@@ -29,9 +29,22 @@ body{display:flex;justify-content:center;align-items:flex-start;padding:8px;padd
 #app{
   --cw:46px;--ch:62px;--fanUp:-44px;--fanDn:-50px;
   --mint:#36e0a0;--gold:#ffd23f;--pink:#ff5b7f;--felt:#0e2c1d;--panel:#0a0f0b;
-  width:100%;max-width:440px;position:relative;
+  width:100%;max-width:440px;position:relative;z-index:1;
   transform-origin:top center;   /* UI-scale (Options) applies transform:scale() here */
 }
+
+/* living-background layer: drifts, pulses & shifts colour over the static image (keeps the image) */
+#bgfx{position:fixed;inset:-12%;z-index:0;pointer-events:none;mix-blend-mode:screen;
+  background:
+    radial-gradient(45% 45% at 28% 32%, rgba(54,224,160,.20), transparent 70%),
+    radial-gradient(50% 50% at 76% 70%, rgba(16,110,86,.24), transparent 72%),
+    radial-gradient(42% 42% at 60% 18%, rgba(120,224,180,.12), transparent 75%);
+  animation:bgatmo 24s ease-in-out infinite;will-change:transform,opacity,filter}
+@keyframes bgatmo{
+  0%{transform:translate3d(0,0,0) scale(1);opacity:.65;filter:hue-rotate(0deg)}
+  50%{transform:translate3d(1.5%,-1.5%,0) scale(1.12);opacity:1;filter:hue-rotate(-14deg)}
+  100%{transform:translate3d(0,0,0) scale(1);opacity:.65;filter:hue-rotate(0deg)}}
+@media(prefers-reduced-motion:reduce){#bgfx{animation:none}}
 
 /* global CRT scanline overlay (toggle in Options) — sibling of #app so app's scale transform can't trap it */
 #scanlines{position:fixed;inset:0;pointer-events:none;z-index:9999;
@@ -308,6 +321,7 @@ input.vol::-moz-range-thumb{width:15px;height:15px;border-radius:3px;background:
 </style>
 </head>
 <body>
+<div id="bgfx"></div>
 <div id="scanlines"></div>
 <div id="app">
 
@@ -429,7 +443,7 @@ input.vol::-moz-range-thumb{width:15px;height:15px;border-radius:3px;background:
     </div>
     <button class="opt-reset" id="opt-tut" style="border-color:#2c5a43;background:#0d2419;color:var(--mint)">TUTORIAL ZURÜCKSETZEN</button>
     <button class="opt-reset" id="opt-reset">FORTSCHRITT ZURÜCKSETZEN</button>
-    <div class="opt-about">KLONDAIRE &middot; v0.5<br>RETRO ROGUELIKE SOLITAIRE</div>
+    <div class="opt-about">KLONDAIRE &middot; v0.5.2<br>RETRO ROGUELIKE SOLITAIRE</div>
   </section>
 
   <!-- ===================== GAME OVER ===================== -->
@@ -652,6 +666,10 @@ function paintIcons(root){(root||document).querySelectorAll('[data-ic]').forEach
    Format: { v:'Titel', date:'optional', notes:['Punkt 1','Punkt 2', ...] }
    ============================================================ */
 const PATCH_NOTES=[
+ {v:'v0.5.2', date:'', notes:[
+   'Die Homescreen-App aktualisiert sich jetzt automatisch (lädt beim Start die neueste Version, offline aus dem Cache).',
+   'Lebendiger Hintergrund: sanfte Drift, Pulsation & Farb-Atmosphäre über deinem Bild — dezent, nicht aufdringlich.',
+ ]},
  {v:'v0.5', date:'', notes:[
    'Sieg ab Ante 8 — danach Endlosmodus für den Highscore.',
    'Joker & Spezialkarten im Shop: dein Deck wächst.',
@@ -1449,6 +1467,8 @@ applyOpts();
 paintIcons();        // fill all static [data-ic] elements with their SVG
 renderPostit();      // fill the menu sticky note with the latest update
 showScene('menu');
+// auto-update for the iPhone homescreen app (network-first; needs HTTPS hosting)
+if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('sw.js').catch(function(){});});}
 })();
 </script>
 </body>
