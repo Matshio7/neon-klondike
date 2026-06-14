@@ -6,7 +6,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black">
 <meta name="theme-color" content="#050805">
-<title>Neon Klondike</title>
+<title>Klondaire</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
@@ -21,21 +21,23 @@
 
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 [hidden]{display:none !important}   /* author rules (e.g. .mbtn display:flex) otherwise beat the UA [hidden] rule */
-html,body{margin:0;min-height:100%;background:#050805;font-family:'Press Start 2P',monospace;color:#dfeee6;-webkit-user-select:none;user-select:none;touch-action:manipulation}
-body{display:flex;justify-content:center;align-items:flex-start;padding:8px;padding-top:max(8px,env(safe-area-inset-top))}
+html,body{margin:0;min-height:100vh;font-family:'Press Start 2P',monospace;color:#dfeee6;-webkit-user-select:none;user-select:none;touch-action:manipulation}
+html{background:#0a1a13 url('img/background.png') center center / cover no-repeat}   /* root bg always fills the whole viewport */
+body{display:flex;justify-content:center;align-items:flex-start;padding:8px;padding-top:max(8px,env(safe-area-inset-top));background:transparent}
 
 /* ---- shared palette + app frame ---- */
 #app{
   --cw:46px;--ch:62px;--fanUp:-44px;--fanDn:-50px;
   --mint:#36e0a0;--gold:#ffd23f;--pink:#ff5b7f;--felt:#0e2c1d;--panel:#0a0f0b;
   width:100%;max-width:440px;position:relative;
+  transform-origin:top center;   /* UI-scale (Options) applies transform:scale() here */
 }
 
-/* global CRT scanline overlay (toggle in Options) */
+/* global CRT scanline overlay (toggle in Options) — sibling of #app so app's scale transform can't trap it */
 #scanlines{position:fixed;inset:0;pointer-events:none;z-index:9999;
   background:repeating-linear-gradient(rgba(0,0,0,0) 0 2px,rgba(0,0,0,.16) 2px 3px)}
-#app.crt-off #scanlines{display:none}
-#app.crt-off #stage::before{display:none}
+body.crt-off #scanlines{display:none}
+body.crt-off #stage::before{display:none}
 
 /* ---- scene container (every screen is a framed neon panel) ---- */
 .scene{background:var(--panel);border:2px solid #1c3a2b;border-radius:14px;padding:10px;
@@ -50,9 +52,9 @@ body{display:flex;justify-content:center;align-items:flex-start;padding:8px;padd
 .iconbtn:active{transform:scale(.95)}
 
 /* =================== MENU =================== */
-#scene-menu{min-height:62vh;display:flex;flex-direction:column;align-items:center;justify-content:center;
-  gap:18px;padding:28px 16px;position:relative;overflow:hidden}
-.logo{text-align:center;font-size:22px;line-height:1.5;letter-spacing:2px;color:var(--mint);
+#scene-menu{min-height:auto;display:flex;flex-direction:column;align-items:center;justify-content:center;
+  gap:0;padding:26px 16px 24px;position:relative;overflow:hidden}
+.logo{text-align:center;font-size:22px;line-height:1.5;letter-spacing:2px;white-space:nowrap;color:var(--mint);
   text-shadow:0 0 8px rgba(54,224,160,.8),0 0 18px rgba(54,224,160,.4);animation:glow 2.4s ease-in-out infinite}
 .logo .h{color:var(--pink);text-shadow:0 0 8px rgba(255,91,127,.8)}
 .logo .d{color:var(--gold);text-shadow:0 0 8px rgba(255,210,63,.8)}
@@ -71,10 +73,36 @@ body{display:flex;justify-content:center;align-items:flex-start;padding:8px;padd
 .mbtn.danger:hover{box-shadow:0 0 14px rgba(255,91,127,.35)}
 .menu-foot{font-size:8px;color:#5f8f78;text-align:center;line-height:2;margin-top:4px}
 .menu-foot b{color:var(--gold)}
+/* build version: pinned to the very bottom, intentionally near-invisible (dark on dark) */
+.menu-build{position:absolute;bottom:5px;left:0;right:0;text-align:center;font-size:7px;letter-spacing:1.5px;color:#17261d;z-index:1;pointer-events:none;user-select:none}
 /* drifting suit glyphs in the menu background */
 .drift{position:absolute;color:rgba(54,224,160,.08);font-size:40px;pointer-events:none;z-index:0;animation:drift 14s linear infinite}
 @keyframes drift{0%{transform:translateY(110%) rotate(0)}100%{transform:translateY(-130%) rotate(40deg)}}
-.menu-card{position:relative;z-index:2;display:flex;flex-direction:column;align-items:center;gap:18px;width:100%}
+.menu-card{position:relative;z-index:2;display:flex;flex-direction:column;align-items:center;gap:12px;width:100%}
+.menu-head{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;min-height:72px} /* compact header band; modest centered gap around the name */
+/* update post-it — sits on top of the menu, tilted, like a sticky note */
+#postit{position:absolute;top:20px;right:-58px;width:144px;z-index:70;display:none;cursor:pointer;
+  background:#f3e7a6;color:#2a2410;border-radius:3px 3px 0 0;padding:10px 10px 0;
+  transform:rotate(4.5deg);box-shadow:0 8px 16px rgba(0,0,0,.55);
+  font-family:'Press Start 2P',monospace;transition:transform .12s}
+#postit:hover{transform:rotate(2deg) scale(1.03)}
+#postit:active{transform:rotate(2deg) scale(.99)}
+#postit::before{content:"";position:absolute;top:-8px;left:50%;width:54px;height:16px;
+  transform:translateX(-50%) rotate(-3deg);background:rgba(214,200,120,.55);border:1px solid rgba(0,0,0,.12)}
+#postit .pt-h{font-size:8px;color:#7a5c00;letter-spacing:.5px;margin-bottom:7px}
+#postit ul{margin:0;padding-left:10px}
+#postit li{font-size:7px;line-height:1.55;margin-bottom:4px;color:#2a2410}
+#postit .pt-more{margin-top:6px;border-top:1px dashed rgba(42,36,16,.5)}
+#postit .pt-tear{font-size:7px;color:#7a5c00;text-align:center;line-height:1.4;padding:5px 0 6px}
+#postit .pt-fringe{display:flex;gap:3px;height:14px;margin:0 -10px -14px}
+#postit .pt-fringe span{flex:1;background:#f3e7a6;border-radius:0 0 2px 2px;box-shadow:0 2px 3px rgba(0,0,0,.3);cursor:pointer;transition:transform .1s}
+#postit .pt-fringe span:hover{transform:translateY(3px)}
+#postit .pt-fringe span.torn{animation:tearaway .7s ease forwards;pointer-events:none}
+@keyframes tearaway{0%{transform:translateY(0) rotate(0);opacity:1}100%{transform:translate(7px,48px) rotate(22deg);opacity:0}}
+.pt-fortune{position:absolute;left:50%;bottom:-16px;transform:translateX(-50%);width:158px;background:#f3e7a6;color:#2a2410;font-family:'Press Start 2P',monospace;font-size:7px;line-height:1.55;text-align:center;padding:8px;border-radius:3px;box-shadow:0 5px 13px rgba(0,0,0,.55);z-index:80;pointer-events:none;animation:fortuneDrop 2.7s ease forwards}
+@keyframes fortuneDrop{0%{opacity:0;transform:translate(-50%,-6px) rotate(-3deg)}12%{opacity:1}78%{opacity:1}100%{opacity:0;transform:translate(-50%,36px) rotate(5deg)}}
+.pt-fortune.mean{color:#8a1f1f;box-shadow:0 5px 13px rgba(120,0,0,.45);animation-duration:3.4s}
+@media (max-width:480px){#postit{right:-6px;top:16px}}   /* on phones keep the note on-panel so it isn't clipped */
 
 /* =================== GAME (core, preserved) =================== */
 #topbar{display:flex;align-items:center;gap:6px;margin:2px 0 8px}
@@ -99,8 +127,9 @@ body{display:flex;justify-content:center;align-items:flex-start;padding:8px;padd
 #tab{display:flex;gap:4px;justify-content:space-between}
 .slot{width:var(--cw);height:var(--ch);border-radius:5px;border:1.5px dashed rgba(255,255,255,.18);display:flex;align-items:center;justify-content:center;font-size:calc(var(--cw)*0.3);color:rgba(255,255,255,.25)}
 .card{width:var(--cw);height:var(--ch);border-radius:5px;position:relative;cursor:pointer;background:#f4f1e4;border:1px solid #20140a;font-family:'Press Start 2P',monospace}
-.card .cn{position:absolute;top:3px;left:4px;font-size:calc(var(--cw)*0.22);line-height:1}
-.card .pip{position:absolute;bottom:4px;right:4px;font-size:calc(var(--cw)*0.34);line-height:1}
+.card .cn{position:absolute;top:3px;left:4px;font-size:calc(var(--cw)*0.22);line-height:1;display:flex;align-items:center;gap:1px}
+.card .pip{position:absolute;bottom:3px;right:4px;font-size:calc(var(--cw)*0.40);line-height:1}
+.card .pip .svgi{display:block}
 .card.red{color:#d8332f}.card.blk{color:#16110a}
 .card.down{background:#13261c;border:1px solid var(--mint);background-image:repeating-linear-gradient(45deg,#163a29 0 6px,#0f2a1e 6px 12px)}
 .card.sel{box-shadow:0 0 0 3px var(--gold);transform:translateY(-4px);z-index:99}
@@ -118,8 +147,10 @@ body{display:flex;justify-content:center;align-items:flex-start;padding:8px;padd
 .mbtn .mi{display:inline-flex;align-items:center;justify-content:center}
 .ach-ic svg{width:18px;height:18px;display:block;margin:0 auto}
 /* ---- top control bar (replaces the old bottom bar) ---- */
-#topbar{display:flex;align-items:center;gap:6px;margin:2px 0 8px}
-#recchip{flex:1;display:flex;align-items:center;justify-content:center;gap:6px;font-size:11px;color:#7fae98}
+#topbar{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:6px;margin:2px 0 8px}
+.tb-left{justify-self:start;display:flex;gap:6px}
+.tb-right{justify-self:end;display:flex;gap:6px}
+#recchip{justify-self:center;display:flex;align-items:center;justify-content:center;gap:6px;font-size:11px;color:#7fae98}
 #recchip .svgi{font-size:14px;color:var(--mint)}
 #recchip b{color:var(--mint);font-size:12px}
 /* ---- in-game ITEMS panel (rendered in #overlay) ---- */
@@ -139,7 +170,7 @@ body{display:flex;justify-content:center;align-items:flex-start;padding:8px;padd
 .btn.gold{border-color:#6b5410;color:var(--gold);background:#241d07}
 #overlay{position:absolute;inset:0;z-index:60;background:#070f0a;border-radius:10px;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:16px;text-align:center;gap:12px;overflow:auto}
 #overlay::before{content:"";position:absolute;inset:0;pointer-events:none;background:repeating-linear-gradient(rgba(0,0,0,0) 0 2px,rgba(0,0,0,.18) 2px 3px);border-radius:10px}
-#app.crt-off #overlay::before{display:none}
+body.crt-off #overlay::before{display:none}
 #overlay.hidden{display:none}
 #overlay h3{font-size:15px;margin:0;line-height:1.5}
 #overlay .sub{font-size:9px;color:#7fae98;line-height:1.9}
@@ -183,8 +214,33 @@ body{display:flex;justify-content:center;align-items:flex-start;padding:8px;padd
 .tgl{font-family:'Press Start 2P',monospace;font-size:10px;min-width:62px;padding:11px 8px;border-radius:7px;border:1.5px solid #5a2238;background:#240913;color:var(--pink);cursor:pointer}
 .tgl.on{border-color:#2c5a43;background:#0d2419;color:var(--mint)}
 .tgl:active{transform:scale(.97)}
+input.vol{-webkit-appearance:none;appearance:none;width:100%;height:18px;background:transparent;cursor:pointer;margin:0}
+input.vol::-webkit-slider-runnable-track{height:6px;border-radius:4px;background:#0e2418;border:1px solid #2c5a43}
+input.vol::-webkit-slider-thumb{-webkit-appearance:none;appearance:none;width:16px;height:16px;border-radius:3px;background:var(--mint);border:1px solid #0a0f0b;margin-top:-6px;box-shadow:0 0 6px rgba(54,224,160,.5)}
+input.vol::-moz-range-track{height:6px;border-radius:4px;background:#0e2418;border:1px solid #2c5a43}
+input.vol::-moz-range-thumb{width:15px;height:15px;border-radius:3px;background:var(--mint);border:1px solid #0a0f0b;box-shadow:0 0 6px rgba(54,224,160,.5)}
 .opt-reset{font-family:'Press Start 2P',monospace;font-size:9px;width:100%;padding:12px;border-radius:8px;border:1.5px solid #5a2238;background:#1a0a10;color:var(--pink);cursor:pointer;margin-top:6px;line-height:1.6}
 .opt-about{font-size:8px;color:#5f8f78;text-align:center;line-height:2;margin-top:14px}
+/* UI-size segmented control */
+.scaleset{display:flex;gap:5px}
+.scaleset.disabled{opacity:.4;pointer-events:none}
+.sbtn{flex:1;font-family:'Press Start 2P',monospace;font-size:9px;padding:10px 2px;border-radius:7px;border:1.5px solid #2c5a43;background:#0d2419;color:#7fae98;cursor:pointer}
+.sbtn.on{color:var(--mint);border-color:var(--mint);background:#10301f}
+.sbtn:active{transform:scale(.96)}
+/* subtle help affordance on HUD + in-game help panel */
+#hud [title]{cursor:help}
+.help-list{display:flex;flex-direction:column;gap:6px;width:100%;text-align:left}
+.hrow{background:#0e2418;border:1px solid #244;border-radius:8px;padding:8px 10px}
+.hrow .hk{font-size:9px;color:var(--mint)}
+.hrow .hv{font-size:8px;color:#9fc7b4;line-height:1.7;margin-top:4px}
+.hrow.formula{border-color:#6b5410}
+.hrow.formula .hk{color:var(--gold)}
+/* round-clear reward breakdown (stacked + readable) */
+.rwd{display:flex;flex-direction:column;gap:6px;width:100%;max-width:280px;margin:2px auto 0}
+.rwd .rr{display:flex;justify-content:space-between;align-items:baseline;gap:10px;font-size:9px;line-height:1.4}
+.rwd .rr .rl{color:#9fc7b4;text-align:left}
+.rwd .rr .rv{color:var(--mint);white-space:nowrap}
+.rwd .rtot{display:flex;justify-content:space-between;align-items:baseline;gap:10px;margin-top:3px;padding-top:8px;border-top:1px solid #2c5a43;font-size:11px;color:var(--gold)}
 
 /* =================== GAME OVER =================== */
 #scene-over{min-height:62vh;display:flex;flex-direction:column;gap:12px}
@@ -218,14 +274,6 @@ body{display:flex;justify-content:center;align-items:flex-start;padding:8px;padd
 .go-achbadges{display:flex;flex-wrap:wrap;gap:5px;justify-content:center}
 .go-btns{display:flex;gap:8px;margin-top:2px}
 
-/* =================== TOAST (achievement unlock) =================== */
-#toast{position:absolute;left:50%;top:8px;transform:translate(-50%,-140%);z-index:10000;
-  background:#15200a;border:2px solid #6b5410;border-radius:10px;padding:10px 14px;
-  font-size:9px;color:var(--gold);line-height:1.6;text-align:center;max-width:90%;
-  box-shadow:0 0 18px rgba(255,210,63,.4);transition:transform .35s ease;pointer-events:none}
-#toast.show{transform:translate(-50%,0)}
-#toast .ti{font-size:12px;margin-right:4px}
-
 /* goodbye screen */
 #scene-bye{min-height:50vh;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;text-align:center;padding:30px 18px}
 #scene-bye .by{font-size:14px;color:var(--mint);line-height:1.8}
@@ -233,41 +281,47 @@ body{display:flex;justify-content:center;align-items:flex-start;padding:8px;padd
 </style>
 </head>
 <body>
+<div id="scanlines"></div>
 <div id="app">
-  <div id="scanlines"></div>
-  <div id="toast"></div>
 
   <!-- ===================== MAIN MENU ===================== -->
   <section class="scene" id="scene-menu">
     <div class="menu-card">
-      <div class="logo"><span class="d">&#9824;</span> NEON<br>KLONDIKE <span class="h">&#9829;</span></div>
-      <div class="tag">RETRO ROGUELIKE SOLITAIRE</div>
+      <div class="menu-head">
+        <div class="logo"><span class="d svgi" data-ic="spade"></span> KLONDAIRE <span class="h svgi" data-ic="heart"></span></div>
+        <div class="tag">RETRO ROGUELIKE SOLITAIRE</div>
+      </div>
       <div class="menu-btns">
         <button class="mbtn gold" data-go="resume" id="btn-resume" hidden><span class="mi" data-ic="play"></span> FORTSETZEN</button>
         <button class="mbtn gold" data-go="start"><span class="mi" data-ic="play"></span> START</button>
         <button class="mbtn" data-go="decks"><span class="mi" data-ic="spade"></span> DECKS</button>
         <button class="mbtn" data-go="ach"><span class="mi" data-ic="trophy"></span> ERFOLGE</button>
-        <button class="mbtn" data-go="news"><span class="mi" data-ic="news"></span> NEUES</button>
         <button class="mbtn" data-go="opts"><span class="mi" data-ic="gear"></span> OPTIONS</button>
         <button class="mbtn danger" data-go="exit"><span class="mi" data-ic="power"></span> EXIT</button>
       </div>
       <div class="menu-foot" style="color:var(--gold);margin-bottom:-2px">AKTIVES DECK: <b id="m-deck">STANDARD</b></div>
       <div class="menu-foot">BEST ANTE <b id="m-bestante">-</b> &nbsp;&middot;&nbsp; <b id="m-achcount">0/0</b> ERFOLGE &nbsp;&middot;&nbsp; <b id="m-volt">0</b> <span class="svgi" data-ic="volt" style="color:var(--gold)"></span> VOLT</div>
     </div>
+    <div class="menu-build" id="menu-build"></div>
   </section>
 
   <!-- ===================== GAME ===================== -->
   <section class="scene" id="scene-game" hidden>
     <div id="topbar">
-      <button class="iconbtn" id="homebtn" title="Menü (Run pausieren)" data-ic="menu"></button>
-      <button class="iconbtn" id="itemsbtn" title="Deine Items" data-ic="items"></button>
+      <div class="tb-left">
+        <button class="iconbtn" id="homebtn" title="Menü (Run pausieren)" data-ic="menu"></button>
+        <button class="iconbtn" id="itemsbtn" title="Deine Items" data-ic="items"></button>
+      </div>
       <div id="recchip" title="Verbleibende Recycles"><span class="svgi" data-ic="recycle"></span><b id="recnum">2</b></div>
-      <button class="iconbtn danger" id="giveupbtn" title="Run aufgeben" data-ic="giveup"></button>
+      <div class="tb-right">
+        <button class="iconbtn" id="helpbtn" title="Spielhilfe" data-ic="help"></button>
+        <button class="iconbtn danger" id="giveupbtn" title="Run aufgeben" data-ic="giveup"></button>
+      </div>
     </div>
     <div id="hud">
-      <div><div class="lbl">ANTE</div><div class="val" id="ante">1</div></div>
-      <div style="text-align:center"><div class="lbl">CHIPS</div><div class="val"><span id="chips">0</span><span style="color:#456">/</span><span id="tgt">60</span></div><div id="multline">MULT <span id="mult">&#215;1.0</span></div></div>
-      <div style="text-align:right"><div class="lbl">COINS</div><div class="val" id="coins">4</div></div>
+      <div title="ANTE — aktuelle Runde. Steigt nach jedem Sieg; jede 3. Ante ist ein Boss."><div class="lbl">ANTE</div><div class="val" id="ante">1</div></div>
+      <div style="text-align:center" title="CHIPS — dein Score / Ziel. Jede gebankte Karte: Basis-Chips × MULT."><div class="lbl">CHIPS</div><div class="val"><span id="chips">0</span><span style="color:#456">/</span><span id="tgt">60</span></div><div id="multline" title="MULT — Multiplikator. Score = Chips × MULT.">MULT <span id="mult">&#215;1.0</span></div></div>
+      <div style="text-align:right" title="COINS — Währung für den Shop zwischen den Runden."><div class="lbl">COINS</div><div class="val" id="coins">4</div></div>
     </div>
     <div id="bossstrip" class="hidden"></div>
     <div id="stage">
@@ -306,16 +360,40 @@ body{display:flex;justify-content:center;align-items:flex-start;padding:8px;padd
       <div class="ht">OPTIONS</div>
       <div style="width:34px"></div>
     </div>
-    <div class="orow">
-      <div><div class="ol">SOUND</div><div class="od">Retro-Soundeffekte beim Spielen</div></div>
-      <button class="tgl" id="opt-sound" data-opt="sound">AN</button>
+    <div class="orow" style="flex-direction:column;align-items:stretch;gap:9px">
+      <div style="display:flex;justify-content:space-between;align-items:baseline;gap:10px">
+        <div><div class="ol">SOUND</div><div class="od">Lautstärke der Effekte</div></div>
+        <div class="ol" id="sfx-pct">75%</div>
+      </div>
+      <input type="range" class="vol" id="opt-sfx" min="0" max="100" step="5" value="75">
+    </div>
+    <div class="orow" style="flex-direction:column;align-items:stretch;gap:9px">
+      <div style="display:flex;justify-content:space-between;align-items:baseline;gap:10px">
+        <div><div class="ol">MUSIK</div><div class="od">Lautstärke der Hintergrundmusik</div></div>
+        <div class="ol" id="music-pct">25%</div>
+      </div>
+      <input type="range" class="vol" id="opt-musicvol" min="0" max="100" step="5" value="25">
     </div>
     <div class="orow">
       <div><div class="ol">CRT-SCANLINES</div><div class="od">Retro-Bildschirm-Effekt</div></div>
       <button class="tgl" id="opt-crt" data-opt="crt">AN</button>
     </div>
+    <div class="orow" style="flex-direction:column;align-items:stretch;gap:9px">
+      <div><div class="ol">UI-GRÖSSE</div><div class="od">Skaliert die gesamte Oberfläche</div></div>
+      <div class="scaleset" id="scaleset">
+        <button class="sbtn" data-scale="0.5">0.5×</button>
+        <button class="sbtn" data-scale="0.8">0.8×</button>
+        <button class="sbtn" data-scale="1">1.0×</button>
+        <button class="sbtn" data-scale="1.2">1.2×</button>
+        <button class="sbtn" data-scale="1.5">1.5×</button>
+      </div>
+    </div>
+    <div class="orow">
+      <div><div class="ol">AN FENSTER ANPASSEN</div><div class="od">Skaliert automatisch auf die Fenstergröße</div></div>
+      <button class="tgl" id="opt-fit" data-opt="fit">AUS</button>
+    </div>
     <button class="opt-reset" id="opt-reset">FORTSCHRITT ZURÜCKSETZEN</button>
-    <div class="opt-about">NEON KLONDIKE &middot; v0.3<br>RETRO ROGUELIKE SOLITAIRE</div>
+    <div class="opt-about">KLONDAIRE &middot; v0.4<br>RETRO ROGUELIKE SOLITAIRE</div>
   </section>
 
   <!-- ===================== GAME OVER ===================== -->
@@ -344,7 +422,7 @@ body{display:flex;justify-content:center;align-items:flex-start;padding:8px;padd
   <section class="scene" id="scene-news" hidden>
     <div class="shead">
       <button class="iconbtn" data-back data-ic="back"></button>
-      <div class="ht">NEUES</div>
+      <div class="ht">UPDATES</div>
       <div style="width:34px"></div>
     </div>
     <div class="news-list" id="news-list"></div>
@@ -352,10 +430,20 @@ body{display:flex;justify-content:center;align-items:flex-start;padding:8px;padd
 
   <!-- ===================== GOODBYE ===================== -->
   <section class="scene" id="scene-bye" hidden>
-    <div class="by"><span style="color:var(--gold)">&#9824;</span> DANKE<br>FÜRS SPIELEN <span style="color:var(--pink)">&#9829;</span></div>
+    <div class="by"><span class="svgi" data-ic="spade" style="color:var(--gold)"></span> DANKE<br>FÜRS SPIELEN <span class="svgi" data-ic="heart" style="color:var(--pink)"></span></div>
     <div class="bs">Du kannst den Tab jetzt schließen.<br>(In der Steam-Version beendet dies das Spiel.)</div>
     <button class="mbtn" data-back style="max-width:240px"><span class="mi" data-ic="back"></span> ZURÜCK ZUM MENÜ</button>
   </section>
+
+  <!-- ===================== UPDATE POST-IT (overlays the menu) ===================== -->
+  <div id="postit" title="Alle Updates ansehen">
+    <div class="pt-h" id="postit-ver">NEU</div>
+    <ul id="postit-list"></ul>
+    <div class="pt-more" id="postit-more">
+      <div class="pt-tear">… und noch mehr &#8599;</div>
+      <div class="pt-fringe" id="postit-fringe" title="abreißen &amp; mitnehmen"><span></span><span></span><span></span><span></span><span></span><span></span><span></span></div>
+    </div>
+  </div>
 
 </div>
 <script>
@@ -381,7 +469,11 @@ const Store={
     d.stats=Object.assign({totalRuns:0,bestAnte:0,bestChips:0,bestRunChips:0,boardClears:0,bossesBeaten:[]},d.stats||{});
     if(!Array.isArray(d.stats.bossesBeaten))d.stats.bossesBeaten=[];
     d.ach=Array.isArray(d.ach)?d.ach:[];
-    d.opts=Object.assign({sound:true,crt:true},d.opts||{});
+    d.opts=Object.assign({crt:true,scale:1,fit:false,sfxVol:0.75,musicVol:0.25},d.opts||{});
+    if(typeof d.opts.sound==='boolean'){ d.opts.sfxVol=d.opts.sound?0.75:0; delete d.opts.sound; }      // migrate old on/off
+    if(typeof d.opts.music==='boolean'){ d.opts.musicVol=d.opts.music?0.25:0; delete d.opts.music; }
+    if(typeof d.opts.sfxVol!=='number')d.opts.sfxVol=0.75;
+    if(typeof d.opts.musicVol!=='number')d.opts.musicVol=0.25;
     d.meta=Object.assign({
       volt:0,                    // persistent currency, earned every run (win OR loss)
       selectedDeck:'standard',
@@ -406,8 +498,8 @@ const SFX={
   ensure(){ if(this.ctx)return; try{this.ctx=new (window.AudioContext||window.webkitAudioContext)();}catch(e){} },
   resume(){ if(this.ctx&&this.ctx.state==='suspended')this.ctx.resume(); },
   tone(freq,dur,type,vol){
-    if(!Store.data.opts.sound||!this.ctx)return;
-    type=type||'square'; vol=vol||0.04;
+    var sv=Store.data.opts.sfxVol; if(!sv||!this.ctx)return;
+    type=type||'square'; vol=(vol||0.20)*sv;
     const t=this.ctx.currentTime;
     const o=this.ctx.createOscillator(), g=this.ctx.createGain();
     o.type=type; o.frequency.value=freq;
@@ -419,9 +511,43 @@ const SFX={
   click(){this.tone(420,0.05);},
   bank(){this.tone(660,0.07);setTimeout(()=>this.tone(880,0.06),40);},
   buy(){this.tone(520,0.08);setTimeout(()=>this.tone(820,0.08),60);},
-  unlock(){[660,990,1320].forEach((f,i)=>setTimeout(()=>this.tone(f,0.12,'square',0.05),i*80));},
-  win(){[523,659,784,1047].forEach((f,i)=>setTimeout(()=>this.tone(f,0.12,'square',0.05),i*90));},
-  lose(){[440,330,220,165].forEach((f,i)=>setTimeout(()=>this.tone(f,0.18,'sawtooth',0.05),i*120));},
+  unlock(){[660,990,1320].forEach((f,i)=>setTimeout(()=>this.tone(f,0.12,'square',0.22),i*80));},
+  win(){[523,659,784,1047].forEach((f,i)=>setTimeout(()=>this.tone(f,0.12,'square',0.22),i*90));},
+  lose(){[440,330,220,165].forEach((f,i)=>setTimeout(()=>this.tone(f,0.18,'sawtooth',0.22),i*120));},
+};
+
+/* ============================================================
+   MUSIC  -  background tracks (HTML5 Audio, files in /music).
+   Menu loops one track; a run plays the other four back-to-back
+   on loop. Starts on first user gesture (autoplay policy) and
+   follows the active scene. Toggle in Options.
+   ============================================================ */
+const Music={
+  el:null, mode:'menu', idx:0, ready:false, cur:'',
+  MENU:'music/menu-blue-saga.mp3',
+  RUN:['music/run-out-to-the-world.mp3','music/run-rocket-jr.mp3','music/run-ava-low.mp3','music/run-wave-saver.mp3'],
+  init(){
+    if(this.el)return;
+    try{this.el=new Audio();}catch(e){return;}
+    this.el.volume=Store.data.opts.musicVol;
+    var self=this;
+    this.el.addEventListener('ended',function(){            // advance the run playlist
+      if(self.mode==='run'){ self.idx=(self.idx+1)%self.RUN.length; self.cur=self.RUN[self.idx]; self.el.src=self.cur; self._play(); }
+    });
+  },
+  _target(){ return this.mode==='menu'?this.MENU:this.RUN[this.idx]; },
+  _play(){ if(this.el&&this.ready&&Store.data.opts.musicVol>0){ var p=this.el.play(); if(p&&p.catch)p.catch(function(){}); } },
+  setVol(){ this.init(); if(!this.el)return; this.el.volume=Store.data.opts.musicVol; if(Store.data.opts.musicVol>0)this._play(); else this.el.pause(); },
+  sync(){                                                   // match src to mode, then play/pause per settings
+    this.init(); if(!this.el)return;
+    this.el.volume=Store.data.opts.musicVol;
+    var t=this._target();
+    this.el.loop=(this.mode==='menu');
+    if(this.cur!==t){ this.cur=t; this.el.src=t; }
+    if(this.ready&&Store.data.opts.musicVol>0) this._play(); else this.el.pause();
+  },
+  setMode(m){ this.init(); if(m!==this.mode){ this.mode=m; if(m==='run')this.idx=Math.floor(Math.random()*this.RUN.length); } this.sync(); },
+  kick(){ this.ready=true; this.sync(); }                   // first user gesture unlocks playback
 };
 
 /* ============================================================
@@ -441,10 +567,11 @@ const ACHIEVEMENTS=[
  {id:'mult5',     name:'MULTIPLIKATOR',desc:'Erreiche ×5.0 Mult oder mehr.',      test:c=>c.RUN.maxMult>=5},
  {id:'coins20',   name:'SPARFUCHS',   desc:'Halte 20+ Coins gleichzeitig.',       test:c=>c.G.coins>=20},
  {id:'runs10',    name:'DURCHHALTER', desc:'Spiele 10 Runs.',                     test:c=>c.S.totalRuns>=10},
+ {id:'souvenir',  name:'ZUM MITNEHMEN', desc:'Nimm dir ein Andenken vom schwarzen Brett.', test:c=>!!c.S.souvenir},
 ];
 /* VOLT bounty paid the FIRST time each achievement unlocks (one-off, tracked in
    Store.data.meta.paidAch) + any deck it unlocks. */
-const ACH_VOLT={first_bank:2,clear_board:5,boss1:8,allboss:15,ante3:5,ante5:10,ante8:20,chips500:8,chips1000:15,perks5:8,mult5:8,coins20:5,runs10:10};
+const ACH_VOLT={first_bank:2,clear_board:5,boss1:8,allboss:15,ante3:5,ante5:10,ante8:20,chips500:8,chips1000:15,perks5:8,mult5:8,coins20:5,runs10:10,souvenir:7};
 const ACH_DECK={allboss:'bossrush'};
 
 /* ============================================================
@@ -463,10 +590,16 @@ const IC={
  gear:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3.2"/><path d="M12 2.5v3M12 18.5v3M2.5 12h3M18.5 12h3M5 5l2.1 2.1M16.9 16.9 19 19M19 5l-2.1 2.1M7.1 16.9 5 19"/></svg>',
  power:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M12 3v8"/><path d="M6.5 6.5a8 8 0 1 0 11 0"/></svg>',
  spade:'<svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 3C8.2 7 4 9.2 4 13.2c0 2.3 1.9 3.9 3.9 3.9 1 0 1.9-.4 2.6-1-.2 2-.9 3-2 3.9h7c-1.1-.9-1.8-1.9-2-3.9.7.6 1.6 1 2.6 1 2 0 3.9-1.6 3.9-3.9C20 9.2 15.8 7 12 3z"/></svg>',
+ heart:'<svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 20.3l-1.45-1.32C5.4 14.24 2 11.16 2 7.5 2 4.92 4.02 3 6.5 3c1.74 0 3.41.81 4.5 2.09C12.09 3.81 13.76 3 15.5 3 17.98 3 20 4.92 20 7.5c0 3.66-3.4 6.74-8.55 11.49L12 20.3z"/></svg>',
+ diamond:'<svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l7.5 10L12 22 4.5 12z"/></svg>',
+ club:'<svg viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="6.6" r="3.4"/><circle cx="6.8" cy="13" r="3.4"/><circle cx="17.2" cy="13" r="3.4"/><path d="M10.4 12.5h3.2l1.3 7.5h-5.8z"/></svg>',
+ star:'<svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2.5l2.9 6.1 6.6.7-4.9 4.5 1.4 6.6L12 17.6 5.9 20.9l1.4-6.6L2.4 9.3l6.7-.7z"/></svg>',
+ coin:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="8.5"/><circle cx="12" cy="12" r="3.4" fill="currentColor" stroke="none"/></svg>',
  news:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3.5 10.5v3a1 1 0 0 0 1 1h2.5l6 3.5V6L7 9.5H4.5a1 1 0 0 0-1 1z"/><path d="M16.5 9.5a3.5 3.5 0 0 1 0 5"/></svg>',
  volt:'<svg viewBox="0 0 24 24" fill="currentColor"><path d="M13 2 4 13.5h6L9 22l9-12h-6z"/></svg>',
- recycle:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5.5 9.2A7 7 0 0 1 17 6.3"/><path d="M18.5 14.8A7 7 0 0 1 7 17.7"/><path d="M17.5 3.5V7H14M6.5 20.5V17H10"/></svg>',
+ recycle:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><g transform="translate(0.1,-0.95)"><path d="M7 19H4.8a1.83 1.83 0 0 1-1.57-2.66L7.2 9.5"/><path d="M11 19h8.2a1.83 1.83 0 0 0 1.55-2.66l-1.22-2.12"/><path d="m14 16-3 3 3 3"/><path d="M8.3 13.6 7.2 9.5 3.1 10.6"/><path d="m9.34 5.81 1.1-1.9a1.83 1.83 0 0 1 3.1.01l3.94 6.84"/><path d="m13.38 9.63 4.1 1.1 1.1-4.1"/></g></svg>',
  close:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg>',
+ help:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M9.3 9.3a2.7 2.7 0 0 1 5.2 1c0 1.8-2.5 2.1-2.5 3.9"/><path d="M12 17.5h.01"/></svg>',
 };
 function svg(name){return '<span class="svgi">'+(IC[name]||'')+'</span>';}
 function paintIcons(root){(root||document).querySelectorAll('[data-ic]').forEach(function(el){if(el.dataset.painted)return;el.innerHTML=IC[el.dataset.ic]||'';el.dataset.painted='1';});}
@@ -477,6 +610,17 @@ function paintIcons(root){(root||document).querySelectorAll('[data-ic]').forEach
    Format: { v:'Titel', date:'optional', notes:['Punkt 1','Punkt 2', ...] }
    ============================================================ */
 const PATCH_NOTES=[
+ {v:'v0.4', date:'', notes:[
+   'Das Spiel heißt jetzt KLONDAIRE.',
+   'Hintergrundmusik: ein eigener Menü-Track und vier Tracks im Spiel.',
+   'Lautstärke für Sound und Musik getrennt regelbar.',
+   'UI-Größe einstellbar (0,5×–1,5×) oder automatisch ans Fenster anpassen.',
+   'Doppeltipp auf eine Karte legt sie direkt auf die Bank.',
+   'Leertaste zieht die nächste Karte vom Stapel.',
+   'Neue Spielhilfe (?) erklärt Chips, Mult, Ante & Co.',
+   'Übersichtliche Belohnungs-Aufschlüsselung nach jeder Runde.',
+   'Schärfere Kartensymbole, neuer Hintergrund — und ein Notizzettel am Menü mit kleiner Überraschung.',
+ ]},
  {v:'v0.3', date:'', notes:[
    'Hauptmenü: FORTSETZEN pausiert und lädt den laufenden Run.',
    'Steuerung ist nach oben gewandert (Menü · Items · Aufgeben).',
@@ -484,13 +628,15 @@ const PATCH_NOTES=[
    'ITEMS-Ansicht zeigt deine Perks, dein Deck und den Boss.',
    'Symbole statt Emojis — sauberere Optik.',
  ]},
- // { v:'v0.4', date:'', notes:[ 'Dein nächster Punkt …' ] },
+ // { v:'v0.5', date:'', notes:[ 'Dein nächster Punkt …' ] },
 ];
 
 /* ============================================================
    GAME CORE  (Klondike + Balatro-style scoring/shop/bosses)
    ============================================================ */
 const SUITS=['♠','♥','♦','♣'];
+const SUITNAME=['spade','heart','diamond','club'];
+function suitSvg(s){return svg(SUITNAME[s]);}   // suit as inline SVG (inherits card color)
 const RED=s=>s===1||s===2;
 const RANKS=['','A','2','3','4','5','6','7','8','9','10','J','Q','K'];
 const POOL=[
@@ -598,6 +744,11 @@ function onClick(e){
   if(G.phase!=='play')return;
   const el=e.target.closest('[data-pile]');if(!el)return;
   const p=el.dataset.pile,col=el.dataset.col!==undefined?+el.dataset.col:null,idx=el.dataset.idx!==undefined?+el.dataset.idx:null;
+  if(p==='tab'||p==='waste'){
+    const tapId=p+':'+col+':'+idx, now=Date.now();
+    if(G._dt&&G._dt.id===tapId&&now-G._dt.t<350){G._dt=null;if(tryQuickFound(p,col,idx))return;}
+    else G._dt={id:tapId,t:now};
+  }
   if(p==='stock'){handleStock();return;}
   if(!G.sel){
     if(p==='waste'){selWaste();}
@@ -654,11 +805,15 @@ function roundClear(cleared){
   G.coins+=reward;
   evalAch();
   SFX.win();
-  const lines=['+3 base','+'+perf+' score','+'+interest+' interest'];
-  if(cleared)lines.push('+6 clear');if(bounty)lines.push('+8 boss');
-  showOv('<h3 style="color:var(--gold)">'+(G.boss?'BOSS DEFEATED!':(cleared?'BOARD CLEARED!':'ROUND CLEAR'))+'</h3>'+
-    '<div class="sub">CHIPS '+earned+' / '+G.target+'<br>'+lines.join(' &nbsp; ')+'<br><span style="color:var(--gold)">REWARD +'+reward+' COINS</span></div>'+
-    '<button class="btn gold" data-act="shop" style="flex:0;padding:11px 18px">OPEN SHOP &#8599;</button>');
+  const base=3+(G.deck?G.deck.rewardDelta:0);
+  const rows=[['Grundbelohnung',base],['Punkte (1 je 40 Chips)',perf],['Zinsen (1 je 5 Coins)',interest]];
+  if(cleared)rows.push(['Board geräumt',6]);
+  if(bounty)rows.push(['Boss besiegt',bounty]);
+  const rh=rows.map(r=>'<div class="rr"><span class="rl">'+r[0]+'</span><span class="rv">+'+r[1]+'</span></div>').join('');
+  showOv('<h3 style="color:var(--gold)">'+(G.boss?'BOSS BESIEGT!':(cleared?'BOARD GERÄUMT!':'RUNDE GESCHAFFT'))+'</h3>'+
+    '<div class="sub">CHIPS '+earned+' / '+G.target+'</div>'+
+    '<div class="rwd">'+rh+'<div class="rtot"><span>BELOHNUNG</span><span>+'+reward+' COINS</span></div></div>'+
+    '<button class="btn gold" data-act="shop" style="flex:0;padding:11px 18px">SHOP ÖFFNEN &#8599;</button>');
   render();
 }
 function openShop(){
@@ -670,15 +825,15 @@ function openShop(){
 function renderShop(){
   const owned=G.perks.map(id=>{const p=POOL.find(x=>x.id===id);return '<span class="tag-pill '+(p.m?'m':'')+'">'+p.name+'</span>';}).join('');
   const rows=G.offers.map((p,i)=>{const aff=G.coins>=p.price;
-    return '<div class="perk '+(p.m?'mlt':'')+'"><div><div class="pn">'+p.name+'</div><div class="pd">'+p.desc+'</div></div><button class="buy" data-buy="'+i+'" '+(aff?'':'disabled')+'>'+p.price+'◉</button></div>';}).join('')||'<div class="sub">SOLD OUT — NICE COLLECTION</div>';
+    return '<div class="perk '+(p.m?'mlt':'')+'"><div><div class="pn">'+p.name+'</div><div class="pd">'+p.desc+'</div></div><button class="buy" data-buy="'+i+'" '+(aff?'':'disabled')+'>'+p.price+' COINS</button></div>';}).join('')||'<div class="sub">SOLD OUT — NICE COLLECTION</div>';
   const nb=((G.deck&&G.deck.bossEveryAnte)||(G.ante+1)%3===0)?' ·BOSS':'';
   let rerollBtn='';
   if(!(G.deck&&G.deck.noReroll)){
     const free=!!(G.deck&&G.deck.freeReroll), cost=free?0:1;
     const dis=(G.coins>=cost&&G.offers.length)?'':'disabled';
-    rerollBtn='<button class="btn" data-act="reroll" '+dis+' style="flex:1">REROLL '+(free?'GRATIS':'1◉')+'</button>';
+    rerollBtn='<button class="btn" data-act="reroll" '+dis+' style="flex:1">REROLL '+(free?'GRATIS':'1 COIN')+'</button>';
   }
-  showOv('<h3 style="color:var(--mint)">SHOP — '+G.coins+'◉</h3>'+
+  showOv('<h3 style="color:var(--mint)">SHOP — '+G.coins+' COINS</h3>'+
     '<div class="shop">'+rows+'</div>'+
     (owned?'<div class="owned">'+owned+'</div>':'')+
     '<div style="display:flex;gap:6px;width:100%;margin-top:2px">'+
@@ -699,6 +854,32 @@ function showItems(){
   showOv('<h3 style="color:var(--mint)">DEINE ITEMS</h3>'+
     '<div class="items-list">'+deck+boss+perks+'</div>'+
     '<button class="btn gold" data-act="items-close" style="flex:0;padding:11px 18px">'+svg('back')+' ZURÜCK</button>');
+}
+
+/* ---- in-game help: subtle explanations of the scoring terms ---- */
+function showHelp(){
+  if(G.phase!=='play')return;
+  const terms=[
+    ['ANTE','Aktuelle Runde. Jede 3. Ante ist ein Boss mit Spezialregel.'],
+    ['CHIPS','Dein Score in dieser Runde — erreiche den Wert hinter dem „/".'],
+    ['ZIEL','So viele Chips brauchst du, um die Runde zu schaffen.'],
+    ['MULT','Multiplikator. Jede gebankte Karte zählt Chips × MULT.'],
+    ['COINS','Währung für den Shop zwischen den Runden.'],
+    ['RECYCLE','Wie oft du den Zieh-Stapel neu durchgehen darfst (Zähler oben).'],
+  ];
+  const list=terms.map(t=>'<div class="hrow"><div class="hk">'+t[0]+'</div><div class="hv">'+t[1]+'</div></div>').join('');
+  const formula='<div class="hrow formula"><div class="hk">SCORE = BASIS × MULT</div><div class="hv">Jede Karte gibt Basis-Chips (10) × MULT. Perks erhöhen Basis-Chips oder MULT — so „explodiert" dein Score.</div></div>';
+  const keys='<div class="hrow"><div class="hk">TASTEN</div><div class="hv">Leertaste = nächste Karte aufdecken. Doppelklick/-tipp auf eine Karte = direkt nach oben auf die Bank.</div></div>';
+  showOv('<h3 style="color:var(--mint)">SPIELHILFE</h3>'+
+    '<div class="help-list">'+formula+list+keys+'</div>'+
+    '<button class="btn gold" data-act="items-close" style="flex:0;padding:11px 18px">'+svg('back')+' ZURÜCK</button>');
+}
+
+/* double-tap / double-click a card -> straight to its foundation (speed play) */
+function tryQuickFound(p,col,idx){
+  if(p==='waste'){if(!G.waste.length)return false;if(canFound(G.waste[G.waste.length-1])){G.sel={p:'waste'};doFound();return true;}return false;}
+  if(p==='tab'){const t=G.tab[col];if(!t.length||idx!==t.length-1)return false;const c=t[idx];if(c.up&&canFound(c)){G.sel={p:'tab',col,idx};doFound();return true;}return false;}
+  return false;
 }
 
 /* ---- META: convert a finished run into persistent VOLT ----
@@ -733,7 +914,7 @@ function gameOver(){
 function showOv(html){const o=$('overlay');o.innerHTML=html;o.classList.remove('hidden');}
 function hideOv(){$('overlay').classList.add('hidden');}
 function fitCards(){const inner=$('stage').clientWidth-16;let cw=Math.floor((inner-6*4)/7);cw=Math.max(34,Math.min(cw,60));const ch=Math.round(cw*1.36);const r=document.documentElement.style;r.setProperty('--cw',cw+'px');r.setProperty('--ch',ch+'px');r.setProperty('--fanUp',(-Math.round(ch*0.7))+'px');r.setProperty('--fanDn',(-Math.round(ch*0.8))+'px');}
-function cardEl(c,attr,extra){if(!c.up)return '<div class="card down '+(extra||'')+'" '+attr+'></div>';return '<div class="card '+(RED(c.s)?'red':'blk')+' '+(extra||'')+'" '+attr+'><span class="cn">'+RANKS[c.r]+SUITS[c.s]+'</span><span class="pip">'+SUITS[c.s]+'</span></div>';}
+function cardEl(c,attr,extra){if(!c.up)return '<div class="card down '+(extra||'')+'" '+attr+'></div>';return '<div class="card '+(RED(c.s)?'red':'blk')+' '+(extra||'')+'" '+attr+'><span class="cn">'+RANKS[c.r]+suitSvg(c.s)+'</span><span class="pip">'+suitSvg(c.s)+'</span></div>';}
 function render(){
   if($('scene-game').hidden)return;
   $('ante').textContent=G.ante;
@@ -746,7 +927,7 @@ function render(){
   G._last=G.chips;
   const bs=$('bossstrip');
   if(G.boss){bs.classList.remove('hidden');bs.innerHTML='BOSS · '+G.boss.name+' — '+G.boss.desc;}else bs.classList.add('hidden');
-  let f='';for(let s=0;s<4;s++){const fo=G.found[s];if(fo.length){f+=cardEl(fo[fo.length-1],'data-pile="found" data-suit="'+s+'"','');}else f+='<div class="slot" data-pile="found" data-suit="'+s+'">'+SUITS[s]+'</div>';}
+  let f='';for(let s=0;s<4;s++){const fo=G.found[s];if(fo.length){f+=cardEl(fo[fo.length-1],'data-pile="found" data-suit="'+s+'"','');}else f+='<div class="slot" data-pile="found" data-suit="'+s+'">'+suitSvg(s)+'</div>';}
   let w;if(G.waste.length){const sel=G.sel&&G.sel.p==='waste'?'sel':'';w=cardEl(G.waste[G.waste.length-1],'data-pile="waste"',sel);}else w='<div class="slot" data-pile="waste"></div>';
   let st;if(G.stock.length)st='<div class="card down" data-pile="stock"></div>';else st='<div class="slot" data-pile="stock">'+(G.rec>0?svg('recycle'):svg('close'))+'</div>';
   let tb='';for(let c=0;c<7;c++){const col=G.tab[c];let inner='';if(col.length===0){inner='<div class="slot" data-pile="tab" data-col="'+c+'" data-idx="-1"></div>';}else{col.forEach((card,i)=>{const fanCls=i===0?'':(card.up?'fan':'fan dn');const selThis=G.sel&&G.sel.p==='tab'&&G.sel.col===c&&i>=G.sel.idx?'sel':'';inner+=cardEl(card,'data-pile="tab" data-col="'+c+'" data-idx="'+i+'"',fanCls+' '+selThis);});}
@@ -760,17 +941,61 @@ function render(){
 function showScene(name){
   document.querySelectorAll('.scene').forEach(s=>s.hidden=true);
   const el=$('scene-'+name); if(el)el.hidden=false;
-  if(name==='menu')renderMenu();
+  if(name==='menu'){renderMenu();renderPostit();}
   else if(name==='ach')renderAch();
   else if(name==='opts')renderOpts();
   else if(name==='decks')renderDecks();
   else if(name==='news')renderNews();
+  $('postit').style.display=(name==='menu')?'block':'none';   // sticky note only on the menu
+  Music.setMode(name==='game'?'run':'menu');                  // run playlist in-game, menu track elsewhere
+  applyScale();   // recompute fit-to-window for the now-visible scene height
 }
 function renderNews(){
   $('news-list').innerHTML=PATCH_NOTES.map(p=>
     '<div class="patch"><h4>'+p.v+(p.date?'<span class="dt">'+p.date+'</span>':'')+'</h4><ul>'+
     p.notes.map(n=>'<li>'+n+'</li>').join('')+'</ul></div>'
   ).join('')||'<div class="ach-prog">NOCH KEINE EINTRÄGE</div>';
+}
+/* the menu post-it shows the latest version + its first 5 points */
+function renderPostit(){
+  const p=PATCH_NOTES[0];
+  if(!p){$('postit').style.display='none';return;}
+  $('postit-ver').textContent='NEU · '+p.v;
+  $('postit-list').innerHTML=p.notes.slice(0,2).map(n=>'<li>'+n+'</li>').join('');
+  $('postit-more').style.display=(p.notes.length>2)?'block':'none';
+  document.querySelectorAll('#postit-fringe span.torn').forEach(s=>s.classList.remove('torn')); // regrow tabs
+}
+/* Easter egg: tear off a fringe tab -> a little souvenir note + a secret achievement. */
+const FORTUNES=[
+  'Glückskeks sagt: Asse zuerst.',
+  'Spar deine Coins — Zinsen sind dein Freund.',
+  'Geheimtipp: Könige räumen Platz.',
+  'Doppeltipp = direkt auf die Bank.',
+  'Hier könnte deine Werbung stehen.',
+  'Solitär seit 1989. Retro 4 ever.',
+  'Den hat schon jemand abgerissen… ach, du warst es.',
+  '+0 Coins. Aber ein gutes Gefühl.',
+  'Viel Glück beim nächsten Run!',
+  'Du Sammler. Immer am Mitnehmen.',
+];
+/* tearing the FINAL tab earns a slightly mean line for hogging them all */
+const MEAN=[
+  'Die letzte?! Jetzt geht jeder andere leer aus. Stark.',
+  'Gierig. Jetzt hat NIEMAND sonst mehr eine Lasche.',
+  'Alle abgerissen. Teilen war wohl keine Option, was?',
+  'Du Monster. Jetzt hängt da nur noch ein nackter Zettel.',
+];
+function tearTab(tab){
+  if(!tab||tab.classList.contains('torn'))return;
+  tab.classList.add('torn');
+  const last=$('postit-fringe').querySelectorAll('span:not(.torn)').length===0;
+  if(last)SFX.tone(200,0.18,'sawtooth',0.20);else SFX.buy();
+  const n=document.createElement('div');
+  n.className='pt-fortune'+(last?' mean':'');
+  n.textContent=last?MEAN[Math.floor(Math.random()*MEAN.length)]:FORTUNES[Math.floor(Math.random()*FORTUNES.length)];
+  $('postit').appendChild(n);
+  setTimeout(function(){n.remove();},last?3400:2700);
+  if(!Store.data.stats.souvenir){Store.data.stats.souvenir=true;Store.save();evalAch();}
 }
 
 function renderMenu(){
@@ -780,6 +1005,7 @@ function renderMenu(){
   $('m-volt').textContent=Store.data.meta.volt;
   $('m-deck').textContent=DECK(Store.data.meta.selectedDeck).name;
   $('btn-resume').hidden=!runActive;   // show FORTSETZEN only when a run is paused
+  $('menu-build').textContent='build '+((PATCH_NOTES[0]&&PATCH_NOTES[0].v)||'?');
 }
 
 function renderDecks(){
@@ -811,11 +1037,28 @@ function renderAch(){
 
 function renderOpts(){
   const o=Store.data.opts;
-  const sb=$('opt-sound'); sb.textContent=o.sound?'AN':'AUS'; sb.classList.toggle('on',!!o.sound);
-  const cb=$('opt-crt');   cb.textContent=o.crt?'AN':'AUS';   cb.classList.toggle('on',!!o.crt);
+  const cb=$('opt-crt'); cb.textContent=o.crt?'AN':'AUS'; cb.classList.toggle('on',!!o.crt);
+  const fb=$('opt-fit'); fb.textContent=o.fit?'AN':'AUS'; fb.classList.toggle('on',!!o.fit);
+  const sp=Math.round(o.sfxVol*100), mp=Math.round(o.musicVol*100);
+  $('opt-sfx').value=sp; $('sfx-pct').textContent=sp+'%';
+  $('opt-musicvol').value=mp; $('music-pct').textContent=mp+'%';
+  document.querySelectorAll('#scaleset .sbtn').forEach(b=>b.classList.toggle('on',!o.fit&&parseFloat(b.dataset.scale)===(o.scale||1)));
+  $('scaleset').classList.toggle('disabled',!!o.fit);
 }
 
-function applyOpts(){ $('app').classList.toggle('crt-off',!Store.data.opts.crt); }
+function applyOpts(){ document.body.classList.toggle('crt-off',!Store.data.opts.crt); }
+/* UI scaling. transform:scale keeps layout/clientWidth unscaled, so fitCards()
+   is unaffected and the whole UI scales uniformly (text + cards + buttons). */
+function applyScale(){
+  const o=Store.data.opts, app=$('app');
+  let s=o.scale||1;
+  if(o.fit){
+    const w=app.offsetWidth||440, h=app.offsetHeight||640;
+    s=Math.min((window.innerWidth-8)/w,(window.innerHeight-8)/h);
+    s=Math.max(0.5,Math.min(s,2.5));
+  }
+  app.style.transform='scale('+s+')';
+}
 
 /* ---- GAME OVER visualization ---- */
 function renderGameOver(){
@@ -826,8 +1069,8 @@ function renderGameOver(){
   const recs=[];
   const achV=(RUN.newAch||[]).reduce((sum,id)=>sum+(ACH_VOLT[id]||0),0);
   recs.push(svg('volt')+' +'+((RUN.voltEarned||0)+achV)+' VOLT &middot; GESAMT '+Store.data.meta.volt);
-  if(RUN.newBestAnte)recs.push('★ NEUER REKORD: ANTE '+G.ante);
-  if(RUN.newBestChips)recs.push('★ BESTE RUNDE: '+s.bestChips);
+  if(RUN.newBestAnte)recs.push(svg('star')+' NEUER REKORD: ANTE '+G.ante);
+  if(RUN.newBestChips)recs.push(svg('star')+' BESTE RUNDE: '+s.bestChips);
   $('go-records').innerHTML=recs.map(r=>'<span class="rec">'+r+'</span>').join('');
   // bar chart (height = chips/target, target line drawn at 1.0 of a 1.4 scale)
   $('go-chart').innerHTML='<div class="tline"><span>TARGET</span></div>'+h.map(r=>{
@@ -859,7 +1102,7 @@ function evalAch(){
   for(const a of ACHIEVEMENTS){
     if(Store.data.ach.indexOf(a.id)>=0)continue;
     let ok=false; try{ok=a.test(ctx);}catch(e){}
-    if(ok){Store.data.ach.push(a.id);changed=true;if(RUN.newAch)RUN.newAch.push(a.id);payAch(a.id);queueToast(a);}
+    if(ok){Store.data.ach.push(a.id);changed=true;if(RUN.newAch)RUN.newAch.push(a.id);payAch(a.id);SFX.unlock();}
   }
   if(changed)Store.save();
 }
@@ -874,16 +1117,6 @@ function payAch(id){
 }
 /* On boot, retro-pay achievements earned before this system existed (runs once each). */
 function reconcileAch(){for(const id of Store.data.ach)payAch(id);Store.save();}
-let toastQ=[],toastBusy=false;
-function queueToast(a){toastQ.push(a);if(!toastBusy)nextToast();}
-function nextToast(){
-  if(!toastQ.length){toastBusy=false;return;}
-  toastBusy=true;
-  const a=toastQ.shift(), t=$('toast');
-  t.innerHTML='<span class="ti">'+svg('trophy')+'</span>ERFOLG<br>'+a.name;
-  t.classList.add('show'); SFX.unlock();
-  setTimeout(()=>{t.classList.remove('show');setTimeout(nextToast,300);},1900);
-}
 
 /* ============================================================
    EXIT  (web: goodbye screen; Steam/Electron: wire to app.quit)
@@ -911,6 +1144,7 @@ $('overlay').addEventListener('click',function(e){
 // top bar: home pauses to menu (run stays); items + give up
 $('homebtn').addEventListener('click',function(){SFX.click();showScene('menu');});
 $('itemsbtn').addEventListener('click',function(){SFX.click();showItems();});
+$('helpbtn').addEventListener('click',function(){SFX.click();showHelp();});
 $('giveupbtn').addEventListener('click',function(){SFX.click();if(runActive&&confirm('Diesen Run aufgeben? Das führt direkt zum Game-Over.'))gameOver();});
 // main menu
 $('scene-menu').addEventListener('click',function(e){
@@ -926,6 +1160,9 @@ $('scene-menu').addEventListener('click',function(e){
 });
 // generic back buttons -> menu
 document.querySelectorAll('[data-back]').forEach(b=>b.addEventListener('click',function(){SFX.click();showScene('menu');}));
+// update post-it -> full updates screen; tearing a fringe tab is an easter egg
+$('postit').addEventListener('click',function(){SFX.click();showScene('news');});
+$('postit-fringe').addEventListener('click',function(e){const t=e.target.closest('span');if(!t)return;e.stopPropagation();tearTab(t);});
 // decks screen: unlock with VOLT / select active deck
 $('scene-decks').addEventListener('click',function(e){
   const buy=e.target.closest('[data-deck-buy]');
@@ -935,11 +1172,22 @@ $('scene-decks').addEventListener('click',function(e){
   const sel=e.target.closest('[data-deck-sel]');
   if(sel){Store.data.meta.selectedDeck=sel.dataset.deckSel;Store.save();SFX.click();renderDecks();return;}
 });
-// options toggles + reset
+// options toggles + reset + UI scale
 $('scene-opts').addEventListener('click',function(e){
+  const sc=e.target.closest('[data-scale]');
+  if(sc){Store.data.opts.scale=parseFloat(sc.dataset.scale);Store.data.opts.fit=false;Store.save();applyScale();renderOpts();SFX.click();return;}
   const t=e.target.closest('[data-opt]');
-  if(t){const k=t.dataset.opt;Store.data.opts[k]=!Store.data.opts[k];Store.save();applyOpts();renderOpts();SFX.click();return;}
+  if(t){const k=t.dataset.opt;Store.data.opts[k]=!Store.data.opts[k];Store.save();applyOpts();applyScale();renderOpts();SFX.click();return;}
 });
+// volume sliders (live)
+$('scene-opts').addEventListener('input',function(e){
+  const r=e.target.closest('input.vol');if(!r)return;
+  const v=(+r.value)/100;
+  if(r.id==='opt-sfx'){Store.data.opts.sfxVol=v;$('sfx-pct').textContent=r.value+'%';}
+  else if(r.id==='opt-musicvol'){Store.data.opts.musicVol=v;$('music-pct').textContent=r.value+'%';Music.setVol();}
+  Store.save();
+});
+$('scene-opts').addEventListener('change',function(e){ if(e.target.id==='opt-sfx')SFX.click(); }); // preview level on release
 $('opt-reset').addEventListener('click',function(){
   if(confirm('Allen Fortschritt (Erfolge, Rekorde, VOLT & Decks) wirklich löschen?')){Store.reset();renderOpts();SFX.click();alert('Fortschritt zurückgesetzt.');}
 });
@@ -949,10 +1197,16 @@ $('scene-over').addEventListener('click',function(e){
   if(a.dataset.act==='retry'){showScene('game');fitCards();newRun();}
   else if(a.dataset.act==='menu')showScene('menu');
 });
-// resize (only matters while playing)
-window.addEventListener('resize',function(){if(!$('scene-game').hidden){fitCards();render();}});
+// resize: refit cards (while playing) + recompute UI scale (fit-to-window)
+window.addEventListener('resize',function(){if(!$('scene-game').hidden){fitCards();render();}applyScale();});
+// keyboard: Space draws the next card (only in active play, no overlay open)
+window.addEventListener('keydown',function(e){
+  if($('scene-game').hidden||G.phase!=='play')return;
+  if(!$('overlay').classList.contains('hidden'))return;
+  if(e.code==='Space'||e.key===' '){e.preventDefault();handleStock();}
+});
 // resume audio on first user gesture (mobile autoplay policy)
-window.addEventListener('pointerdown',function init(){SFX.ensure();SFX.resume();window.removeEventListener('pointerdown',init);},{once:true});
+window.addEventListener('pointerdown',function init(){SFX.ensure();SFX.resume();Music.kick();window.removeEventListener('pointerdown',init);},{once:true});
 
 /* ============================================================
    BOOT
@@ -961,6 +1215,7 @@ Store.load();
 reconcileAch();
 applyOpts();
 paintIcons();        // fill all static [data-ic] elements with their SVG
+renderPostit();      // fill the menu sticky note with the latest update
 showScene('menu');
 })();
 </script>
