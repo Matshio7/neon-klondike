@@ -20,6 +20,7 @@
    ============================================================ */
 
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+[hidden]{display:none !important}   /* author rules (e.g. .mbtn display:flex) otherwise beat the UA [hidden] rule */
 html,body{margin:0;min-height:100%;background:#050805;font-family:'Press Start 2P',monospace;color:#dfeee6;-webkit-user-select:none;user-select:none;touch-action:manipulation}
 body{display:flex;justify-content:center;align-items:flex-start;padding:8px;padding-top:max(8px,env(safe-area-inset-top))}
 
@@ -106,11 +107,39 @@ body{display:flex;justify-content:center;align-items:flex-start;padding:8px;padd
 .fan{margin-top:var(--fanUp)}.fan.dn{margin-top:var(--fanDn)}
 .scorepop{position:absolute;left:50%;top:36px;font-size:14px;color:var(--gold);z-index:70;pointer-events:none;animation:floatUp .8s ease forwards}
 @keyframes floatUp{0%{opacity:0;transform:translate(-50%,8px)}20%{opacity:1}100%{opacity:0;transform:translate(-50%,-30px)}}
-#bar{display:flex;gap:6px;margin-top:10px}
 .btn{flex:1;font-family:'Press Start 2P',monospace;font-size:10px;padding:11px 4px;border-radius:8px;border:1.5px solid #2c5a43;background:#0d2419;color:var(--mint);cursor:pointer;line-height:1.4}
+/* ---- inline SVG icon sizing ---- */
+.svgi{display:inline-flex;align-items:center;justify-content:center;vertical-align:middle}
+.svgi svg{width:1em;height:1em;display:block}
+.iconbtn svg{width:17px;height:17px;display:block}
+.iconbtn{display:flex;align-items:center;justify-content:center;padding:0}
+.iconbtn.danger{border-color:#5a2238;color:var(--pink);background:#240913}
+.mbtn .mi svg{width:15px;height:15px;display:block}
+.mbtn .mi{display:inline-flex;align-items:center;justify-content:center}
+.ach-ic svg{width:18px;height:18px;display:block;margin:0 auto}
+/* ---- top control bar (replaces the old bottom bar) ---- */
+#topbar{display:flex;align-items:center;gap:6px;margin:2px 0 8px}
+#recchip{flex:1;display:flex;align-items:center;justify-content:center;gap:6px;font-size:11px;color:#7fae98}
+#recchip .svgi{font-size:14px;color:var(--mint)}
+#recchip b{color:var(--mint);font-size:12px}
+/* ---- in-game ITEMS panel (rendered in #overlay) ---- */
+.items-list{display:flex;flex-direction:column;gap:7px;width:100%}
+.ideck{font-size:8px;color:var(--gold);border:1px solid #6b5410;background:#241d07;border-radius:8px;padding:9px 10px;text-align:left;line-height:1.7}
+.ideck b{font-size:10px}
+.iboss{font-size:8px;color:var(--pink);border:1px solid #5a2238;background:#240913;border-radius:8px;padding:9px 10px;text-align:left;line-height:1.7}
+/* ---- patch-notes / news scene ---- */
+#scene-news{min-height:62vh}
+.news-list{display:flex;flex-direction:column;gap:12px;max-height:60vh;overflow:auto;padding-right:2px}
+.patch{background:#0e2418;border:1px solid #244;border-radius:9px;padding:11px 12px}
+.patch h4{margin:0 0 8px;font-size:10px;color:var(--mint);letter-spacing:1px}
+.patch h4 .dt{color:#5f8f78;font-size:8px;margin-left:6px}
+.patch ul{margin:0;padding-left:14px}
+.patch li{font-size:8px;color:#bfe6d4;line-height:1.9;margin-bottom:4px}
 .btn:active{transform:scale(.97)}
 .btn.gold{border-color:#6b5410;color:var(--gold);background:#241d07}
-#overlay{position:absolute;inset:0;z-index:60;background:rgba(5,12,8,.94);border-radius:10px;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:16px;text-align:center;gap:12px;overflow:auto}
+#overlay{position:absolute;inset:0;z-index:60;background:#070f0a;border-radius:10px;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:16px;text-align:center;gap:12px;overflow:auto}
+#overlay::before{content:"";position:absolute;inset:0;pointer-events:none;background:repeating-linear-gradient(rgba(0,0,0,0) 0 2px,rgba(0,0,0,.18) 2px 3px);border-radius:10px}
+#app.crt-off #overlay::before{display:none}
 #overlay.hidden{display:none}
 #overlay h3{font-size:15px;margin:0;line-height:1.5}
 #overlay .sub{font-size:9px;color:#7fae98;line-height:1.9}
@@ -214,23 +243,26 @@ body{display:flex;justify-content:center;align-items:flex-start;padding:8px;padd
       <div class="logo"><span class="d">&#9824;</span> NEON<br>KLONDIKE <span class="h">&#9829;</span></div>
       <div class="tag">RETRO ROGUELIKE SOLITAIRE</div>
       <div class="menu-btns">
-        <button class="mbtn gold" data-go="start"><span class="mi">&#9654;</span> START</button>
-        <button class="mbtn" data-go="decks"><span class="mi">&#9824;</span> DECKS</button>
-        <button class="mbtn" data-go="ach"><span class="mi">&#9733;</span> ERFOLGE</button>
-        <button class="mbtn" data-go="opts"><span class="mi">&#9881;</span> OPTIONS</button>
-        <button class="mbtn danger" data-go="exit"><span class="mi">&#9211;</span> EXIT</button>
+        <button class="mbtn gold" data-go="resume" id="btn-resume" hidden><span class="mi" data-ic="play"></span> FORTSETZEN</button>
+        <button class="mbtn gold" data-go="start"><span class="mi" data-ic="play"></span> START</button>
+        <button class="mbtn" data-go="decks"><span class="mi" data-ic="spade"></span> DECKS</button>
+        <button class="mbtn" data-go="ach"><span class="mi" data-ic="trophy"></span> ERFOLGE</button>
+        <button class="mbtn" data-go="news"><span class="mi" data-ic="news"></span> NEUES</button>
+        <button class="mbtn" data-go="opts"><span class="mi" data-ic="gear"></span> OPTIONS</button>
+        <button class="mbtn danger" data-go="exit"><span class="mi" data-ic="power"></span> EXIT</button>
       </div>
       <div class="menu-foot" style="color:var(--gold);margin-bottom:-2px">AKTIVES DECK: <b id="m-deck">STANDARD</b></div>
-      <div class="menu-foot">BEST ANTE <b id="m-bestante">-</b> &nbsp;&middot;&nbsp; <b id="m-achcount">0/0</b> ERFOLGE &nbsp;&middot;&nbsp; <b id="m-volt">0</b> &#9889; VOLT</div>
+      <div class="menu-foot">BEST ANTE <b id="m-bestante">-</b> &nbsp;&middot;&nbsp; <b id="m-achcount">0/0</b> ERFOLGE &nbsp;&middot;&nbsp; <b id="m-volt">0</b> <span class="svgi" data-ic="volt" style="color:var(--gold)"></span> VOLT</div>
     </div>
   </section>
 
   <!-- ===================== GAME ===================== -->
   <section class="scene" id="scene-game" hidden>
     <div id="topbar">
-      <button class="iconbtn" id="homebtn" title="Hauptmenü">&#9776;</button>
-      <div id="title"><span class="d">&#9824;</span> NEON KLONDIKE <span class="h">&#9829;</span></div>
-      <div style="width:34px"></div>
+      <button class="iconbtn" id="homebtn" title="Menü (Run pausieren)" data-ic="menu"></button>
+      <button class="iconbtn" id="itemsbtn" title="Deine Items" data-ic="items"></button>
+      <div id="recchip" title="Verbleibende Recycles"><span class="svgi" data-ic="recycle"></span><b id="recnum">2</b></div>
+      <button class="iconbtn danger" id="giveupbtn" title="Run aufgeben" data-ic="giveup"></button>
     </div>
     <div id="hud">
       <div><div class="lbl">ANTE</div><div class="val" id="ante">1</div></div>
@@ -242,18 +274,13 @@ body{display:flex;justify-content:center;align-items:flex-start;padding:8px;padd
       <div id="board"></div>
       <div id="overlay" class="hidden"></div>
     </div>
-    <div id="bar">
-      <button class="btn" data-act="auto">&#9889; AUTO</button>
-      <button class="btn" data-act="recycle"><span id="recnum">&#8635; 2</span></button>
-      <button class="btn gold" data-act="new">NEW RUN</button>
-    </div>
   </section>
 
   <!-- ===================== ACHIEVEMENTS ===================== -->
   <section class="scene" id="scene-ach" hidden>
     <div class="shead">
-      <button class="iconbtn" data-back>&#8592;</button>
-      <div class="ht">&#9733; ERFOLGE</div>
+      <button class="iconbtn" data-back data-ic="back"></button>
+      <div class="ht">ERFOLGE</div>
       <div style="width:34px"></div>
     </div>
     <div class="ach-prog">FREIGESCHALTET <b id="ach-count">0/0</b></div>
@@ -264,19 +291,19 @@ body{display:flex;justify-content:center;align-items:flex-start;padding:8px;padd
   <!-- ===================== DECKS ===================== -->
   <section class="scene" id="scene-decks" hidden>
     <div class="shead">
-      <button class="iconbtn" data-back>&#8592;</button>
-      <div class="ht">&#9824; DECKS</div>
+      <button class="iconbtn" data-back data-ic="back"></button>
+      <div class="ht">DECKS</div>
       <div style="width:34px"></div>
     </div>
-    <div class="ach-prog"><b id="deck-volt">0</b> &#9889; VOLT &middot; WÄHLE DEIN START-DECK</div>
+    <div class="ach-prog"><b id="deck-volt">0</b> <span class="svgi" data-ic="volt" style="color:var(--gold)"></span> VOLT &middot; WÄHLE DEIN START-DECK</div>
     <div class="shop" id="deck-grid"></div>
   </section>
 
   <!-- ===================== OPTIONS ===================== -->
   <section class="scene" id="scene-opts" hidden>
     <div class="shead">
-      <button class="iconbtn" data-back>&#8592;</button>
-      <div class="ht">&#9881; OPTIONS</div>
+      <button class="iconbtn" data-back data-ic="back"></button>
+      <div class="ht">OPTIONS</div>
       <div style="width:34px"></div>
     </div>
     <div class="orow">
@@ -288,7 +315,7 @@ body{display:flex;justify-content:center;align-items:flex-start;padding:8px;padd
       <button class="tgl" id="opt-crt" data-opt="crt">AN</button>
     </div>
     <button class="opt-reset" id="opt-reset">FORTSCHRITT ZURÜCKSETZEN</button>
-    <div class="opt-about">NEON KLONDIKE &middot; v0.2<br>RETRO ROGUELIKE SOLITAIRE</div>
+    <div class="opt-about">NEON KLONDIKE &middot; v0.3<br>RETRO ROGUELIKE SOLITAIRE</div>
   </section>
 
   <!-- ===================== GAME OVER ===================== -->
@@ -308,16 +335,26 @@ body{display:flex;justify-content:center;align-items:flex-start;padding:8px;padd
     <div class="go-stats" id="go-stats"></div>
     <div id="go-ach"></div>
     <div class="go-btns">
-      <button class="btn gold" data-act="retry">NEW RUN</button>
-      <button class="btn" data-act="menu">HAUPTMENÜ</button>
+      <button class="btn gold" data-act="menu">HAUPTMENÜ</button>
+      <button class="btn" data-act="retry">NOCHMAL</button>
     </div>
+  </section>
+
+  <!-- ===================== NEUES / PATCH NOTES ===================== -->
+  <section class="scene" id="scene-news" hidden>
+    <div class="shead">
+      <button class="iconbtn" data-back data-ic="back"></button>
+      <div class="ht">NEUES</div>
+      <div style="width:34px"></div>
+    </div>
+    <div class="news-list" id="news-list"></div>
   </section>
 
   <!-- ===================== GOODBYE ===================== -->
   <section class="scene" id="scene-bye" hidden>
     <div class="by"><span style="color:var(--gold)">&#9824;</span> DANKE<br>FÜRS SPIELEN <span style="color:var(--pink)">&#9829;</span></div>
     <div class="bs">Du kannst den Tab jetzt schließen.<br>(In der Steam-Version beendet dies das Spiel.)</div>
-    <button class="mbtn" data-back style="max-width:240px">&#8592; ZURÜCK ZUM MENÜ</button>
+    <button class="mbtn" data-back style="max-width:240px"><span class="mi" data-ic="back"></span> ZURÜCK ZUM MENÜ</button>
   </section>
 
 </div>
@@ -405,6 +442,50 @@ const ACHIEVEMENTS=[
  {id:'coins20',   name:'SPARFUCHS',   desc:'Halte 20+ Coins gleichzeitig.',       test:c=>c.G.coins>=20},
  {id:'runs10',    name:'DURCHHALTER', desc:'Spiele 10 Runs.',                     test:c=>c.S.totalRuns>=10},
 ];
+/* VOLT bounty paid the FIRST time each achievement unlocks (one-off, tracked in
+   Store.data.meta.paidAch) + any deck it unlocks. */
+const ACH_VOLT={first_bank:2,clear_board:5,boss1:8,allboss:15,ante3:5,ante5:10,ante8:20,chips500:8,chips1000:15,perks5:8,mult5:8,coins20:5,runs10:10};
+const ACH_DECK={allboss:'bossrush'};
+
+/* ============================================================
+   ICONS  -  inline SVG (currentColor). Painted into any element
+   that has a data-ic="name" attribute (see paintIcons). Replaces
+   emoji and font-missing glyphs with crisp, themeable symbols.
+   ============================================================ */
+const IC={
+ menu:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M4 6h16M4 12h16M4 18h16"/></svg>',
+ items:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><rect x="3.5" y="5" width="10" height="14" rx="1.6"/><path d="M10.6 5l7.4 1.8a1.6 1.6 0 0 1 1.2 2L17 19"/></svg>',
+ giveup:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5.5 21V4"/><path d="M5.5 4.5h12l-2.4 4.2 2.4 4.2H5.5"/></svg>',
+ back:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"/></svg>',
+ play:'<svg viewBox="0 0 24 24" fill="currentColor"><path d="M7 4.5l13 7.5-13 7.5z"/></svg>',
+ trophy:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 4h10v4.5a5 5 0 0 1-10 0V4z"/><path d="M7 6H4.2v1.2A3.2 3.2 0 0 0 7 10.3M17 6h2.8v1.2A3.2 3.2 0 0 1 17 10.3"/><path d="M10 13.6V17M14 13.6V17M8.5 20h7"/></svg>',
+ lock:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><rect x="5" y="10.5" width="14" height="9.5" rx="2"/><path d="M8 10.5V7.5a4 4 0 0 1 8 0v3"/></svg>',
+ gear:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3.2"/><path d="M12 2.5v3M12 18.5v3M2.5 12h3M18.5 12h3M5 5l2.1 2.1M16.9 16.9 19 19M19 5l-2.1 2.1M7.1 16.9 5 19"/></svg>',
+ power:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M12 3v8"/><path d="M6.5 6.5a8 8 0 1 0 11 0"/></svg>',
+ spade:'<svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 3C8.2 7 4 9.2 4 13.2c0 2.3 1.9 3.9 3.9 3.9 1 0 1.9-.4 2.6-1-.2 2-.9 3-2 3.9h7c-1.1-.9-1.8-1.9-2-3.9.7.6 1.6 1 2.6 1 2 0 3.9-1.6 3.9-3.9C20 9.2 15.8 7 12 3z"/></svg>',
+ news:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3.5 10.5v3a1 1 0 0 0 1 1h2.5l6 3.5V6L7 9.5H4.5a1 1 0 0 0-1 1z"/><path d="M16.5 9.5a3.5 3.5 0 0 1 0 5"/></svg>',
+ volt:'<svg viewBox="0 0 24 24" fill="currentColor"><path d="M13 2 4 13.5h6L9 22l9-12h-6z"/></svg>',
+ recycle:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5.5 9.2A7 7 0 0 1 17 6.3"/><path d="M18.5 14.8A7 7 0 0 1 7 17.7"/><path d="M17.5 3.5V7H14M6.5 20.5V17H10"/></svg>',
+ close:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg>',
+};
+function svg(name){return '<span class="svgi">'+(IC[name]||'')+'</span>';}
+function paintIcons(root){(root||document).querySelectorAll('[data-ic]').forEach(function(el){if(el.dataset.painted)return;el.innerHTML=IC[el.dataset.ic]||'';el.dataset.painted='1';});}
+
+/* ============================================================
+   PATCH NOTES  -  shown in the NEUES menu screen.
+   >>> Mats: trage hier deine eigenen Punkte ein. Neueste Version oben.
+   Format: { v:'Titel', date:'optional', notes:['Punkt 1','Punkt 2', ...] }
+   ============================================================ */
+const PATCH_NOTES=[
+ {v:'v0.3', date:'', notes:[
+   'Hauptmenü: FORTSETZEN pausiert und lädt den laufenden Run.',
+   'Steuerung ist nach oben gewandert (Menü · Items · Aufgeben).',
+   'Neuer AUFGEBEN-Knopf führt direkt zum Game-Over.',
+   'ITEMS-Ansicht zeigt deine Perks, dein Deck und den Boss.',
+   'Symbole statt Emojis — sauberere Optik.',
+ ]},
+ // { v:'v0.4', date:'', notes:[ 'Dein nächster Punkt …' ] },
+];
 
 /* ============================================================
    GAME CORE  (Klondike + Balatro-style scoring/shop/bosses)
@@ -435,10 +516,17 @@ const DECKS=[
  {id:'standard',  name:'STANDARD',    desc:'AUSGEWOGEN — KEINE MODIFIKATOREN',     coins:4, recDelta:0, baseMult:1, startPerks:[], targetMul:1,    rewardDelta:0,  cost:0},
  {id:'highroller',name:'HIGH ROLLER', desc:'+6 START-COINS · ALLE ZIELE +15%',    coins:10,recDelta:0, baseMult:1, startPerks:[], targetMul:1.15, rewardDelta:0,  cost:20},
  {id:'marathon',  name:'MARATHON',    desc:'+1 RECYCLE/RUNDE · BASIS-REWARD -1',   coins:4, recDelta:1, baseMult:1, startPerks:[], targetMul:1,    rewardDelta:-1, cost:20},
+ {id:'combo',     name:'KOMBO',       desc:'START MIT COMBO-PERK · NUR 2 COINS',   coins:2, recDelta:0, baseMult:1,   startPerks:['streak'], targetMul:1,    rewardDelta:0,  cost:25},
+ {id:'founders',  name:'FUNDAMENT',   desc:'FOUNDATION +5 CHIPS · KEIN REROLL',    coins:4, recDelta:0, baseMult:1,   startPerks:['plus5'],  targetMul:1,    rewardDelta:0,  noReroll:true, cost:28},
+ {id:'redheat',   name:'ROTGLUT',     desc:'ROT +6 · SCHWARZ -2 CHIPS',            coins:4, recDelta:0, baseMult:1,   startPerks:[],         targetMul:1,    rewardDelta:0,  cardMods:{red:6,black:-2}, cost:30},
+ {id:'glasscannon',name:'GLASKANONE', desc:'BASIS-MULT ×1.5 · NUR 1 RECYCLE',      coins:4, recDelta:-1,baseMult:1.5, startPerks:[],         targetMul:1,    rewardDelta:0,  cost:35},
+ {id:'minimalist',name:'MINIMALIST',  desc:'5 COINS, GRATIS REROLL · ZIELE +25%',  coins:5, recDelta:-1,baseMult:1,   startPerks:[],         targetMul:1.25, rewardDelta:0,  freeReroll:true, cost:40},
+ {id:'bossrush',  name:'BOSS-STURM',  desc:'BOSS JEDE ANTE · ×2 BEUTE & VOLT',     coins:4, recDelta:0, baseMult:1,   startPerks:[],         targetMul:1,    rewardDelta:0,  bossEveryAnte:true, bossBountyMul:2, bossVoltMul:2, cost:0, unlockVia:'allboss'},
 ];
 const DECK=id=>DECKS.find(d=>d.id===id)||DECKS[0];
 let G={};
 let RUN={};   // per-run tracking (resets each new run)
+let runActive=false; // true while a run is in progress (resumable from the menu)
 
 function $(id){return document.getElementById(id);}
 function shuffle(a){for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a;}
@@ -454,9 +542,12 @@ function newRun(){
   Store.data.stats.totalRuns++;
   const deck=DECK(Store.data.meta.selectedDeck);
   G={ante:1,coins:deck.coins,perks:deck.startPerks.slice(),history:[],deck:deck};
+  runActive=true;
   newRound();           // newRound updates bestAnte + saves
   evalAch();            // covers runs10 etc.
 }
+/* Resume a paused run without resetting anything (re-render current state). */
+function resumeGame(){ if(!runActive)return; showScene('game'); fitCards(); render(); }
 
 function newRound(){
   const deck=[];for(let s=0;s<4;s++)for(let r=1;r<=13;r++)deck.push({r,s,up:false});
@@ -466,7 +557,7 @@ function newRound(){
   G.stock=deck;G.waste=[];G.found=[[],[],[],[]];
   G.chips=0;G.roundMult=0;G.phase='play';G.sel=null;G._last=0;G.boss=null;
   G.target=target(G.ante);if(G.deck&&G.deck.targetMul!==1)G.target=Math.round(G.target*G.deck.targetMul/5)*5;G.rec=recBase();
-  if(G.ante%3===0){G.boss=BOSSES[Math.floor(Math.random()*BOSSES.length)];
+  if(G.ante%3===0||(G.deck&&G.deck.bossEveryAnte)){G.boss=BOSSES[Math.floor(Math.random()*BOSSES.length)];
     if(G.boss.id==='tax')G.target=Math.round(G.target*1.4/5)*5;
     if(G.boss.id==='drought')G.rec=Math.max(1,G.rec-2);}
   // reaching an ante = a record candidate
@@ -480,7 +571,7 @@ function validSeq(cards){for(let i=1;i<cards.length;i++){const a=cards[i-1],b=ca
 function moving(){if(!G.sel)return[];if(G.sel.p==='waste')return[G.waste[G.waste.length-1]];return G.tab[G.sel.col].slice(G.sel.idx);}
 function canFound(c){const f=G.found[c.s];return (f.length===0&&c.r===1)||(f.length>0&&f[f.length-1].r===c.r-1);}
 function canTab(cards,col){const r0=cards[0],t=G.tab[col];if(t.length===0)return r0.r===13;const top=t[t.length-1];return top.up&&top.r===r0.r+1&&color(top)!==color(r0);}
-function chipsFor(c){if(G.boss&&G.boss.id==='crown'&&c.r>=11)return 0;let v=10;if(G.perks.includes('plus5'))v+=5;if(G.perks.includes('red')&&RED(c.s))v+=4;if(G.perks.includes('ten')&&c.r===10)v+=12;return v;}
+function chipsFor(c){if(G.boss&&G.boss.id==='crown'&&c.r>=11)return 0;let v=10;if(G.perks.includes('plus5'))v+=5;if(G.perks.includes('red')&&RED(c.s))v+=4;if(G.perks.includes('ten')&&c.r===10)v+=12;if(G.deck&&G.deck.cardMods)v+=RED(c.s)?G.deck.cardMods.red:G.deck.cardMods.black;return Math.max(0,v);}
 function bankGain(c){
   if(G.perks.includes('streak'))G.roundMult+=0.1;
   if(G.perks.includes('ace')&&c.r===1)G.roundMult+=0.5;
@@ -525,10 +616,7 @@ function onClick(e){
   }
   if(p==='waste'){G.sel=null;selWaste();render();return;}
 }
-function autoCollect(){let moved=true,total=0;while(moved){moved=false;
-  if(G.waste.length){const c=G.waste[G.waste.length-1];if(canFound(c)){G.found[c.s].push(c);G.waste.pop();total+=bankGain(c);moved=true;}}
-  for(let col=0;col<7;col++){const t=G.tab[col];if(t.length){const c=t[t.length-1];if(c.up&&canFound(c)){G.found[c.s].push(c);t.pop();flip(t);total+=bankGain(c);moved=true;}}}
-}G.sel=null;pop(total);check();}
+/* AUTO-collect removed by design: the player banks every card by hand. */
 function anyMove(){
   if(G.stock.length)return true;
   if(G.rec>0&&G.waste.length)return true;
@@ -561,7 +649,7 @@ function roundClear(cleared){
   const interest=Math.min(5,Math.floor(G.coins/5));
   const perf=Math.floor(earned/40);
   const bonus=cleared?6:0;
-  const bounty=G.boss?8:0;
+  const bounty=G.boss?8*((G.deck&&G.deck.bossBountyMul)||1):0;
   const reward=Math.max(0,3+(G.deck?G.deck.rewardDelta:0)+perf+interest+bonus+bounty);
   G.coins+=reward;
   evalAch();
@@ -583,25 +671,44 @@ function renderShop(){
   const owned=G.perks.map(id=>{const p=POOL.find(x=>x.id===id);return '<span class="tag-pill '+(p.m?'m':'')+'">'+p.name+'</span>';}).join('');
   const rows=G.offers.map((p,i)=>{const aff=G.coins>=p.price;
     return '<div class="perk '+(p.m?'mlt':'')+'"><div><div class="pn">'+p.name+'</div><div class="pd">'+p.desc+'</div></div><button class="buy" data-buy="'+i+'" '+(aff?'':'disabled')+'>'+p.price+'◉</button></div>';}).join('')||'<div class="sub">SOLD OUT — NICE COLLECTION</div>';
-  const nb=(G.ante+1)%3===0?' ·BOSS':'';
+  const nb=((G.deck&&G.deck.bossEveryAnte)||(G.ante+1)%3===0)?' ·BOSS':'';
+  let rerollBtn='';
+  if(!(G.deck&&G.deck.noReroll)){
+    const free=!!(G.deck&&G.deck.freeReroll), cost=free?0:1;
+    const dis=(G.coins>=cost&&G.offers.length)?'':'disabled';
+    rerollBtn='<button class="btn" data-act="reroll" '+dis+' style="flex:1">REROLL '+(free?'GRATIS':'1◉')+'</button>';
+  }
   showOv('<h3 style="color:var(--mint)">SHOP — '+G.coins+'◉</h3>'+
     '<div class="shop">'+rows+'</div>'+
     (owned?'<div class="owned">'+owned+'</div>':'')+
     '<div style="display:flex;gap:6px;width:100%;margin-top:2px">'+
-      '<button class="btn" data-act="reroll" '+(G.coins>=1&&G.offers.length?'':'disabled')+' style="flex:1">REROLL 1◉</button>'+
+      rerollBtn+
       '<button class="btn gold" data-act="next" style="flex:1.4">DEAL ANTE '+(G.ante+1)+nb+' &#8599;</button>'+
     '</div>');
 }
-function buy(i){const p=G.offers[i];if(!p||G.coins<p.price)return;G.coins-=p.price;G.perks.push(p.id);G.offers.splice(i,1);SFX.buy();evalAch();renderShop();}
-function reroll(){if(G.coins<1)return;G.coins-=1;const avail=POOL.filter(p=>!G.perks.includes(p.id));G.offers=shuffle(avail.slice()).slice(0,3);SFX.click();renderShop();}
+function buy(i){const p=G.offers[i];if(!p||G.coins<p.price)return;G.coins-=p.price;G.perks.push(p.id);G.offers.splice(i,1);SFX.buy();evalAch();renderShop();render();}
+function reroll(){if(G.deck&&G.deck.noReroll)return;const cost=(G.deck&&G.deck.freeReroll)?0:1;if(G.coins<cost||!G.offers.length)return;G.coins-=cost;const avail=POOL.filter(p=>!G.perks.includes(p.id));G.offers=shuffle(avail.slice()).slice(0,3);SFX.click();renderShop();render();}
+
+/* ---- ITEMS: in-game view of owned perks + active deck + boss ---- */
+function showItems(){
+  if(G.phase!=='play')return;
+  const perks=(G.perks||[]).map(id=>{const p=POOL.find(x=>x.id===id);return p?'<div class="perk'+(p.m?' mlt':'')+'"><div><div class="pn">'+p.name+'</div><div class="pd">'+p.desc+'</div></div></div>':'';}).join('')
+    ||'<div class="sub">NOCH KEINE ITEMS — KAUFE PERKS IM SHOP</div>';
+  const deck=G.deck?'<div class="ideck"><b>DECK · '+G.deck.name+'</b><br>'+G.deck.desc+'</div>':'';
+  const boss=G.boss?'<div class="iboss">BOSS · '+G.boss.name+' — '+G.boss.desc+'</div>':'';
+  showOv('<h3 style="color:var(--mint)">DEINE ITEMS</h3>'+
+    '<div class="items-list">'+deck+boss+perks+'</div>'+
+    '<button class="btn gold" data-act="items-close" style="flex:0;padding:11px 18px">'+svg('back')+' ZURÜCK</button>');
+}
 
 /* ---- META: convert a finished run into persistent VOLT ----
    Earned from PROGRESS (ante reached + bosses beaten + board clears) so a
-   losing run still pays out. Boss Rush deck will later double the boss share. */
+   losing run still pays out. Boss Rush deck doubles the boss share (bossVoltMul). */
 function awardVolt(){
   const bosses=G.history.filter(h=>h.boss&&!h.failed).length; // boss rounds actually beaten
   const clears=G.history.filter(h=>h.cleared).length;         // full board clears
-  const v=G.ante+3*bosses+clears;
+  const bmul=(G.deck&&G.deck.bossVoltMul)||1;
+  const v=G.ante+3*bosses*bmul+clears;
   Store.data.meta.volt+=v;
   RUN.voltEarned=v;
   Store.save();
@@ -617,6 +724,7 @@ function gameOver(){
   Store.save();
   evalAch();
   awardVolt();
+  runActive=false;
   SFX.lose();
   renderGameOver();
   showScene('over');
@@ -631,16 +739,16 @@ function render(){
   $('ante').textContent=G.ante;
   $('tgt').textContent=G.target;
   $('coins').textContent=G.coins;
-  $('recnum').innerHTML='↻ '+G.rec;
+  $('recnum').textContent=G.rec;
   $('mult').textContent='×'+effMult().toFixed(1);
   const ch=$('chips');ch.textContent=G.chips;
   if(G.chips>G._last){ch.classList.remove('pulse');void ch.offsetWidth;ch.classList.add('pulse');}
   G._last=G.chips;
   const bs=$('bossstrip');
-  if(G.boss){bs.classList.remove('hidden');bs.innerHTML='☠ BOSS · '+G.boss.name+' — '+G.boss.desc;}else bs.classList.add('hidden');
+  if(G.boss){bs.classList.remove('hidden');bs.innerHTML='BOSS · '+G.boss.name+' — '+G.boss.desc;}else bs.classList.add('hidden');
   let f='';for(let s=0;s<4;s++){const fo=G.found[s];if(fo.length){f+=cardEl(fo[fo.length-1],'data-pile="found" data-suit="'+s+'"','');}else f+='<div class="slot" data-pile="found" data-suit="'+s+'">'+SUITS[s]+'</div>';}
   let w;if(G.waste.length){const sel=G.sel&&G.sel.p==='waste'?'sel':'';w=cardEl(G.waste[G.waste.length-1],'data-pile="waste"',sel);}else w='<div class="slot" data-pile="waste"></div>';
-  let st;if(G.stock.length)st='<div class="card down" data-pile="stock"></div>';else st='<div class="slot" data-pile="stock">'+(G.rec>0?'↻':'✕')+'</div>';
+  let st;if(G.stock.length)st='<div class="card down" data-pile="stock"></div>';else st='<div class="slot" data-pile="stock">'+(G.rec>0?svg('recycle'):svg('close'))+'</div>';
   let tb='';for(let c=0;c<7;c++){const col=G.tab[c];let inner='';if(col.length===0){inner='<div class="slot" data-pile="tab" data-col="'+c+'" data-idx="-1"></div>';}else{col.forEach((card,i)=>{const fanCls=i===0?'':(card.up?'fan':'fan dn');const selThis=G.sel&&G.sel.p==='tab'&&G.sel.col===c&&i>=G.sel.idx?'sel':'';inner+=cardEl(card,'data-pile="tab" data-col="'+c+'" data-idx="'+i+'"',fanCls+' '+selThis);});}
     tb+='<div class="col">'+inner+'</div>';}
   $('board').innerHTML='<div id="top"><div class="founds">'+f+'</div><div class="spacer"></div>'+st+w+'</div><div id="tab">'+tb+'</div>';
@@ -656,6 +764,13 @@ function showScene(name){
   else if(name==='ach')renderAch();
   else if(name==='opts')renderOpts();
   else if(name==='decks')renderDecks();
+  else if(name==='news')renderNews();
+}
+function renderNews(){
+  $('news-list').innerHTML=PATCH_NOTES.map(p=>
+    '<div class="patch"><h4>'+p.v+(p.date?'<span class="dt">'+p.date+'</span>':'')+'</h4><ul>'+
+    p.notes.map(n=>'<li>'+n+'</li>').join('')+'</ul></div>'
+  ).join('')||'<div class="ach-prog">NOCH KEINE EINTRÄGE</div>';
 }
 
 function renderMenu(){
@@ -664,6 +779,7 @@ function renderMenu(){
   $('m-achcount').textContent=Store.data.ach.length+'/'+ACHIEVEMENTS.length;
   $('m-volt').textContent=Store.data.meta.volt;
   $('m-deck').textContent=DECK(Store.data.meta.selectedDeck).name;
+  $('btn-resume').hidden=!runActive;   // show FORTSETZEN only when a run is paused
 }
 
 function renderDecks(){
@@ -674,7 +790,8 @@ function renderDecks(){
     let act;
     if(sel)act='<span class="deck-aktiv">AKTIV</span>';
     else if(unlocked)act='<button class="buy" data-deck-sel="'+d.id+'">WÄHLEN</button>';
-    else act='<button class="buy" data-deck-buy="'+d.id+'"'+(m.volt>=d.cost?'':' disabled')+'>'+d.cost+' &#9889;</button>';
+    else if(d.unlockVia){const a=ACHIEVEMENTS.find(x=>x.id===d.unlockVia);act='<span class="deck-aktiv" style="color:#7fae98;border-color:#355">'+svg('lock')+' '+(a?a.name:d.unlockVia)+'</span>';}
+    else act='<button class="buy" data-deck-buy="'+d.id+'"'+(m.volt>=d.cost?'':' disabled')+'>'+d.cost+' '+svg('volt')+'</button>';
     return '<div class="perk'+(sel?' sel':'')+(unlocked?'':' lock')+'">'+
       '<div><div class="pn">'+d.name+'</div><div class="pd">'+d.desc+'</div></div>'+act+'</div>';
   }).join('');
@@ -687,7 +804,7 @@ function renderAch(){
   $('ach-grid').innerHTML=ACHIEVEMENTS.map(a=>{
     const on=got.indexOf(a.id)>=0;
     return '<div class="ach '+(on?'on':'off')+'">'+
-      '<div class="ach-ic">'+(on?'🏆':'🔒')+'</div>'+
+      '<div class="ach-ic">'+(on?IC.trophy:IC.lock)+'</div>'+
       '<div><div class="ach-nm">'+a.name+'</div><div class="ach-ds">'+a.desc+'</div></div></div>';
   }).join('');
 }
@@ -707,7 +824,8 @@ function renderGameOver(){
     'BENÖTIGT '+G.target+' · ERREICHT '+G.chips;
   // records
   const recs=[];
-  recs.push('&#9889; +'+(RUN.voltEarned||0)+' VOLT &middot; GESAMT '+Store.data.meta.volt);
+  const achV=(RUN.newAch||[]).reduce((sum,id)=>sum+(ACH_VOLT[id]||0),0);
+  recs.push(svg('volt')+' +'+((RUN.voltEarned||0)+achV)+' VOLT &middot; GESAMT '+Store.data.meta.volt);
   if(RUN.newBestAnte)recs.push('★ NEUER REKORD: ANTE '+G.ante);
   if(RUN.newBestChips)recs.push('★ BESTE RUNDE: '+s.bestChips);
   $('go-records').innerHTML=recs.map(r=>'<span class="rec">'+r+'</span>').join('');
@@ -729,7 +847,7 @@ function renderGameOver(){
   const na=RUN.newAch.map(id=>ACHIEVEMENTS.find(a=>a.id===id)).filter(Boolean);
   $('go-ach').innerHTML=na.length?
     '<div class="go-achh">NEUE ERFOLGE</div><div class="go-achbadges">'+
-    na.map(a=>'<span class="rec">🏆 '+a.name+'</span>').join('')+'</div>':'';
+    na.map(a=>'<span class="rec">'+svg('trophy')+' '+a.name+'</span>').join('')+'</div>':'';
 }
 
 /* ============================================================
@@ -741,17 +859,28 @@ function evalAch(){
   for(const a of ACHIEVEMENTS){
     if(Store.data.ach.indexOf(a.id)>=0)continue;
     let ok=false; try{ok=a.test(ctx);}catch(e){}
-    if(ok){Store.data.ach.push(a.id);changed=true;if(RUN.newAch)RUN.newAch.push(a.id);queueToast(a);}
+    if(ok){Store.data.ach.push(a.id);changed=true;if(RUN.newAch)RUN.newAch.push(a.id);payAch(a.id);queueToast(a);}
   }
   if(changed)Store.save();
 }
+/* Pay a one-off VOLT bounty + apply any deck unlock for an achievement. Idempotent. */
+function payAch(id){
+  const m=Store.data.meta;
+  if(m.paidAch.indexOf(id)>=0)return;
+  m.volt+=(ACH_VOLT[id]||0);
+  const dk=ACH_DECK[id];
+  if(dk&&m.decksUnlocked.indexOf(dk)<0)m.decksUnlocked.push(dk);
+  m.paidAch.push(id);
+}
+/* On boot, retro-pay achievements earned before this system existed (runs once each). */
+function reconcileAch(){for(const id of Store.data.ach)payAch(id);Store.save();}
 let toastQ=[],toastBusy=false;
 function queueToast(a){toastQ.push(a);if(!toastBusy)nextToast();}
 function nextToast(){
   if(!toastQ.length){toastBusy=false;return;}
   toastBusy=true;
   const a=toastQ.shift(), t=$('toast');
-  t.innerHTML='<span class="ti">🏆</span>ERFOLG<br>'+a.name;
+  t.innerHTML='<span class="ti">'+svg('trophy')+'</span>ERFOLG<br>'+a.name;
   t.classList.add('show'); SFX.unlock();
   setTimeout(()=>{t.classList.remove('show');setTimeout(nextToast,300);},1900);
 }
@@ -770,23 +899,28 @@ function doExit(){
    ============================================================ */
 // in-board card taps
 $('board').addEventListener('click',onClick);
-// overlay (round-clear + shop)
+// overlay (round-clear + shop + items)
 $('overlay').addEventListener('click',function(e){
   const b=e.target.closest('[data-buy]');if(b){buy(+b.dataset.buy);return;}
   const a=e.target.closest('[data-act]');if(!a)return;const act=a.dataset.act;
-  if(act==='shop')openShop();else if(act==='next'){G.ante++;newRound();}else if(act==='reroll')reroll();else if(act==='new')newRun();
+  if(act==='shop')openShop();
+  else if(act==='next'){G.ante++;newRound();}
+  else if(act==='reroll')reroll();
+  else if(act==='items-close')hideOv();
 });
-// in-game bottom bar
-$('bar').addEventListener('click',function(e){const a=e.target.closest('[data-act]');if(!a)return;const act=a.dataset.act;if(G.phase==='play'){if(act==='auto')autoCollect();else if(act==='recycle')handleStock();}if(act==='new'){SFX.click();newRun();}});
-// home button -> menu
+// top bar: home pauses to menu (run stays); items + give up
 $('homebtn').addEventListener('click',function(){SFX.click();showScene('menu');});
+$('itemsbtn').addEventListener('click',function(){SFX.click();showItems();});
+$('giveupbtn').addEventListener('click',function(){SFX.click();if(runActive&&confirm('Diesen Run aufgeben? Das führt direkt zum Game-Over.'))gameOver();});
 // main menu
 $('scene-menu').addEventListener('click',function(e){
   const b=e.target.closest('[data-go]');if(!b)return;SFX.click();
   const go=b.dataset.go;
-  if(go==='start'){showScene('game');fitCards();newRun();}
+  if(go==='resume')resumeGame();
+  else if(go==='start'){showScene('game');fitCards();newRun();}
   else if(go==='decks')showScene('decks');
   else if(go==='ach')showScene('ach');
+  else if(go==='news')showScene('news');
   else if(go==='opts')showScene('opts');
   else if(go==='exit')doExit();
 });
@@ -807,7 +941,7 @@ $('scene-opts').addEventListener('click',function(e){
   if(t){const k=t.dataset.opt;Store.data.opts[k]=!Store.data.opts[k];Store.save();applyOpts();renderOpts();SFX.click();return;}
 });
 $('opt-reset').addEventListener('click',function(){
-  if(confirm('Allen Fortschritt (Erfolge & Rekorde) wirklich löschen?')){Store.reset();renderOpts();SFX.click();alert('Fortschritt zurückgesetzt.');}
+  if(confirm('Allen Fortschritt (Erfolge, Rekorde, VOLT & Decks) wirklich löschen?')){Store.reset();renderOpts();SFX.click();alert('Fortschritt zurückgesetzt.');}
 });
 // game over buttons
 $('scene-over').addEventListener('click',function(e){
@@ -824,7 +958,9 @@ window.addEventListener('pointerdown',function init(){SFX.ensure();SFX.resume();
    BOOT
    ============================================================ */
 Store.load();
+reconcileAch();
 applyOpts();
+paintIcons();        // fill all static [data-ic] elements with their SVG
 showScene('menu');
 })();
 </script>
