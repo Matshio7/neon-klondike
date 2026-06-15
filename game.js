@@ -20,9 +20,10 @@ const Store={
     d.stats=Object.assign({totalRuns:0,bestAnte:0,bestChips:0,bestRunChips:0,boardClears:0,bossesBeaten:[],wins:0},d.stats||{});
     if(!Array.isArray(d.stats.bossesBeaten))d.stats.bossesBeaten=[];
     d.ach=Array.isArray(d.ach)?d.ach:[];
-    d.opts=Object.assign({crt:true,scale:1,fit:false,sfxVol:0.75,musicVol:0.25},d.opts||{});
+    d.opts=Object.assign({crt:0.3,scale:1,fit:false,sfxVol:0.75,musicVol:0.25},d.opts||{});
     if(typeof d.opts.sound==='boolean'){ d.opts.sfxVol=d.opts.sound?0.75:0; delete d.opts.sound; }      // migrate old on/off
     if(typeof d.opts.music==='boolean'){ d.opts.musicVol=d.opts.music?0.25:0; delete d.opts.music; }
+    if(typeof d.opts.crt==='boolean')d.opts.crt=d.opts.crt?0.3:0;  // migrate old boolean to opacity
     if(typeof d.opts.sfxVol!=='number')d.opts.sfxVol=0.75;
     if(typeof d.opts.musicVol!=='number')d.opts.musicVol=0.25;
     d.meta=Object.assign({
@@ -33,7 +34,8 @@ const Store={
       paidAch:[],                // achievement ids already paid out in VOLT
       themesUnlocked:['neon'], selectedTheme:'neon',
       tutDone:false,             // first-run tutorial shown?
-      cloudCode:'', cloudName:'' // cloud-save code + username (set when activated)
+      cloudCode:'', cloudName:'', // cloud-save code + username (set when activated)
+      difficultyUnlocked:0, selectedDifficulty:0 // difficulty tiers 0-7, unlocked by winning
     },d.meta||{});
   },
   save(){
@@ -109,6 +111,7 @@ const Music={
 const ACHIEVEMENTS=[
  {id:'first_bank',name:'ANGEZÄHLT',   desc:'Banke deine erste Karte.',            test:c=>c.RUN.banked>=1},
  {id:'clear_board',name:'AUFRÄUMER',  desc:'Räume ein Board komplett ab.',        test:c=>c.S.boardClears>=1},
+ {id:'all_revealed',name:'VOLL IM BLICK',desc:'Alle Karten auf dem Brett aufgedeckt.', test:c=>c.G.tab&&c.G.tab.every(col=>col.every(card=>card.up))},
  {id:'boss1',     name:'BOSS-JÄGER',  desc:'Besiege deinen ersten Boss.',         test:c=>c.S.bossesBeaten.length>=1},
  {id:'allboss',   name:'THRONRÄUBER', desc:'Besiege 3 verschiedene Bosse.',        test:c=>c.S.bossesBeaten.length>=3},
  {id:'boss5',     name:'BOSS-PLAGE',  desc:'Besiege 5 verschiedene Bosse.',        test:c=>c.S.bossesBeaten.length>=5},
@@ -128,7 +131,7 @@ const ACHIEVEMENTS=[
 ];
 /* VOLT bounty paid the FIRST time each achievement unlocks (one-off, tracked in
    Store.data.meta.paidAch) + any deck it unlocks. */
-const ACH_VOLT={first_bank:2,clear_board:5,boss1:8,allboss:15,boss5:20,ante3:5,ante5:10,ante8:20,chips500:8,chips1000:15,perks5:8,perks8:12,mult5:8,coins20:5,runs10:10,souvenir:7,win:25,endless12:20};
+const ACH_VOLT={first_bank:2,clear_board:5,all_revealed:5,boss1:8,allboss:15,boss5:20,ante3:5,ante5:10,ante8:20,chips500:8,chips1000:15,perks5:8,perks8:12,mult5:8,coins20:5,runs10:10,souvenir:7,win:25,endless12:20};
 const ACH_DECK={allboss:'bossrush'};
 
 /* ============================================================
@@ -169,12 +172,20 @@ function paintIcons(root){(root||document).querySelectorAll('[data-ic]').forEach
    Format: { v:'Titel', date:'optional', notes:['Punkt 1','Punkt 2', ...] }
    ============================================================ */
 const PATCH_NOTES=[
- {v:'v0.6.1', date:'15.06.2026', notes:[
-    'CRT-Filter: kräftigere Scanlines + Flimmern & Glitch-Effekte.',
-    'Rangliste: Bestenliste mit allen gespeicherten Runs — wer kommt am weitesten?',
-    'UI: Post-it hängt tiefer, verdeckt nicht mehr den Titel.',
-    'UI: Update-Fenster geht jetzt bis zum unteren Rand — mehr Platz für die News.',
+ {v:'v0.7', date:'15.06.2026', notes:[
+   'UI: Konsistente max-width für alle Unter-Seiten — kein wildes Auseinanderziehen.',
+    'Etwas wurde im Hauptmenü hinzugefügt … vielleicht findest du ja raus, was es ist.',
+    'Neuer Erfolg: VOLL IM BLICK — alle Karten auf dem Brett aufdecken.',
+    'AUTO-RÄUMEN-Button: wenn das ganze Brett sortiert ist, werden alle Karten animiert eingebankt.',
+    'Musik: Deutlich komprimiert (128kbps) und wird nach erstem Laden im Cache gehalten.',
+    'CRT-Scanlines: Stufenlos regelbar statt nur an/aus.',
   ]},
+ {v:'v0.6.1', date:'15.06.2026', notes:[
+   'CRT-Filter: kräftigere Scanlines + Flimmern & Glitch-Effekte.',
+   'Rangliste: Bestenliste mit allen gespeicherten Runs — wer kommt am weitesten?',
+   'UI: Post-it hängt tiefer, verdeckt nicht mehr den Titel.',
+   'UI: Update-Fenster geht jetzt bis zum unteren Rand — mehr Platz für die News.',
+ ]},
  {v:'v0.6', date:'15.06.2026', notes:[
     'Cloud-Speicherstand: Benutzernamen wählen, 8-stelligen Code bekommen — dein Fortschritt wird nach jeder Runde automatisch in der Cloud gesichert.',
     'Mit dem Code holst du deinen kompletten Stand (Statistiken, Erfolge, VOLT & laufender Run) auf jedes Gerät.',
@@ -273,6 +284,16 @@ const DECKS=[
 ];
 const DECK=id=>DECKS.find(d=>d.id===id)||DECKS[0];
 const WIN_ANTE=8;   // clear this ante = run won; then optional endless mode for highscore
+const DIFFICULTIES=[
+ {id:0, name:'NORMAL',   lab:'0 · NORMAL',         targetMul:1,   coinPen:0,  recPen:0, noInt:false, noUndo:false, bossEA:false, shopPen:0, noSpec:false,  basePen:0},
+ {id:1, name:'ERHÖHT',   lab:'1 · ERHÖHT',         targetMul:1.15,coinPen:0,  recPen:0, noInt:false, noUndo:false, bossEA:false, shopPen:0, noSpec:false,  basePen:0},
+ {id:2, name:'SCHWER',   lab:'2 · SCHWER',         targetMul:1.3, coinPen:1,  recPen:0, noInt:true,  noUndo:false, bossEA:false, shopPen:0, noSpec:false,  basePen:0},
+ {id:3, name:'FORTGESCHRITTEN',lab:'3 · FORTGESCHRITTEN',targetMul:1.45,coinPen:2,recPen:0, noInt:true,  noUndo:false, bossEA:false, shopPen:1, noSpec:false,  basePen:0},
+ {id:4, name:'EXPERTE',  lab:'4 · EXPERTE',        targetMul:1.6, coinPen:2,  recPen:1, noInt:true,  noUndo:false, bossEA:false, shopPen:1, noSpec:false,  basePen:0},
+ {id:5, name:'MEISTER',  lab:'5 · MEISTER',        targetMul:1.8, coinPen:3,  recPen:1, noInt:true,  noUndo:false, bossEA:false, shopPen:2, noSpec:true,   basePen:0},
+ {id:6, name:'ALBTRAUM', lab:'6 · ALBTRAUM',       targetMul:2,   coinPen:3,  recPen:2, noInt:true,  noUndo:true,  bossEA:true,  shopPen:3, noSpec:true,   basePen:0.3},
+ {id:7, name:'HARDCORE', lab:'7 · HARDCORE',       targetMul:2.5, coinPen:5,  recPen:9, noInt:true,  noUndo:true,  bossEA:true,  shopPen:0, noSpec:true,   basePen:0.5},
+];
 let G={};
 let RUN={};   // per-run tracking (resets each new run)
 let runActive=false; // true while a run is in progress (resumable from the menu)
@@ -281,7 +302,7 @@ function $(id){return document.getElementById(id);}
 function shuffle(a){for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a;}
 function target(n){return Math.round(60*Math.pow(1.55,n-1)/5)*5;}
 function recBase(){return 2+(G.perks.includes('rec')?1:0)+(G.deck?G.deck.recDelta:0);}
-function baseMult(){return (G.deck?G.deck.baseMult:1)+(G.perks.includes('fever')?0.5:0)+(G.perks.includes('bigfever')?1:0);}
+function baseMult(){var b=(G.deck?G.deck.baseMult:1)+(G.perks.includes('fever')?0.5:0)+(G.perks.includes('bigfever')?1:0);return b-((G.dd&&G.dd.basePen)||0);}
 function effMult(){return baseMult()+G.roundMult;}
 
 function resetRun(){RUN={banked:0,totalChips:0,maxMult:0,bestRound:0,newBestAnte:false,newBestChips:false,newAch:[],voltEarned:0,won:false};}
@@ -291,7 +312,10 @@ function newRun(){
   Store.data.stats.totalRuns++;
   const tut=!Store.data.meta.tutDone;                          // first ever run -> tutorial
   const deck=tut?DECK('standard'):DECK(Store.data.meta.selectedDeck);  // tutorial always on the standard deck
-  G={ante:1,coins:deck.coins,perks:deck.startPerks.slice(),history:[],deck:deck,undo:[],undoUses:0,tutorial:tut,tutStep:0,endless:false,specials:[],specialOffer:null};
+  const diffId=tut?0:(Store.data.meta.selectedDifficulty||0);
+  const diffDef=DIFFICULTIES[diffId]||DIFFICULTIES[0];
+  G={ante:1,coins:Math.max(1,deck.coins-diffDef.coinPen),perks:deck.startPerks.slice(),history:[],deck:deck,undo:[],undoUses:0,tutorial:tut,tutStep:0,endless:false,specials:[],specialOffer:null,diff:diffId};
+  if(diffId)G.dd=diffDef;
   runActive=true;
   newRound();           // newRound updates bestAnte + saves
   evalAch();            // covers runs10 etc.
@@ -310,6 +334,7 @@ function snapRun(){                                            // serializable c
 function restoreRun(r){                                        // r = {g, run}
   if(!r||!r.g||!Array.isArray(r.g.tab))return false;
   const g=r.g; g.deck=DECK(g.deckId||'standard'); delete g.deckId; g.undo=[]; g.sel=null; g.undoUses=g.undoUses||0;
+  if(g.diff&&!g.dd)g.dd=DIFFICULTIES[g.diff];
   G=g; RUN=Object.assign({banked:0,totalChips:0,maxMult:0,bestRound:0,newBestAnte:false,newBestChips:false,newAch:[],voltEarned:0,won:false},r.run||{});
   if(!Array.isArray(RUN.newAch))RUN.newAch=[];
   runActive=true; return true;
@@ -371,7 +396,10 @@ function newRound(){
   G.stock=deck;G.waste=[];G.found=[[],[],[],[]];
   G.chips=0;G.roundMult=0;G.phase='play';G.sel=null;G._last=0;G.boss=null;G.undo=[];
   G.target=target(G.ante);if(G.deck&&G.deck.targetMul!==1)G.target=Math.round(G.target*G.deck.targetMul/5)*5;G.rec=recBase();
-  if(G.ante%3===0||(G.deck&&G.deck.bossEveryAnte)){G.boss=BOSSES[Math.floor(Math.random()*BOSSES.length)];
+  var dd=DIFFICULTIES[G.diff];if(dd&&dd.targetMul!==1)G.target=Math.round(G.target*dd.targetMul/5)*5;
+  if(dd&&dd.recPen)G.rec=Math.max(0,G.rec-dd.recPen);
+  var bossAnte=(G.ante%3===0)||(G.deck&&G.deck.bossEveryAnte)||(dd&&dd.bossEA);
+  if(bossAnte){G.boss=BOSSES[Math.floor(Math.random()*BOSSES.length)];
     if(G.boss.id==='tax')G.target=Math.round(G.target*1.4/5)*5;
     if(G.boss.id==='bigtax')G.target=Math.round(G.target*1.8/5)*5;
     if(G.boss.id==='drought')G.rec=Math.max(1,G.rec-2);}
@@ -446,6 +474,7 @@ function pushUndo(){
 }
 function undoCost(){return (G.undoUses||0)+1;}
 function doUndo(){
+  if(G.dd&&G.dd.noUndo)return;
   if(G.phase!=='play'||!G.undo||!G.undo.length)return;
   const cost=undoCost();
   if(G.coins<cost){shake();return;}
@@ -492,6 +521,7 @@ function endTutorial(){G.tutorial=false;G.tutGlow=null;$('tutbox').hidden=true;S
 function tutHide(){$('tutbox').hidden=true;G.tutGlow=null;}
 function onClick(e){
   if(G.phase!=='play')return;
+  const ac=e.target.closest('[data-act]');if(ac&&ac.dataset.act==='autoclear'){autoCollect();return;}
   const el=e.target.closest('[data-pile]');if(!el)return;
   const p=el.dataset.pile,col=el.dataset.col!==undefined?+el.dataset.col:null,idx=el.dataset.idx!==undefined?+el.dataset.idx:null,suit=el.dataset.suit!==undefined?+el.dataset.suit:null;
   if(p==='tab'||p==='waste'){
@@ -559,7 +589,7 @@ function roundClear(cleared){
     Store.data.stats.bossesBeaten.push(G.boss.id);
   Store.save();
   // ---- reward (unchanged economy) ----
-  const interest=Math.min(G.perks.includes('deepinterest')?8:5,Math.floor(G.coins/5));
+  const interest=G.dd&&G.dd.noInt?0:Math.min(G.perks.includes('deepinterest')?8:5,Math.floor(G.coins/5));
   const perf=Math.floor(earned/40);
   const bonus=cleared?6:0;
   const bounty=G.boss?8*((G.deck&&G.deck.bossBountyMul)||1):0;
@@ -574,7 +604,7 @@ function roundClear(cleared){
   if(bounty)rows.push(['Boss besiegt',bounty]);
   const rh=rows.map(r=>'<div class="rr"><span class="rl">'+r[0]+'</span><span class="rv">+'+r[1]+'</span></div>').join('');
   if(G.ante>=WIN_ANTE && !G.endless){            // ---- RUN WON ----
-    if(!RUN.won){RUN.won=true;Store.data.stats.wins=(Store.data.stats.wins||0)+1;Store.save();evalAch();}
+    if(!RUN.won){RUN.won=true;Store.data.stats.wins=(Store.data.stats.wins||0)+1;var du=Store.data.meta.difficultyUnlocked||0;if(du<7){Store.data.meta.difficultyUnlocked=du+1;}Store.save();evalAch();}
     showVictory('<div class="rwd">'+rh+'<div class="rtot"><span>BELOHNUNG</span><span>+'+reward+' COINS</span></div></div>');
     render();return;
   }
@@ -588,16 +618,17 @@ function openShop(){
   G.phase='shop';
   const avail=POOL.filter(p=>!G.perks.includes(p.id));
   G.offers=shuffle(avail.slice()).slice(0,3);
-  G.specialOffer=(Math.random()<0.45)?SPECIALS[Math.floor(Math.random()*SPECIALS.length)].id:null;  // luck-based special
+  G.specialOffer=(G.dd&&G.dd.noSpec)?null:(Math.random()<0.45)?SPECIALS[Math.floor(Math.random()*SPECIALS.length)].id:null;  // luck-based special
   renderShop();
   saveGame();
 }
 function renderShop(){
+  const spen=G.dd?G.dd.shopPen:0;
   const owned=G.perks.map(id=>{const p=POOL.find(x=>x.id===id);return '<span class="tag-pill '+(p.m?'m':'')+'">'+p.name+'</span>';}).join('');
-  const rows=G.offers.map((p,i)=>{const aff=G.coins>=p.price;
-    return '<div class="perk '+(p.m?'mlt':'')+'"><div><div class="pn">'+p.name+'</div><div class="pd">'+p.desc+'</div></div><button class="buy" data-buy="'+i+'" '+(aff?'':'disabled')+'>'+p.price+' COINS</button></div>';}).join('')||'<div class="sub">SOLD OUT — NICE COLLECTION</div>';
+  const rows=G.offers.map((p,i)=>{const pr=p.price+spen;const aff=G.coins>=pr;
+    return '<div class="perk '+(p.m?'mlt':'')+'"><div><div class="pn">'+p.name+'</div><div class="pd">'+p.desc+'</div></div><button class="buy" data-buy="'+i+'" '+(aff?'':'disabled')+'>'+pr+' COINS</button></div>';}).join('')||'<div class="sub">SOLD OUT — NICE COLLECTION</div>';
   let specRow='';
-  if(G.specialOffer){const sp=SPECIAL(G.specialOffer),aff=G.coins>=sp.price;specRow='<div class="perk spec"><div><div class="pn">'+sp.mark+' '+sp.name+' <span style="color:#7a5c00">(SPEZIAL)</span></div><div class="pd">'+sp.desc+'</div></div><button class="buy" data-spec-buy="'+sp.id+'" '+(aff?'':'disabled')+'>'+sp.price+' COINS</button></div>';}
+  if(G.specialOffer&&!(G.dd&&G.dd.noSpec)){const sp=SPECIAL(G.specialOffer),pr=sp.price+spen,aff=G.coins>=pr;specRow='<div class="perk spec"><div><div class="pn">'+sp.mark+' '+sp.name+' <span style="color:#7a5c00">(SPEZIAL)</span></div><div class="pd">'+sp.desc+'</div></div><button class="buy" data-spec-buy="'+sp.id+'" '+(aff?'':'disabled')+'>'+pr+' COINS</button></div>';}
   const nb=((G.deck&&G.deck.bossEveryAnte)||(G.ante+1)%3===0)?' ·BOSS':'';
   let rerollBtn='';
   if(!(G.deck&&G.deck.noReroll)){
@@ -693,14 +724,45 @@ function showOv(html){const o=$('overlay');o.innerHTML=html;o.classList.remove('
 function hideOv(){$('overlay').classList.add('hidden');}
 function fitCards(){const inner=$('stage').clientWidth-16;let cw=Math.floor((inner-6*4)/7);cw=Math.max(34,Math.min(cw,60));const ch=Math.round(cw*1.36);const r=document.documentElement.style;r.setProperty('--cw',cw+'px');r.setProperty('--ch',ch+'px');r.setProperty('--fanUp',(-Math.round(ch*0.7))+'px');r.setProperty('--fanDn',(-Math.round(ch*0.8))+'px');}
 function cardEl(c,attr,extra){if(!c.up)return '<div class="card down '+(extra||'')+'" '+attr+'></div>';if(c.special){const sp=SPECIAL(c.special),mk=sp?sp.mark:'?';return '<div class="card spec '+(extra||'')+'" '+attr+'><span class="cn">'+mk+'</span><span class="pip">'+mk+'</span></div>';}return '<div class="card '+(RED(c.s)?'red':'blk')+' '+(extra||'')+'" '+attr+'><span class="cn">'+RANKS[c.r]+suitSvg(c.s)+'</span><span class="pip">'+suitSvg(c.s)+'</span></div>';}
+function autoCollect(){
+  if(!canAutoCollect())return;
+  G.sel=null;
+  var ids=setInterval(function(){
+    for(var c=0;c<7;c++){
+      var col=G.tab[c];
+      if(!col.length)continue;
+      var top=col[col.length-1];
+      if(top.up&&!top.joker){
+        var s=top.s;
+        if(canFound(top,s)){
+          G.found[s].push(col.pop());
+          flip(col);
+          bankGain(top);
+          render();
+          if(!canAutoCollect()){clearInterval(ids);check();}
+          return;
+        }
+      }
+    }
+    clearInterval(ids);check();
+  },120);
+}
+function canAutoCollect(){
+  if(G.phase!=='play'||!G.tab)return false;
+  for(var c=0;c<7;c++){var col=G.tab[c];if(!col.length)continue;if(!col.every(function(card){return card.up;}))return false;if(!validSeq(col))return false;}
+  return true;
+}
+
 function render(){
   if($('scene-game').hidden)return;
   $('ante').textContent=G.ante;
   $('tgt').textContent=G.target;
   $('coins').textContent=G.coins;
+  var dc=$('diffchip');
+  if(G.diff){dc.style.display='block';dc.textContent='SCHWIERIGKEIT: '+DIFFICULTIES[G.diff].name;}else{dc.style.display='none';}
   $('recnum').textContent=G.rec;
   const _rc=$('recchip'),_lastRec=(G.rec===0); _rc.classList.toggle('last',_lastRec); $('reclast').hidden=!_lastRec;
-  const _uc=undoCost();$('undocost').textContent=_uc;$('undobtn').classList.toggle('off',!(G.phase==='play'&&G.undo&&G.undo.length>0&&G.coins>=_uc));
+  const _uc=undoCost();$('undocost').textContent=_uc;$('undobtn').classList.toggle('off',!!(G.dd&&G.dd.noUndo)||!(G.phase==='play'&&G.undo&&G.undo.length>0&&G.coins>=_uc));
   $('mult').textContent='×'+effMult().toFixed(1);
   const ch=$('chips');ch.textContent=G.chips;
   if(G.chips>G._last){ch.classList.remove('pulse');void ch.offsetWidth;ch.classList.add('pulse');}
@@ -714,8 +776,9 @@ function render(){
   let st;const _sg=G.tutGlow==='stock'?' tut-glow':'';if(G.stock.length)st='<div class="card down'+_sg+'" data-pile="stock"></div>';else st='<div class="slot'+_sg+'" data-pile="stock">'+(G.rec>0?svg('recycle'):svg('close'))+'</div>';
   let tb='';for(let c=0;c<7;c++){const col=G.tab[c];let inner='';if(col.length===0){inner='<div class="slot" data-pile="tab" data-col="'+c+'" data-idx="-1"></div>';}else{col.forEach((card,i)=>{const fanCls=i===0?'':(card.up?'fan':'fan dn');const selThis=G.sel&&G.sel.p==='tab'&&G.sel.col===c&&i>=G.sel.idx?'sel':'';inner+=cardEl(card,'data-pile="tab" data-col="'+c+'" data-idx="'+i+'"',fanCls+' '+selThis);});}
     tb+='<div class="col">'+inner+'</div>';}
-  $('board').innerHTML='<div id="top"><div class="founds">'+f+'</div><div class="spacer"></div>'+st+w+'</div><div id="tab">'+tb+'</div>';
-  saveGame();   // persist after every state change
+  let autoBtn=canAutoCollect()?'<div class="auto-clear" data-act="autoclear">'+svg('star')+' AUTO-RÄUMEN</div>':'';
+  $('board').innerHTML='<div id="top"><div class="founds">'+f+'</div><div class="spacer"></div>'+st+w+'</div><div id="tab">'+tb+'</div>'+autoBtn;
+  saveGame(); evalAch();   // persist + check achievements after every state change
 }
 
 /* ============================================================
@@ -835,6 +898,18 @@ function renderMenu(){
   $('btn-resume').hidden=!(runActive||hasSave());   // show FORTSETZEN for a paused run or a saved one
   $('menu-build').textContent='build '+((PATCH_NOTES[0]&&PATCH_NOTES[0].v)||'?');
   $('iostip').hidden=true;             // close the iPhone tip when (re)entering the menu
+  // difficulty selector
+  var du=Store.data.meta.difficultyUnlocked||0,sel=Store.data.meta.selectedDifficulty||0;
+  var dr=$('diff-row');
+  if(dr){dr.hidden=!(du>0);}
+  var dh=$('diff-holder');
+  if(!dh)return;
+  if(du>0){dh.hidden=false;
+    dh.innerHTML=DIFFICULTIES.map(function(d,i){
+      var locked=i>du?' diff-locked':'',active=i===sel?' diff-active':'';
+      return '<span class="diff-dot'+locked+active+'" data-diff="'+i+'" title="'+d.lab+'">'+(i<=du?i:'?')+'</span>';
+    }).join('');
+  }else{dh.hidden=true;}
 }
 
 function renderDecks(){
@@ -866,7 +941,8 @@ function renderAch(){
 
 function renderOpts(){
   const o=Store.data.opts;
-  const cb=$('opt-crt'); cb.textContent=o.crt?'AN':'AUS'; cb.classList.toggle('on',!!o.crt);
+  const cr=Math.round((o.crt||0)*100);
+  $('opt-crt').value=cr; $('crt-pct').textContent=cr+'%';
   const fb=$('opt-fit'); fb.textContent=o.fit?'AN':'AUS'; fb.classList.toggle('on',!!o.fit);
   const sp=Math.round(o.sfxVol*100), mp=Math.round(o.musicVol*100);
   $('opt-sfx').value=sp; $('sfx-pct').textContent=sp+'%';
@@ -875,7 +951,7 @@ function renderOpts(){
   $('scaleset').classList.toggle('disabled',!!o.fit);
 }
 
-function applyOpts(){ document.body.classList.toggle('crt-off',!Store.data.opts.crt); }
+function applyOpts(){ const v=Store.data.opts.crt||0; document.documentElement.style.setProperty('--crt-opacity',v); document.body.classList.toggle('crt-off',v===0); }
 /* UI scaling. transform:scale keeps layout/clientWidth unscaled, so fitCards()
    is unaffected and the whole UI scales uniformly (text + cards + buttons). */
 function applyScale(){
@@ -992,6 +1068,8 @@ $('scene-menu').addEventListener('click',function(e){
   else if(go==='rang')showScene('rang');
   else if(go==='opts')showScene('opts');
   else if(go==='exit')doExit();
+  // difficulty selection
+  var d=e.target.closest('[data-diff]');if(d){var di=+d.dataset.diff;if(di<=Store.data.meta.difficultyUnlocked){Store.data.meta.selectedDifficulty=di;Store.save();renderMenu();SFX.click();}}
 });
 // generic back buttons -> menu
 document.querySelectorAll('[data-back]').forEach(b=>b.addEventListener('click',function(){SFX.click();showScene('menu');}));
@@ -1045,6 +1123,7 @@ $('scene-opts').addEventListener('input',function(e){
   const v=(+r.value)/100;
   if(r.id==='opt-sfx'){Store.data.opts.sfxVol=v;$('sfx-pct').textContent=r.value+'%';}
   else if(r.id==='opt-musicvol'){Store.data.opts.musicVol=v;$('music-pct').textContent=r.value+'%';Music.setVol();}
+  else if(r.id==='opt-crt'){Store.data.opts.crt=v;$('crt-pct').textContent=r.value+'%';applyOpts();}
   Store.save();
 });
 $('scene-opts').addEventListener('change',function(e){ if(e.target.id==='opt-sfx')SFX.click(); }); // preview level on release
@@ -1070,6 +1149,7 @@ window.addEventListener('keydown',function(e){
 });
 // resume audio on first user gesture (mobile autoplay policy)
 window.addEventListener('pointerdown',function init(){SFX.ensure();SFX.resume();Music.kick();window.removeEventListener('pointerdown',init);},{once:true});
+document.addEventListener('visibilitychange',function(){if(document.hidden){if(Music.el)Music.el.pause();}else{Music.sync();}});
 
 /* ============================================================
    BOOT

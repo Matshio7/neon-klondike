@@ -43,7 +43,7 @@ body{display:flex;justify-content:center;align-items:flex-start;padding:8px;padd
 
 /* global CRT scanline overlay (toggle in Options) — sibling of #app so app's scale transform can't trap it */
 #scanlines{position:fixed;inset:0;pointer-events:none;z-index:9999;
-  background:repeating-linear-gradient(rgba(0,0,0,0) 0 2px,rgba(0,0,0,.3) 2px 3px);
+  background:repeating-linear-gradient(rgba(0,0,0,0) 0 2px,rgba(0,0,0,var(--crt-opacity,0.3)) 2px 3px);
   animation:scanglitch 2.6s steps(2,end) infinite, scanroll .14s linear infinite}
 #scanlines::after{content:'';position:fixed;inset:0;pointer-events:none;
   background:linear-gradient(90deg,transparent 30%,rgba(255,255,255,.04) 60%,transparent 90%);
@@ -88,6 +88,10 @@ body.crt-off #stage::before{display:none}
 .mbtn.danger:hover{box-shadow:0 0 14px rgba(255,91,127,.35)}
 .menu-foot{font-size:8px;color:#5f8f78;text-align:center;line-height:2;margin-top:4px}
 .menu-foot b{color:var(--gold)}
+.diff-dot{display:inline-flex;align-items:center;justify-content:center;width:20px;height:20px;border-radius:50%;font-size:9px;margin:0 2px;cursor:pointer;border:1.5px solid #2c5a43;background:#0d2419;color:#5f8f78;vertical-align:middle;line-height:1}
+.diff-dot.diff-active{border-color:var(--gold);color:var(--gold);background:#241d07;box-shadow:0 0 6px rgba(255,210,63,.4)}
+.diff-dot.diff-locked{opacity:.3;cursor:default;border-color:#1a3a2a;color:#2a4a3a}
+.diff-dot:active{transform:scale(.92)}
 /* build version: pinned to the very bottom, intentionally near-invisible (dark on dark) */
 .menu-build{position:absolute;bottom:5px;left:0;right:0;text-align:center;font-size:7px;letter-spacing:1.5px;color:#17261d;z-index:1;pointer-events:none;user-select:none}
 .menu-ios{position:absolute;bottom:4px;left:8px;z-index:3;font-family:'Press Start 2P',monospace;font-size:7px;letter-spacing:.5px;color:#3a6b54;background:none;border:none;cursor:pointer;padding:2px}
@@ -179,6 +183,7 @@ body.crt-off #stage::before{display:none}
 #recchip .svgi{font-size:14px;color:var(--mint)}
 #recchip b{color:var(--mint);font-size:12px}
 #recchip.last .svgi,#recchip.last b{color:var(--pink)}
+.diffchip{font-size:8px;color:var(--gold);text-align:center;padding:6px 0 2px;letter-spacing:1px}
 .reclast{color:var(--pink);font-size:8px;letter-spacing:.5px;animation:recblink 1s steps(2,start) infinite}
 @keyframes recblink{50%{opacity:.45}}
 /* tutorial coach + highlight glow */
@@ -192,7 +197,7 @@ body.crt-off #stage::before{display:none}
 .tuthint{font-size:8px;color:var(--gold);animation:recblink 1s steps(2,start) infinite}
 .tut-skip{font-size:7px;color:#7a5c00;background:none;border:none;cursor:pointer;text-decoration:underline}
 /* ---- in-game ITEMS panel (rendered in #overlay) ---- */
-.items-list{display:flex;flex-direction:column;gap:7px;width:100%}
+.items-list{display:flex;flex-direction:column;gap:7px;width:100%;max-width:360px;margin:0 auto}
 .ideck{font-size:8px;color:var(--gold);border:1px solid #6b5410;background:#241d07;border-radius:8px;padding:9px 10px;text-align:left;line-height:1.7}
 .ideck b{font-size:10px}
 .iboss{font-size:8px;color:var(--pink);border:1px solid #5a2238;background:#240913;border-radius:8px;padding:9px 10px;text-align:left;line-height:1.7}
@@ -200,10 +205,10 @@ body.crt-off #stage::before{display:none}
 .ispec b{color:var(--gold)}
 /* ---- patch-notes / news scene ---- */
 #scene-news{min-height:calc(100vh - 20px)}
-.news-list{display:flex;flex-direction:column;gap:12px;max-height:calc(100vh - 100px);overflow:auto;padding-right:2px}
+.news-list{display:flex;flex-direction:column;gap:12px;max-height:calc(100vh - 100px);overflow:auto;padding-right:2px;max-width:360px;margin:0 auto}
 .patch{background:#0e2418;border:1px solid #244;border-radius:9px;padding:11px 12px}
-.patch h4{margin:0 0 8px;font-size:10px;color:var(--mint);letter-spacing:1px}
-.patch h4 .dt{color:#5f8f78;font-size:8px;margin-left:6px}
+.patch h4{display:flex;justify-content:space-between;align-items:baseline;margin:0 0 8px;font-size:10px;color:var(--mint);letter-spacing:1px}
+.patch h4 .dt{color:#5f8f78;font-size:8px}
 .patch ul{margin:0;padding-left:14px}
 .patch li{font-size:8px;color:#bfe6d4;line-height:1.9;margin-bottom:4px}
 .btn:active{transform:scale(.97)}
@@ -214,7 +219,7 @@ body.crt-off #overlay::before{display:none}
 #overlay.hidden{display:none}
 #overlay h3{font-size:15px;margin:0;line-height:1.5}
 #overlay .sub{font-size:9px;color:#7fae98;line-height:1.9}
-.shop{display:flex;flex-direction:column;gap:8px;width:100%}
+.shop{display:flex;flex-direction:column;gap:8px;width:100%;max-width:360px;margin:0 auto}
 .perk{display:flex;justify-content:space-between;align-items:center;gap:8px;background:#0e2418;border:1px solid #244;border-radius:8px;padding:8px 10px;text-align:left}
 .perk.mlt{border-color:#5a2238}
 .perk.spec{border-color:#6b5410;background:#1d1907}
@@ -239,7 +244,7 @@ body.crt-off #overlay::before{display:none}
 .ach-prog b{color:var(--gold)}
 .ach-bar{height:8px;border-radius:5px;background:#0e2418;border:1px solid #244;overflow:hidden;margin:6px 0 12px}
 .ach-bar i{display:block;height:100%;background:linear-gradient(90deg,var(--mint),var(--gold));box-shadow:0 0 8px rgba(54,224,160,.5)}
-.ach-grid{display:flex;flex-direction:column;gap:7px;max-height:54vh;overflow:auto;padding-right:2px}
+.ach-grid{display:flex;flex-direction:column;gap:7px;max-height:54vh;overflow:auto;padding-right:2px;max-width:360px;margin:0 auto}
 .ach{display:flex;align-items:center;gap:10px;border-radius:9px;padding:9px 10px;border:1px solid #244;background:#0e2418}
 .ach.off{opacity:.5;filter:grayscale(.6)}
 .ach.on{border-color:#6b5410;background:#15200a;box-shadow:0 0 10px rgba(255,210,63,.15)}
@@ -264,7 +269,7 @@ input.vol::-moz-range-thumb{width:15px;height:15px;border-radius:3px;background:
 .opt-reset{font-family:'Press Start 2P',monospace;font-size:9px;width:100%;padding:12px;border-radius:8px;border:1.5px solid #5a2238;background:#1a0a10;color:var(--pink);cursor:pointer;margin-top:6px;line-height:1.6}
 .opt-about{font-size:8px;color:#5f8f78;text-align:center;line-height:2;margin-top:14px}
 /* ---- cloud save screen ---- */
-.cloud-body{display:flex;flex-direction:column;gap:11px}
+.cloud-body{display:flex;flex-direction:column;gap:11px;max-width:360px;margin:0 auto}
 .cloud-card{display:flex;flex-direction:column;align-items:flex-start;gap:9px;background:#0e2418;border:1px solid #244;border-radius:10px;padding:14px 13px}
 .cl-lbl{font-size:9px;color:var(--gold);letter-spacing:.5px}
 .cl-sub{font-size:8px;color:#8fbfa6;line-height:1.9}
@@ -276,7 +281,7 @@ input.vol::-moz-range-thumb{width:15px;height:15px;border-radius:3px;background:
 .cl-status{min-height:14px;font-size:8px;line-height:1.8;color:#8fbfa6;text-align:center;margin-top:2px}
 
 /* ---- leaderboard / rangliste ---- */
-.lb-body{display:flex;flex-direction:column;gap:5px;max-height:54vh;overflow:auto;padding-right:2px}
+.lb-body{display:flex;flex-direction:column;gap:5px;max-height:54vh;overflow:auto;padding-right:2px;max-width:360px;margin:0 auto}
 .lb-row{display:flex;justify-content:space-between;align-items:center;gap:8px;background:#0e2418;border:1px solid #244;border-radius:8px;padding:9px 10px;font-size:9px;line-height:1.5}
 .lb-rank{color:var(--gold);min-width:22px;text-align:center;font-size:11px;font-weight:bold}
 .lb-name{flex:1;color:var(--mint);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
@@ -292,7 +297,7 @@ input.vol::-moz-range-thumb{width:15px;height:15px;border-radius:3px;background:
 .sbtn:active{transform:scale(.96)}
 /* subtle help affordance on HUD + in-game help panel */
 #hud [title]{cursor:help}
-.help-list{display:flex;flex-direction:column;gap:6px;width:100%;text-align:left}
+.help-list{display:flex;flex-direction:column;gap:6px;width:100%;text-align:left;max-width:360px;margin:0 auto}
 .hrow{background:#0e2418;border:1px solid #244;border-radius:8px;padding:8px 10px}
 .hrow .hk{font-size:9px;color:var(--mint)}
 .hrow .hv{font-size:8px;color:#9fc7b4;line-height:1.7;margin-top:4px}
@@ -336,6 +341,12 @@ input.vol::-moz-range-thumb{width:15px;height:15px;border-radius:3px;background:
 .go-achh{font-size:8px;color:var(--gold);text-align:center;margin:4px 0 2px;letter-spacing:1px}
 .go-achbadges{display:flex;flex-wrap:wrap;gap:5px;justify-content:center}
 .go-btns{display:flex;gap:8px;margin-top:2px}
+
+/* auto-clear button on the board */
+.auto-clear{display:flex;align-items:center;justify-content:center;gap:6px;margin:10px auto 0;padding:10px 14px;border-radius:8px;border:1.5px solid #6b5410;background:#241d07;color:var(--gold);font-family:'Press Start 2P',monospace;font-size:10px;cursor:pointer;max-width:220px;animation:autopulse 1.6s ease-in-out infinite}
+.auto-clear .svgi{font-size:13px}
+.auto-clear:active{transform:scale(.97)}
+@keyframes autopulse{0%,100%{box-shadow:0 0 6px rgba(255,210,63,.25)}50%{box-shadow:0 0 16px rgba(255,210,63,.55)}}
 
 /* goodbye screen */
 #scene-bye{min-height:50vh;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;text-align:center;padding:30px 18px}
