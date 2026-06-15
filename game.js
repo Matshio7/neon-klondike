@@ -1057,17 +1057,20 @@ $('helpbtn').addEventListener('click',function(){SFX.click();showHelp();});
 $('giveupbtn').addEventListener('click',function(){SFX.click();if(runActive&&confirm('Diesen Run aufgeben? Das führt direkt zum Game-Over.'))gameOver();});
 // main menu
 $('scene-menu').addEventListener('click',function(e){
-  const b=e.target.closest('[data-go]');if(!b)return;SFX.click();
-  const go=b.dataset.go;
-  if(go==='resume')doResume();
-  else if(go==='start'){showScene('game');fitCards();newRun();}
-  else if(go==='decks')showScene('decks');
-  else if(go==='ach')showScene('ach');
-  else if(go==='news')showScene('news');
-  else if(go==='cloud')showScene('cloud');
-  else if(go==='rang')showScene('rang');
-  else if(go==='opts')showScene('opts');
-  else if(go==='exit')doExit();
+  const b=e.target.closest('[data-go]');
+  if(b){
+    SFX.click();
+    const go=b.dataset.go;
+    if(go==='resume')doResume();
+    else if(go==='start'){showScene('game');fitCards();newRun();}
+    else if(go==='decks')showScene('decks');
+    else if(go==='ach')showScene('ach');
+    else if(go==='news')showScene('news');
+    else if(go==='cloud')showScene('cloud');
+    else if(go==='rang')showScene('rang');
+    else if(go==='opts')showScene('opts');
+    else if(go==='exit')doExit();
+  }
   // difficulty selection
   var d=e.target.closest('[data-diff]');if(d){var di=+d.dataset.diff;if(di<=Store.data.meta.difficultyUnlocked){Store.data.meta.selectedDifficulty=di;Store.save();renderMenu();SFX.click();}}
 });
