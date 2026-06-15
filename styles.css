@@ -92,6 +92,7 @@ body.crt-off #stage::before{display:none}
 .diff-dot.diff-active{border-color:var(--gold);color:var(--gold);background:#241d07;box-shadow:0 0 6px rgba(255,210,63,.4)}
 .diff-dot.diff-locked{opacity:.3;cursor:default;border-color:#1a3a2a;color:#2a4a3a}
 .diff-dot:active{transform:scale(.92)}
+.diff-desc{font-size:7px;color:#7fae98;line-height:1.6;margin-top:2px}
 /* build version: pinned to the very bottom, intentionally near-invisible (dark on dark) */
 .menu-build{position:absolute;bottom:5px;left:0;right:0;text-align:center;font-size:7px;letter-spacing:1.5px;color:#17261d;z-index:1;pointer-events:none;user-select:none}
 .menu-ios{position:absolute;bottom:4px;left:8px;z-index:3;font-family:'Press Start 2P',monospace;font-size:7px;letter-spacing:.5px;color:#3a6b54;background:none;border:none;cursor:pointer;padding:2px}

@@ -910,6 +910,23 @@ function renderMenu(){
       return '<span class="diff-dot'+locked+active+'" data-diff="'+i+'" title="'+d.lab+'">'+(i<=du?i:'?')+'</span>';
     }).join('');
   }else{dh.hidden=true;}
+  var dd=$('diff-desc');
+  if(dd){
+    if(du>0){
+      var d0=DIFFICULTIES[sel];
+      var pts=[];
+      if(d0.targetMul>1)pts.push((d0.targetMul*100-100).toFixed(0)+'% ZIEL');
+      if(d0.coinPen)pts.push(d0.coinPen+' COIN');
+      if(d0.recPen)pts.push(d0.recPen+' RECYCLE');
+      if(d0.noInt)pts.push('KEINE ZINSEN');
+      if(d0.noUndo)pts.push('KEIN UNDO');
+      if(d0.bossEA)pts.push('BOSS JEDE ANTE');
+      if(d0.shopPen)pts.push('SHOP +'+d0.shopPen);
+      if(d0.noSpec)pts.push('KEINE SPEZIALK.');
+      if(d0.basePen)pts.push('MULT -'+d0.basePen);
+      dd.textContent=d0.name+' — '+(pts.length?pts.join(', '):'KEINE MODIFIKATOREN');
+    }else{dd.textContent='';}
+  }
 }
 
 function renderDecks(){
