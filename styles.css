@@ -39,11 +39,18 @@ body{display:flex;justify-content:center;align-items:flex-start;padding:8px;padd
   0%{transform:translate3d(0,0,0) scale(1);opacity:.65;filter:hue-rotate(0deg)}
   50%{transform:translate3d(1.5%,-1.5%,0) scale(1.12);opacity:1;filter:hue-rotate(-14deg)}
   100%{transform:translate3d(0,0,0) scale(1);opacity:.65;filter:hue-rotate(0deg)}}
-@media(prefers-reduced-motion:reduce){#bgfx,#bgimg{animation:none}}
+@media(prefers-reduced-motion:reduce){#bgfx,#bgimg,#scanlines{animation:none}}
 
 /* global CRT scanline overlay (toggle in Options) — sibling of #app so app's scale transform can't trap it */
 #scanlines{position:fixed;inset:0;pointer-events:none;z-index:9999;
-  background:repeating-linear-gradient(rgba(0,0,0,0) 0 2px,rgba(0,0,0,.16) 2px 3px)}
+  background:repeating-linear-gradient(rgba(0,0,0,0) 0 2px,rgba(0,0,0,.3) 2px 3px);
+  animation:scanglitch 2.6s steps(2,end) infinite, scanroll .14s linear infinite}
+#scanlines::after{content:'';position:fixed;inset:0;pointer-events:none;
+  background:linear-gradient(90deg,transparent 30%,rgba(255,255,255,.04) 60%,transparent 90%);
+  animation:glitchbar 41s steps(3,end) infinite}
+@keyframes scanroll{0%{background-position:0 0}100%{background-position:0 4px}}
+@keyframes scanglitch{0%{opacity:1;transform:translateY(0)}50%{opacity:.55;transform:translateY(.5px)}100%{opacity:1;transform:translateY(0)}}
+@keyframes glitchbar{0%,97%{opacity:0;transform:translateX(0)}98%{opacity:1;transform:translateX(-8px)}99%{opacity:.5;transform:translateX(4px)}100%{opacity:0;transform:translateX(0)}}
 body.crt-off #scanlines{display:none}
 body.crt-off #stage::before{display:none}
 
@@ -93,7 +100,7 @@ body.crt-off #stage::before{display:none}
 .menu-card{position:relative;z-index:2;display:flex;flex-direction:column;align-items:center;gap:12px;width:100%}
 .menu-head{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;min-height:72px} /* compact header band; modest centered gap around the name */
 /* update post-it — sits on top of the menu, tilted, like a sticky note */
-#postit{position:absolute;top:20px;right:-58px;width:144px;z-index:70;display:none;cursor:pointer;
+#postit{position:absolute;top:88px;right:-58px;width:144px;z-index:70;display:none;cursor:pointer;
   background:#f3e7a6;color:#2a2410;border-radius:3px 3px 0 0;padding:10px 10px 0;
   transform:rotate(4.5deg);box-shadow:0 8px 16px rgba(0,0,0,.55);
   font-family:'Press Start 2P',monospace;transition:transform .12s}
@@ -114,7 +121,7 @@ body.crt-off #stage::before{display:none}
 .pt-fortune{position:absolute;left:50%;bottom:-16px;transform:translateX(-50%);width:158px;background:#f3e7a6;color:#2a2410;font-family:'Press Start 2P',monospace;font-size:7px;line-height:1.55;text-align:center;padding:8px;border-radius:3px;box-shadow:0 5px 13px rgba(0,0,0,.55);z-index:80;pointer-events:none;animation:fortuneDrop 2.7s ease forwards}
 @keyframes fortuneDrop{0%{opacity:0;transform:translate(-50%,-6px) rotate(-3deg)}12%{opacity:1}78%{opacity:1}100%{opacity:0;transform:translate(-50%,36px) rotate(5deg)}}
 .pt-fortune.mean{color:#8a1f1f;box-shadow:0 5px 13px rgba(120,0,0,.45);animation-duration:3.4s}
-@media (max-width:480px){#postit{right:-6px;top:16px}}   /* on phones keep the note on-panel so it isn't clipped */
+@media (max-width:480px){#postit{right:-6px;top:88px}}   /* on phones keep the note on-panel so it isn't clipped */
 
 /* =================== GAME (core, preserved) =================== */
 #topbar{display:flex;align-items:center;gap:6px;margin:2px 0 8px}
@@ -192,8 +199,8 @@ body.crt-off #stage::before{display:none}
 .ispec{font-size:8px;color:#caa53a;border:1px solid #6b5410;background:#1d1907;border-radius:8px;padding:9px 10px;text-align:left;line-height:1.7}
 .ispec b{color:var(--gold)}
 /* ---- patch-notes / news scene ---- */
-#scene-news{min-height:62vh}
-.news-list{display:flex;flex-direction:column;gap:12px;max-height:60vh;overflow:auto;padding-right:2px}
+#scene-news{min-height:calc(100vh - 20px)}
+.news-list{display:flex;flex-direction:column;gap:12px;max-height:calc(100vh - 100px);overflow:auto;padding-right:2px}
 .patch{background:#0e2418;border:1px solid #244;border-radius:9px;padding:11px 12px}
 .patch h4{margin:0 0 8px;font-size:10px;color:var(--mint);letter-spacing:1px}
 .patch h4 .dt{color:#5f8f78;font-size:8px;margin-left:6px}
@@ -267,6 +274,16 @@ input.vol::-moz-range-thumb{width:15px;height:15px;border-radius:3px;background:
 .cloud-in::placeholder{color:#3f6b56;letter-spacing:1px}
 .cloud-in:focus{outline:none;border-color:var(--gold)}
 .cl-status{min-height:14px;font-size:8px;line-height:1.8;color:#8fbfa6;text-align:center;margin-top:2px}
+
+/* ---- leaderboard / rangliste ---- */
+.lb-body{display:flex;flex-direction:column;gap:5px;max-height:54vh;overflow:auto;padding-right:2px}
+.lb-row{display:flex;justify-content:space-between;align-items:center;gap:8px;background:#0e2418;border:1px solid #244;border-radius:8px;padding:9px 10px;font-size:9px;line-height:1.5}
+.lb-rank{color:var(--gold);min-width:22px;text-align:center;font-size:11px;font-weight:bold}
+.lb-name{flex:1;color:var(--mint);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.lb-score{color:#8fbfa6;white-space:nowrap;font-size:8px}
+.lb-me{border-color:var(--gold);background:#15200a;box-shadow:0 0 8px rgba(255,210,63,.15)}
+.lb-me .lb-name{color:var(--gold)}
+
 /* UI-size segmented control */
 .scaleset{display:flex;gap:5px}
 .scaleset.disabled{opacity:.4;pointer-events:none}

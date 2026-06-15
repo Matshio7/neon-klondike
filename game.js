@@ -144,7 +144,7 @@ const IC={
  play:'<svg viewBox="0 0 24 24" fill="currentColor"><path d="M7 4.5l13 7.5-13 7.5z"/></svg>',
  trophy:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 4h10v4.5a5 5 0 0 1-10 0V4z"/><path d="M7 6H4.2v1.2A3.2 3.2 0 0 0 7 10.3M17 6h2.8v1.2A3.2 3.2 0 0 1 17 10.3"/><path d="M10 13.6V17M14 13.6V17M8.5 20h7"/></svg>',
  lock:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><rect x="5" y="10.5" width="14" height="9.5" rx="2"/><path d="M8 10.5V7.5a4 4 0 0 1 8 0v3"/></svg>',
- gear:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3.2"/><path d="M12 2.5v3M12 18.5v3M2.5 12h3M18.5 12h3M5 5l2.1 2.1M16.9 16.9 19 19M19 5l-2.1 2.1M7.1 16.9 5 19"/></svg>',
+ gear:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M12 1.5 12 5M12 19 12 22.5M1.5 12 5 12M19 12 22.5 12M4.5 4.5 6.5 6.5M17.5 17.5 19.5 19.5M4.5 19.5 6.5 17.5M17.5 6.5 19.5 4.5"/></svg>',
  power:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M12 3v8"/><path d="M6.5 6.5a8 8 0 1 0 11 0"/></svg>',
  cloud:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 18h10a4 4 0 0 0 .5-7.97A5.5 5.5 0 0 0 6.7 8.6 3.7 3.7 0 0 0 7 18z"/><path d="M12 16.5V10M9.5 12.5 12 10l2.5 2.5"/></svg>',
  spade:'<svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 3C8.2 7 4 9.2 4 13.2c0 2.3 1.9 3.9 3.9 3.9 1 0 1.9-.4 2.6-1-.2 2-.9 3-2 3.9h7c-1.1-.9-1.8-1.9-2-3.9.7.6 1.6 1 2.6 1 2 0 3.9-1.6 3.9-3.9C20 9.2 15.8 7 12 3z"/></svg>',
@@ -169,40 +169,46 @@ function paintIcons(root){(root||document).querySelectorAll('[data-ic]').forEach
    Format: { v:'Titel', date:'optional', notes:['Punkt 1','Punkt 2', ...] }
    ============================================================ */
 const PATCH_NOTES=[
- {v:'v0.6', date:'', notes:[
-   'Cloud-Speicherstand: Benutzernamen wählen, 8-stelligen Code bekommen — dein Fortschritt wird nach jeder Runde automatisch in der Cloud gesichert.',
-   'Mit dem Code holst du deinen kompletten Stand (Statistiken, Erfolge, VOLT & laufender Run) auf jedes Gerät.',
-   'Die Homescreen-App aktualisiert sich jetzt automatisch — beim Start kommt die neueste Version, offline läuft sie aus dem Cache.',
-   'Lebendiger Hintergrund: sanfte Drift, Pulsation & Farb-Atmosphäre über deinem Bild — dezent, nicht aufdringlich.',
-   'Unter der Haube aufgeräumt: schlankerer Code für schnelleres Laden und stabilere Updates.',
- ]},
- {v:'v0.5', date:'', notes:[
-   'Sieg ab Ante 8 — danach Endlosmodus für den Highscore.',
-   'Joker & Spezialkarten im Shop: dein Deck wächst.',
-   'Undo-Button (kostet Coins, wird teurer) & Karten aus der Bank zurücknehmen.',
-   'Speicherstand: FORTSETZEN lädt deinen Run nach dem Schließen.',
-   'Gescriptetes Tutorial in der ersten Runde (in den Optionen zurücksetzbar).',
-   'Neues Umkehr-Deck (Bank baut K→A), mehr Perks & mehr Bosse.',
-   'Roter „Letzter Versuch" beim letzten Recycle, iPhone-Tipp im Menü.',
- ]},
- {v:'v0.4', date:'', notes:[
-   'Das Spiel heißt jetzt KLONDAIRE.',
-   'Hintergrundmusik: ein eigener Menü-Track und vier Tracks im Spiel.',
-   'Lautstärke für Sound und Musik getrennt regelbar.',
-   'UI-Größe einstellbar (0,5×–1,5×) oder automatisch ans Fenster anpassen.',
-   'Doppeltipp auf eine Karte legt sie direkt auf die Bank.',
-   'Leertaste zieht die nächste Karte vom Stapel.',
-   'Neue Spielhilfe (?) erklärt Chips, Mult, Ante & Co.',
-   'Übersichtliche Belohnungs-Aufschlüsselung nach jeder Runde.',
-   'Schärfere Kartensymbole, neuer Hintergrund — und ein Notizzettel am Menü mit kleiner Überraschung.',
- ]},
- {v:'v0.3', date:'', notes:[
-   'Hauptmenü: FORTSETZEN pausiert und lädt den laufenden Run.',
-   'Steuerung ist nach oben gewandert (Menü · Items · Aufgeben).',
-   'Neuer AUFGEBEN-Knopf führt direkt zum Game-Over.',
-   'ITEMS-Ansicht zeigt deine Perks, dein Deck und den Boss.',
-   'Symbole statt Emojis — sauberere Optik.',
- ]},
+ {v:'v0.6.1', date:'15.06.2026', notes:[
+    'CRT-Filter: kräftigere Scanlines + Flimmern & Glitch-Effekte.',
+    'Rangliste: Bestenliste mit allen gespeicherten Runs — wer kommt am weitesten?',
+    'UI: Post-it hängt tiefer, verdeckt nicht mehr den Titel.',
+    'UI: Update-Fenster geht jetzt bis zum unteren Rand — mehr Platz für die News.',
+  ]},
+ {v:'v0.6', date:'15.06.2026', notes:[
+    'Cloud-Speicherstand: Benutzernamen wählen, 8-stelligen Code bekommen — dein Fortschritt wird nach jeder Runde automatisch in der Cloud gesichert.',
+    'Mit dem Code holst du deinen kompletten Stand (Statistiken, Erfolge, VOLT & laufender Run) auf jedes Gerät.',
+    'Die Homescreen-App aktualisiert sich jetzt automatisch — beim Start kommt die neueste Version, offline läuft sie aus dem Cache.',
+    'Lebendiger Hintergrund: sanfte Drift, Pulsation & Farb-Atmosphäre über deinem Bild — dezent, nicht aufdringlich.',
+    'Unter der Haube aufgeräumt: schlankerer Code für schnelleres Laden und stabilere Updates.',
+  ]},
+ {v:'v0.5', date:'14.06.2026', notes:[
+    'Sieg ab Ante 8 — danach Endlosmodus für den Highscore.',
+    'Joker & Spezialkarten im Shop: dein Deck wächst.',
+    'Undo-Button (kostet Coins, wird teurer) & Karten aus der Bank zurücknehmen.',
+    'Speicherstand: FORTSETZEN lädt deinen Run nach dem Schließen.',
+    'Gescriptetes Tutorial in der ersten Runde (in den Optionen zurücksetzbar).',
+    'Neues Umkehr-Deck (Bank baut K→A), mehr Perks & mehr Bosse.',
+    'Roter „Letzter Versuch" beim letzten Recycle, iPhone-Tipp im Menü.',
+  ]},
+ {v:'v0.4', date:'14.06.2026', notes:[
+    'Das Spiel heißt jetzt KLONDAIRE.',
+    'Hintergrundmusik: ein eigener Menü-Track und vier Tracks im Spiel.',
+    'Lautstärke für Sound und Musik getrennt regelbar.',
+    'UI-Größe einstellbar (0,5×–1,5×) oder automatisch ans Fenster anpassen.',
+    'Doppeltipp auf eine Karte legt sie direkt auf die Bank.',
+    'Leertaste zieht die nächste Karte vom Stapel.',
+    'Neue Spielhilfe (?) erklärt Chips, Mult, Ante & Co.',
+    'Übersichtliche Belohnungs-Aufschlüsselung nach jeder Runde.',
+    'Schärfere Kartensymbole, neuer Hintergrund — und ein Notizzettel am Menü mit kleiner Überraschung.',
+  ]},
+ {v:'v0.3', date:'13.06.2026', notes:[
+    'Hauptmenü: FORTSETZEN pausiert und lädt den laufenden Run.',
+    'Steuerung ist nach oben gewandert (Menü · Items · Aufgeben).',
+    'Neuer AUFGEBEN-Knopf führt direkt zum Game-Over.',
+    'ITEMS-Ansicht zeigt deine Perks, dein Deck und den Boss.',
+    'Symbole statt Emojis — sauberere Optik.',
+  ]},
  // { v:'v0.5', date:'', notes:[ 'Dein nächster Punkt …' ] },
 ];
 
@@ -724,6 +730,7 @@ function showScene(name){
   else if(name==='decks')renderDecks();
   else if(name==='news')renderNews();
   else if(name==='cloud')renderCloud();
+  else if(name==='rang')renderRang();
   $('postit').style.display=(name==='menu')?'block':'none';   // sticky note only on the menu
   Music.setMode(name==='game'?'run':'menu');                  // run playlist in-game, menu track elsewhere
   applyScale();   // recompute fit-to-window for the now-visible scene height
@@ -756,6 +763,25 @@ function renderCloud(){
   h+='<div class="cl-status" id="cl-status"></div>';
   $('cloud-body').innerHTML=h;
 }
+function renderRang(){
+  var body=$('rang-body');
+  body.innerHTML='<div class="ach-prog" style="color:#8fbfa6">Lade …</div>';
+  clRpc('kl_leaderboard',{p_limit:50}).then(function(rows){
+    if(!rows||!rows.length){
+      body.innerHTML='<div class="ach-prog" style="color:#8fbfa6">Noch keine Einträge – spiel eine Runde mit aktivierter Cloud!</div>';
+      return;
+    }
+    body.innerHTML=rows.map(function(r,i){
+      var rank=r.rank||(i+1);
+      var st=rank===1?'color:var(--gold)':(rank===2?'color:#c0c0c0':(rank===3?'color:#cd7f32':''));
+      var cls=(r.username===Store.data.meta.cloudName)?' lb-me':'';
+      return '<div class="lb-row'+cls+'"><span class="lb-rank" style="'+st+'">'+rank+'</span><span class="lb-name">'+r.username+'</span><span class="lb-score">ANTE '+r.best_ante+' · '+(r.best_chips||0).toLocaleString('de-DE')+' CHIPS</span></div>';
+    }).join('');
+  }).catch(function(){
+    body.innerHTML='<div class="ach-prog" style="color:var(--pink)">Rangliste nicht erreichbar – bist du online?</div>';
+  });
+}
+
 /* the menu post-it shows the latest version + its first 5 points */
 function renderPostit(){
   const p=PATCH_NOTES[0];
@@ -963,6 +989,7 @@ $('scene-menu').addEventListener('click',function(e){
   else if(go==='ach')showScene('ach');
   else if(go==='news')showScene('news');
   else if(go==='cloud')showScene('cloud');
+  else if(go==='rang')showScene('rang');
   else if(go==='opts')showScene('opts');
   else if(go==='exit')doExit();
 });
