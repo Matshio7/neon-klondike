@@ -758,8 +758,6 @@ function render(){
   $('ante').textContent=G.ante;
   $('tgt').textContent=G.target;
   $('coins').textContent=G.coins;
-  var dc=$('diffchip');
-  if(G.diff){dc.style.display='block';dc.textContent='SCHWIERIGKEIT: '+DIFFICULTIES[G.diff].name;}else{dc.style.display='none';}
   $('recnum').textContent=G.rec;
   const _rc=$('recchip'),_lastRec=(G.rec===0); _rc.classList.toggle('last',_lastRec); $('reclast').hidden=!_lastRec;
   const _uc=undoCost();$('undocost').textContent=_uc;$('undobtn').classList.toggle('off',!!(G.dd&&G.dd.noUndo)||!(G.phase==='play'&&G.undo&&G.undo.length>0&&G.coins>=_uc));
