@@ -16,7 +16,7 @@ body{display:flex;justify-content:center;align-items:flex-start;padding:8px;padd
 #app{
   --cw:46px;--ch:62px;--fanUp:-44px;--fanDn:-50px;
   --mint:#36e0a0;--gold:#ffd23f;--pink:#ff5b7f;--felt:#0e2c1d;--panel:#0a0f0b;
-  width:100%;max-width:440px;position:relative;z-index:2;
+  width:100%;max-width:440px;position:relative;z-index:3;
   transform-origin:top center;   /* UI-scale (Options) applies transform:scale() here */
 }
 
@@ -28,8 +28,10 @@ body{display:flex;justify-content:center;align-items:flex-start;padding:8px;padd
   0%{transform:scale(1.12) translate(0,0)}
   50%{transform:scale(1.2) translate(-2%,1.6%)}
   100%{transform:scale(1.12) translate(0,0)}}
+/* solid colour tint layer between the image and the atmospheric fx */
+#bgtint{position:fixed;inset:0;z-index:1;pointer-events:none;mix-blend-mode:overlay;background:rgba(54,224,160,.55);transition:background .3s}
 /* atmospheric colour layer over the image: drifts, pulses & shifts hue */
-#bgfx{position:fixed;inset:-12%;z-index:1;pointer-events:none;mix-blend-mode:screen;
+#bgfx{position:fixed;inset:-12%;z-index:2;pointer-events:none;mix-blend-mode:screen;
   background:
     radial-gradient(45% 45% at 28% 32%, rgba(54,224,160,.20), transparent 70%),
     radial-gradient(50% 50% at 76% 70%, rgba(16,110,86,.24), transparent 72%),
@@ -97,8 +99,18 @@ body.crt-off #stage::before{display:none}
 .menu-build{position:absolute;bottom:5px;left:0;right:0;text-align:center;font-size:7px;letter-spacing:1.5px;color:#17261d;z-index:1;pointer-events:none;user-select:none}
 .menu-ios{position:absolute;bottom:4px;left:8px;z-index:3;font-family:'Press Start 2P',monospace;font-size:7px;letter-spacing:.5px;color:#3a6b54;background:none;border:none;cursor:pointer;padding:2px}
 .menu-ios:hover{color:var(--mint)}
+.menu-faq{position:absolute;bottom:4px;right:8px;z-index:3;font-family:'Press Start 2P',monospace;font-size:7px;letter-spacing:1px;color:#3a6b54;background:none;border:none;cursor:pointer;padding:2px}
+.menu-faq:hover{color:var(--mint)}
 .iostip{position:absolute;bottom:22px;left:8px;width:188px;background:#0e2418;border:1px solid #2c5a43;border-radius:8px;padding:10px 11px;font-size:8px;color:#bfe6d4;line-height:1.85;z-index:80;text-align:left;box-shadow:0 6px 14px rgba(0,0,0,.5)}
 .iostip b{color:var(--mint)}
+/* FAQ scene */
+.faq-list{display:flex;flex-direction:column;gap:8px;max-height:calc(100vh - 100px);overflow:auto;padding-right:2px;max-width:360px;margin:0 auto}
+.faq-item{background:#0e2418;border:1px solid #244;border-radius:9px;padding:11px 12px;cursor:pointer}
+.faq-q{font-size:9px;color:var(--gold);line-height:1.6;display:flex;justify-content:space-between;align-items:center;gap:8px}
+.faq-q::after{content:'';display:inline-block;width:8px;height:8px;border-right:2px solid #5f8f78;border-bottom:2px solid #5f8f78;transform:rotate(45deg);transition:transform .2s;flex-shrink:0;margin-top:-4px}
+.faq-item.open .faq-q::after{transform:rotate(-135deg);margin-top:2px}
+.faq-a{font-size:8px;color:#bfe6d4;line-height:1.9;margin-top:8px;display:none;padding-top:8px;border-top:1px solid #244}
+.faq-item.open .faq-a{display:block}
 /* drifting suit glyphs in the menu background */
 .drift{position:absolute;color:rgba(54,224,160,.08);font-size:40px;pointer-events:none;z-index:0;animation:drift 14s linear infinite}
 @keyframes drift{0%{transform:translateY(110%) rotate(0)}100%{transform:translateY(-130%) rotate(40deg)}}
@@ -115,7 +127,7 @@ body.crt-off #stage::before{display:none}
   transform:translateX(-50%) rotate(-3deg);background:rgba(214,200,120,.55);border:1px solid rgba(0,0,0,.12)}
 #postit .pt-h{font-size:8px;color:#7a5c00;letter-spacing:.5px;margin-bottom:7px}
 #postit ul{margin:0;padding-left:10px}
-#postit li{font-size:7px;line-height:1.55;margin-bottom:4px;color:#2a2410}
+#postit li{font-size:7px;line-height:1.55;margin-bottom:4px;color:#2a2410;overflow-wrap:break-word;word-break:break-word}
 #postit .pt-more{margin-top:6px;border-top:1px dashed rgba(42,36,16,.5)}
 #postit .pt-tear{font-size:7px;color:#7a5c00;text-align:center;line-height:1.4;padding:5px 0 6px}
 #postit .pt-fringe{display:flex;gap:3px;height:14px;margin:0 -10px -14px}
@@ -254,6 +266,12 @@ body.crt-off #overlay::before{display:none}
 .ach.on .ach-nm{color:var(--gold)}
 .ach-ds{font-size:8px;color:#8fbfa6;line-height:1.7;margin-top:3px}
 
+/* theme selector in options */
+.theme-set{display:flex;flex-wrap:wrap;gap:6px}
+.theme-btn{flex:1;min-width:60px;display:flex;flex-direction:column;align-items:center;gap:4px;font-family:'Press Start 2P',monospace;font-size:7px;padding:8px 4px;border-radius:8px;border:1.5px solid #2c5a43;background:#0d2419;color:#7fae98;cursor:pointer;line-height:1.4}
+.theme-btn:hover{box-shadow:0 0 8px rgba(54,224,160,.3)}
+.theme-btn.theme-active{border-color:var(--gold);color:var(--gold);background:#241d07;box-shadow:0 0 8px rgba(255,210,63,.3)}
+.theme-swatch{width:20px;height:12px;border-radius:3px;border:1px solid rgba(255,255,255,.15)}
 /* =================== OPTIONS =================== */
 #scene-opts{min-height:62vh}
 .orow{display:flex;justify-content:space-between;align-items:center;gap:10px;background:#0e2418;border:1px solid #244;border-radius:9px;padding:13px 12px;margin-bottom:9px}

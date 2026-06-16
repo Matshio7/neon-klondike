@@ -14,6 +14,7 @@
 </head>
 <body>
 <div id="bgimg"></div>
+<div id="bgtint"></div>
 <div id="bgfx"></div>
 <div id="scanlines"></div>
 <div id="app">
@@ -42,6 +43,7 @@
     <div class="menu-build" id="menu-build"></div>
     <button id="iosbtn" class="menu-ios">+ iPhone-App</button>
     <div id="iostip" class="iostip" hidden><b>Auf dem iPhone installieren:</b><br>1. Im Safari öffnen<br>2. Teilen-Symbol antippen<br>3. „Zum Home-Bildschirm"<br>4. „Hinzufügen" — fertig!</div>
+    <button id="faqbtn" class="menu-faq">FAQ</button>
   </section>
 
   <!-- ===================== GAME ===================== -->
@@ -111,21 +113,21 @@
         <div><div class="ol">SOUND</div><div class="od">Lautstärke der Effekte</div></div>
         <div class="ol" id="sfx-pct">75%</div>
       </div>
-      <input type="range" class="vol" id="opt-sfx" min="0" max="100" step="5" value="75">
+      <input type="range" class="vol" id="opt-sfx" min="0" max="100" step="1" value="75">
     </div>
     <div class="orow" style="flex-direction:column;align-items:stretch;gap:9px">
       <div style="display:flex;justify-content:space-between;align-items:baseline;gap:10px">
         <div><div class="ol">MUSIK</div><div class="od">Lautstärke der Hintergrundmusik</div></div>
         <div class="ol" id="music-pct">25%</div>
       </div>
-      <input type="range" class="vol" id="opt-musicvol" min="0" max="100" step="5" value="25">
+      <input type="range" class="vol" id="opt-musicvol" min="0" max="100" step="1" value="25">
     </div>
     <div class="orow" style="flex-direction:column;align-items:stretch;gap:9px">
       <div style="display:flex;justify-content:space-between;align-items:baseline;gap:10px">
         <div><div class="ol">CRT-SCANLINES</div><div class="od">Retro-Bildschirm-Effekt</div></div>
         <div class="ol" id="crt-pct">30%</div>
       </div>
-      <input type="range" class="vol" id="opt-crt" min="0" max="100" step="5" value="30">
+      <input type="range" class="vol" id="opt-crt" min="0" max="100" step="1" value="30">
     </div>
     <div class="orow" style="flex-direction:column;align-items:stretch;gap:9px">
       <div><div class="ol">UI-GRÖSSE</div><div class="od">Skaliert die gesamte Oberfläche</div></div>
@@ -141,9 +143,13 @@
       <div><div class="ol">AN FENSTER ANPASSEN</div><div class="od">Skaliert automatisch auf die Fenstergröße</div></div>
       <button class="tgl" id="opt-fit" data-opt="fit">AUS</button>
     </div>
+    <div class="orow" style="flex-direction:column;align-items:stretch;gap:9px">
+      <div><div class="ol">FARBTHEMA</div><div class="od">Optik des Spiels anpassen</div></div>
+      <div class="theme-set" id="theme-set"></div>
+    </div>
     <button class="opt-reset" id="opt-tut" style="border-color:#2c5a43;background:#0d2419;color:var(--mint)">TUTORIAL ZURÜCKSETZEN</button>
     <button class="opt-reset" id="opt-reset">FORTSCHRITT ZURÜCKSETZEN</button>
-    <div class="opt-about">KLONDAIRE &middot; v0.6<br>RETRO ROGUELIKE SOLITAIRE</div>
+    <div class="opt-about">KLONDAIRE &middot; v0.7.1<br>RETRO ROGUELIKE SOLITAIRE</div>
   </section>
 
   <!-- ===================== GAME OVER ===================== -->
@@ -198,6 +204,16 @@
     </div>
     <div class="ach-prog">BESTE ANTE · DANN CHIPS</div>
     <div class="lb-body" id="rang-body"></div>
+  </section>
+
+  <!-- ===================== FAQ ===================== -->
+  <section class="scene" id="scene-faq" hidden>
+    <div class="shead">
+      <button class="iconbtn" data-back data-ic="back"></button>
+      <div class="ht">FAQ</div>
+      <div style="width:34px"></div>
+    </div>
+    <div class="faq-list" id="faq-list"></div>
   </section>
 
   <!-- ===================== GOODBYE ===================== -->

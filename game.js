@@ -92,7 +92,7 @@ const Music={
   },
   _target(){ return this.mode==='menu'?this.MENU:this.RUN[this.idx]; },
   _play(){ if(this.el&&this.ready&&Store.data.opts.musicVol>0){ var p=this.el.play(); if(p&&p.catch)p.catch(function(){}); } },
-  setVol(){ this.init(); if(!this.el)return; this.el.volume=Store.data.opts.musicVol; if(Store.data.opts.musicVol>0)this._play(); else this.el.pause(); },
+  setVol(){ this.init(); if(!this.el)return; this.el.volume=Store.data.opts.musicVol; if(Store.data.opts.musicVol>0&&this.ready){var p=this.el.play();if(p&&p.catch)p.catch(function(){});}else if(Store.data.opts.musicVol===0)this.el.pause(); },
   sync(){                                                   // match src to mode, then play/pause per settings
     this.init(); if(!this.el)return;
     this.el.volume=Store.data.opts.musicVol;
@@ -172,6 +172,11 @@ function paintIcons(root){(root||document).querySelectorAll('[data-ic]').forEach
    Format: { v:'Titel', date:'optional', notes:['Punkt 1','Punkt 2', ...] }
    ============================================================ */
 const PATCH_NOTES=[
+ {v:'v0.7.1', date:'16.06.2026', notes:[
+   'Feat: FAQ-Button rechts unten im Hauptmenü mit ausklappbaren Fragen & Antworten.',
+   'Feat: Farb-Themes (Neon, Pink, Amber, Midnight, Blood) in den Optionen – färbt auch den Hintergrund ein. (Danke für den Wunsch, liebe*r Spieler*in! 💜)',
+   'Fix: Musik-Slider feinere Steuerung (step 1 statt 5) und direkte Lautstärke-Setzung.',
+ ]},
  {v:'v0.7', date:'15.06.2026', notes:[
    'UI: Konsistente max-width für alle Unter-Seiten — kein wildes Auseinanderziehen.',
     'Etwas wurde im Hauptmenü hinzugefügt … vielleicht findest du ja raus, was es ist.',
@@ -294,6 +299,14 @@ const DIFFICULTIES=[
  {id:6, name:'ALBTRAUM', lab:'6 · ALBTRAUM',       targetMul:2,   coinPen:3,  recPen:2, noInt:true,  noUndo:true,  bossEA:true,  shopPen:3, noSpec:true,   basePen:0.3},
  {id:7, name:'HARDCORE', lab:'7 · HARDCORE',       targetMul:2.5, coinPen:5,  recPen:9, noInt:true,  noUndo:true,  bossEA:true,  shopPen:0, noSpec:true,   basePen:0.5},
 ];
+function hexRgb(h){return {r:parseInt(h.slice(1,3),16),g:parseInt(h.slice(3,5),16),b:parseInt(h.slice(5,7),16)};}
+const THEMES={
+  neon:{mint:'#36e0a0',gold:'#ffd23f',pink:'#ff5b7f',felt:'#0e2c1d',panel:'#0a0f0b',bg:['#36e0a0','#106e56','#78e0b4']},
+  pink:{mint:'#f472b6',gold:'#fbbf24',pink:'#ec4899',felt:'#2d0a1e',panel:'#12050c',bg:['#f472b6','#b91c6c','#f9a8d4']},
+  amber:{mint:'#ffb347',gold:'#ff8c00',pink:'#ff6347',felt:'#1a1200',panel:'#0a0800',bg:['#ffb347','#cc7000','#ffd699']},
+  midnight:{mint:'#60a5fa',gold:'#facc15',pink:'#f472b6',felt:'#0a1628',panel:'#060a12',bg:['#60a5fa','#1e3a5f','#93c5fd']},
+  blood:{mint:'#ff6b6b',gold:'#ffd93d',pink:'#ff4757',felt:'#1a0a0a',panel:'#0a0505',bg:['#ff6b6b','#8b0000','#ffa3a3']},
+};
 let G={};
 let RUN={};   // per-run tracking (resets each new run)
 let runActive=false; // true while a run is in progress (resumable from the menu)
@@ -792,6 +805,7 @@ function showScene(name){
   else if(name==='news')renderNews();
   else if(name==='cloud')renderCloud();
   else if(name==='rang')renderRang();
+  else if(name==='faq')renderFAQ();
   $('postit').style.display=(name==='menu')?'block':'none';   // sticky note only on the menu
   Music.setMode(name==='game'?'run':'menu');                  // run playlist in-game, menu track elsewhere
   applyScale();   // recompute fit-to-window for the now-visible scene height
@@ -801,6 +815,24 @@ function renderNews(){
     '<div class="patch"><h4>'+p.v+(p.date?'<span class="dt">'+p.date+'</span>':'')+'</h4><ul>'+
     p.notes.map(n=>'<li>'+n+'</li>').join('')+'</ul></div>'
   ).join('')||'<div class="ach-prog">NOCH KEINE EINTRÄGE</div>';
+}
+const FAQ=[
+  {q:'Was ist Klondaire?',a:'Ein Roguelike-Solitär – kombiniert klassisches Klondike mit Balatro-artigem Chip/Mult-Scoring. Baue Karten auf die Bank, sammle Chips, erreiche das Ziel und kaufe Perks im Shop.'},
+  {q:'Wie funktioniert das Scoring?',a:'Jede gebankte Karte gibt BASIS-CHIPS × MULT. Basis-Chips starten bei 10 und werden durch Perks erhöht. MULT startet bei 1.0 und steigt durch Perks wie FIEBER, COMBO und ASS-MULT. Dein Ziel ist es, mit diesen Chips das ANTE-ZIEL zu erreichen.'},
+  {q:'Was sind Antes?',a:'Antes sind die Runden. Mit jedem Sieg steigt die Ante und das Ziel wird höher. Jede 3. Ante ist ein Boss mit einer Spezialregel, die es schwerer macht.'},
+  {q:'Was sind Perks?',a:'Perks sind passive Upgrades, die du im SHOP zwischen den Runden kaufst. Sie erhöhen Chips oder MULT. Manche Perks sind permanent (m), andere wirken jede Runde neu.'},
+  {q:'Was sind Bosse?',a:'Bosse erscheinen alle 3 Antes. Jeder Boss hat eine negative Regel: z.B. STEUER (+40% Ziel), DÜRRE (nur 1 Recycle), HALBE KRAFT (alle Chips halbiert). Bosse besiegen gibt extra Belohnung.'},
+  {q:'Was ist VOLT?',a:'VOLT ist die persistente Währung, die du nach jedem Run bekommst – auch wenn du verlierst. Damit kaufst du neue Decks im DECKS-Menü. Erfolge geben einmalig VOLT dazu.'},
+  {q:'Wie schalte ich Decks frei?',a:'Im DECKS-Menü kaufst du Decks mit VOLT. Jedes Deck hat Vor- und Nachteile. Das BOSS-STURM-Deck wird durch den Erfolg THRONRÄUBER freigeschaltet.'},
+  {q:'Was bedeuten die Schwierigkeitsgrade?',a:'Nach einem Sieg (Ante 8) schaltest du den nächsten Schwierigkeitsgrad frei. Höhere Grade erhöhen das Ziel, reduzieren Coins/Recycles, schalten Zinsen oder Undo aus – und bringen Bosse öfter.'},
+  {q:'Was passiert nach Ante 8?',a:'Ante 8 zu schaffen = RUN GEWONNEN. Du kannst im ENDLOS-Modus weiterspielen, um deinen Highscore zu verbessern. Oder du gehst ins Hauptmenü und startest mit einem höheren Schwierigkeitsgrad.'},
+  {q:'Wie funktioniert der Cloud-Save?',a:'Aktiviere die Cloud im CLOUD-Menü mit einem Benutzernamen. Du bekommst einen 8-stelligen Code. Dein Fortschritt wird automatisch nach jeder Runde gespeichert. Mit dem Code lädst du ihn auf jedem Gerät.'},
+  {q:'Was sind Spezialkarten?',a:'Spezialkarten (Joker, Goldkarte, Mult-Karte) tauchen zufällig im Shop auf. Sie sind WILD – überall anlegbar – und geben Bonus-Chips oder MULT. Sie wachsen deinem Deck dauerhaft bei.'},
+];
+function renderFAQ(){
+  $('faq-list').innerHTML=FAQ.map(function(f,i){
+    return '<div class="faq-item" data-faq="'+i+'"><div class="faq-q">'+f.q+'</div><div class="faq-a">'+f.a+'</div></div>';
+  }).join('');
 }
 function clStatus(msg,ok){const s=$('cl-status');if(!s)return;s.textContent=msg;s.style.color=(ok===false)?'var(--pink)':(ok?'var(--mint)':'#8fbfa6');}
 function renderCloud(){
@@ -964,9 +996,34 @@ function renderOpts(){
   $('opt-musicvol').value=mp; $('music-pct').textContent=mp+'%';
   document.querySelectorAll('#scaleset .sbtn').forEach(b=>b.classList.toggle('on',!o.fit&&parseFloat(b.dataset.scale)===(o.scale||1)));
   $('scaleset').classList.toggle('disabled',!!o.fit);
+  // theme rendering
+  var selTheme=Store.data.meta.selectedTheme||'neon';
+  $('theme-set').innerHTML=Object.keys(THEMES).map(function(k){
+    var t=THEMES[k];
+    var active=k===selTheme?' theme-active':'';
+    return '<button class="theme-btn'+active+'" data-theme="'+k+'" title="'+t.mint+'/'+t.gold+'/'+t.pink+'"><span class="theme-swatch" style="background:'+t.mint+'"></span>'+k.toUpperCase()+'</button>';
+  }).join('');
 }
 
-function applyOpts(){ const v=Store.data.opts.crt||0; document.documentElement.style.setProperty('--crt-opacity',v); document.body.classList.toggle('crt-off',v===0); }
+function applyOpts(){ const v=Store.data.opts.crt||0; document.documentElement.style.setProperty('--crt-opacity',v); document.body.classList.toggle('crt-off',v===0); applyTheme(); }
+function applyTheme(){
+  var t=THEMES[Store.data.meta.selectedTheme]||THEMES.neon, app=$('app');
+  if(!app)return;
+  app.style.setProperty('--mint',t.mint);
+  app.style.setProperty('--gold',t.gold);
+  app.style.setProperty('--pink',t.pink);
+  app.style.setProperty('--felt',t.felt);
+  app.style.setProperty('--panel',t.panel);
+  var bg=$('bgfx'),tint=$('bgtint');
+  if(bg&&t.bg){
+    var x0=hexRgb(t.bg[0]);
+    bg.style.background=
+      'radial-gradient(45% 45% at 28% 32%, rgba('+x0.r+','+x0.g+','+x0.b+',.70), transparent 70%),'+
+      'radial-gradient(50% 50% at 76% 70%, rgba('+x0.r+','+x0.g+','+x0.b+',.60), transparent 72%),'+
+      'radial-gradient(42% 42% at 60% 18%, rgba('+x0.r+','+x0.g+','+x0.b+',.40), transparent 75%)';
+  }
+  if(tint){tint.style.background='rgba('+hexRgb(t.bg[0]).r+','+hexRgb(t.bg[0]).g+','+hexRgb(t.bg[0]).b+',.65)';}
+}
 /* UI scaling. transform:scale keeps layout/clientWidth unscaled, so fitCards()
    is unaffected and the whole UI scales uniformly (text + cards + buttons). */
 function applyScale(){
@@ -1096,6 +1153,13 @@ $('postit').addEventListener('click',function(){SFX.click();showScene('news');})
 $('postit-fringe').addEventListener('click',function(e){const t=e.target.closest('span');if(!t)return;e.stopPropagation();tearTab(t);});
 // iPhone homescreen tip toggle
 $('iosbtn').addEventListener('click',function(e){e.stopPropagation();SFX.click();$('iostip').hidden=!$('iostip').hidden;});
+// FAQ button -> FAQ scene
+$('faqbtn').addEventListener('click',function(e){e.stopPropagation();SFX.click();showScene('faq');});
+// FAQ scene: toggle items open/closed
+$('scene-faq').addEventListener('click',function(e){
+  const item=e.target.closest('[data-faq]');if(!item)return;
+  item.classList.toggle('open');SFX.click();
+});
 // decks screen: unlock with VOLT / select active deck
 $('scene-decks').addEventListener('click',function(e){
   const buy=e.target.closest('[data-deck-buy]');
@@ -1134,6 +1198,8 @@ $('scene-opts').addEventListener('click',function(e){
   if(sc){Store.data.opts.scale=parseFloat(sc.dataset.scale);Store.data.opts.fit=false;Store.save();applyScale();renderOpts();SFX.click();return;}
   const t=e.target.closest('[data-opt]');
   if(t){const k=t.dataset.opt;Store.data.opts[k]=!Store.data.opts[k];Store.save();applyOpts();applyScale();renderOpts();SFX.click();return;}
+  const th=e.target.closest('[data-theme]');
+  if(th){Store.data.meta.selectedTheme=th.dataset.theme;Store.save();applyOpts();renderOpts();SFX.click();return;}
 });
 // volume sliders (live)
 $('scene-opts').addEventListener('input',function(e){
