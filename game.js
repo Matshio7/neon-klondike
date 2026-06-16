@@ -32,7 +32,7 @@ const Store={
       decksUnlocked:['standard'],
       perksUnlocked:['plus5','red','ten','fever','streak','ace','rec'], // current 7 stay free
       paidAch:[],                // achievement ids already paid out in VOLT
-      themesUnlocked:['neon'], selectedTheme:'neon',
+      themesUnlocked:['og'], selectedTheme:'og',
       tutDone:false,             // first-run tutorial shown?
       cloudCode:'', cloudName:'', // cloud-save code + username (set when activated)
       difficultyUnlocked:0, selectedDifficulty:0 // difficulty tiers 0-7, unlocked by winning
@@ -301,7 +301,7 @@ const DIFFICULTIES=[
 ];
 function hexRgb(h){return {r:parseInt(h.slice(1,3),16),g:parseInt(h.slice(3,5),16),b:parseInt(h.slice(5,7),16)};}
 const THEMES={
-  neon:{mint:'#36e0a0',gold:'#ffd23f',pink:'#ff5b7f',felt:'#0e2c1d',panel:'#0a0f0b',bg:['#36e0a0','#106e56','#78e0b4']},
+  og:{mint:'#36e0a0',gold:'#ffd23f',pink:'#ff5b7f',felt:'#0e2c1d',panel:'#0a0f0b',bg:null},
   pink:{mint:'#f472b6',gold:'#fbbf24',pink:'#ec4899',felt:'#2d0a1e',panel:'#12050c',bg:['#f472b6','#b91c6c','#f9a8d4']},
   amber:{mint:'#ffb347',gold:'#ff8c00',pink:'#ff6347',felt:'#1a1200',panel:'#0a0800',bg:['#ffb347','#cc7000','#ffd699']},
   midnight:{mint:'#60a5fa',gold:'#facc15',pink:'#f472b6',felt:'#0a1628',panel:'#060a12',bg:['#60a5fa','#1e3a5f','#93c5fd']},
@@ -327,7 +327,7 @@ function newRun(){
   const deck=tut?DECK('standard'):DECK(Store.data.meta.selectedDeck);  // tutorial always on the standard deck
   const diffId=tut?0:(Store.data.meta.selectedDifficulty||0);
   const diffDef=DIFFICULTIES[diffId]||DIFFICULTIES[0];
-  G={ante:1,coins:Math.max(1,deck.coins-diffDef.coinPen),perks:deck.startPerks.slice(),history:[],deck:deck,undo:[],undoUses:0,tutorial:tut,tutStep:0,endless:false,specials:[],specialOffer:null,diff:diffId};
+  G={ante:1,coins:Math.max(1,deck.coins-diffDef.coinPen),perks:deck.startPerks.slice(),history:[],deck:deck,undo:[],undoUses:0,tutorial:tut,tutStep:0,endless:false,specials:[],specialOffer:null,diff:diffId,helpMode:false};
   if(diffId)G.dd=diffDef;
   runActive=true;
   newRound();           // newRound updates bestAnte + saves
@@ -407,7 +407,7 @@ function newRound(){
   G.tab=[[],[],[],[],[],[],[]];
   for(let c=0;c<7;c++){for(let k=0;k<=c;k++){const card=deck.pop();card.up=(k===c);G.tab[c].push(card);}}
   G.stock=deck;G.waste=[];G.found=[[],[],[],[]];
-  G.chips=0;G.roundMult=0;G.phase='play';G.sel=null;G._last=0;G.boss=null;G.undo=[];
+  G.chips=0;G.roundMult=0;G.phase='play';G.sel=null;G._last=0;G.boss=null;G.undo=[];G.helpMode=false;
   G.target=target(G.ante);if(G.deck&&G.deck.targetMul!==1)G.target=Math.round(G.target*G.deck.targetMul/5)*5;G.rec=recBase();
   var dd=DIFFICULTIES[G.diff];if(dd&&dd.targetMul!==1)G.target=Math.round(G.target*dd.targetMul/5)*5;
   if(dd&&dd.recPen)G.rec=Math.max(0,G.rec-dd.recPen);
@@ -674,25 +674,51 @@ function showItems(){
     '<button class="btn gold" data-act="items-close" style="flex:0;padding:11px 18px">'+svg('back')+' ZURÜCK</button>');
 }
 
-/* ---- in-game help: subtle explanations of the scoring terms ---- */
+/* ---- help: highlights + floating labels on the actual board ---- */
 function showHelp(){
   if(G.phase!=='play')return;
-  const intro='<div class="hrow formula"><div class="hk">ZIEL DES SPIELS</div><div class="hv">Räume die Karten ab und „banke" sie auf die vier Ablagen oben (die BANK). Jede gebankte Karte gibt Chips. Erreiche das ZIEL an Chips, bevor dir die Züge ausgehen.</div></div>';
-  const terms=[
-    ['BANK','Die vier Ablagen oben rechts. Lege je Farbe A → 2 → 3 … bis K ab. „Banken" = eine Karte dorthin legen und Chips kassieren.'],
-    ['ZIEL','Die Chip-Zahl hinter dem „/" oben. So viele Chips musst du in dieser Runde sammeln, um sie zu schaffen.'],
-    ['CHIPS','Dein aktueller Punktestand in der Runde (vor dem „/").'],
-    ['MULT','Multiplikator. Eine gebankte Karte zählt: ihre Chips × MULT.'],
-    ['ANTE','Die aktuelle Stufe/Runde. Jede 3. Ante ist ein Boss mit Spezialregel.'],
-    ['COINS','Währung für den Shop zwischen den Runden (Perks kaufen).'],
-    ['RECYCLE','Wie oft du den verbrauchten Zieh-Stapel neu durchgehen darfst (Zähler oben). Leeren Stapel antippen = recyceln.'],
-  ];
-  const list=terms.map(t=>'<div class="hrow"><div class="hk">'+t[0]+'</div><div class="hv">'+t[1]+'</div></div>').join('');
-  const formula='<div class="hrow formula"><div class="hk">SCORE = BASIS-CHIPS × MULT</div><div class="hv">Jede gebankte Karte: Basis-Chips (10) × MULT. Perks erhöhen Basis-Chips oder MULT — so „explodiert" dein Score statt nur zu addieren.</div></div>';
-  const keys='<div class="hrow"><div class="hk">STEUERUNG</div><div class="hv">Karte antippen → aufheben, Ziel antippen → ablegen. Leertaste = nächste Karte ziehen. Doppelklick/-tipp auf eine Karte = direkt auf die Bank.</div></div>';
-  showOv('<h3 style="color:var(--mint)">SPIELHILFE</h3>'+
-    '<div class="help-list">'+intro+list+formula+keys+'</div>'+
-    '<button class="btn gold" data-act="items-close" style="flex:0;padding:11px 18px">'+svg('back')+' ZURÜCK</button>');
+  G.helpMode=!G.helpMode;
+  if(!G.helpMode){cleanHelp();$('overlay').classList.add('hidden');}
+  render();
+}
+function addHelpLabels(){
+  if(!G.helpMode)return;
+  var stage=$('stage'),board=$('board');
+  cleanHelp();
+  // Glow + label for founds (BANK)
+  var founds=board.querySelector('.founds');
+  if(founds){founds.classList.add('hlp-glow','hlp-glow-found');
+    var l1=hlpLabel(stage,board,'BANK: <b>Ass→König</b> je Farbe = Chips!','found');}
+  // Glow + label for stock
+  var stock=board.querySelector('[data-pile="stock"]');
+  if(stock){stock.classList.add('hlp-glow','hlp-glow-stock');
+    var l2=hlpLabel(stage,board,'STAPEL: antippen / <b>LEERTASTE</b>','stock');}
+  // Glow + label for tableau
+  var tab=board.querySelector('#tab');
+  if(tab){tab.classList.add('hlp-glow','hlp-glow-tab');
+    var l3=hlpLabel(stage,board,'TABLEAU: <b>absteigend</b>, Farbe <b>abwechselnd</b>','tab');}
+  // Glow for HUD
+  var hud=$('hud');
+  if(hud){hud.classList.add('hlp-glow','hlp-glow-hud');}
+  // Goal summary
+  var goal=document.createElement('div');
+  goal.className='hlp-goal'; goal.innerHTML='Erreiche CHIPS ≥ ZIEL → <b>SHOP</b> &nbsp;·&nbsp; Doppeltipp = direkt auf die Bank';
+  stage.appendChild(goal);
+  // Dismiss
+  var dis=document.createElement('button');
+  dis.className='hlp-dismiss'; dis.textContent='✕';
+  dis.addEventListener('click',function(e){e.stopPropagation();G.helpMode=false;cleanHelp();render();showScene('game');});
+  stage.appendChild(dis);
+}
+function hlpLabel(stage,board,html,id){
+  var el=document.createElement('div');
+  el.className='hlp-label hlp-label-'+id; el.innerHTML=html;
+  stage.insertBefore(el,board);
+  return el;
+}
+function cleanHelp(){
+  document.querySelectorAll('.hlp-label,.hlp-goal,.hlp-dismiss').forEach(function(el){el.remove();});
+  document.querySelectorAll('.hlp-glow').forEach(function(el){el.classList.remove('hlp-glow','hlp-glow-found','hlp-glow-stock','hlp-glow-tab','hlp-glow-hud');});
 }
 
 /* double-tap / double-click a card -> straight to its foundation (speed play) */
@@ -719,6 +745,7 @@ function awardVolt(){
 function gameOver(){
   G.phase='over';
   if(G.tutorial){G.tutorial=false;Store.data.meta.tutDone=true;tutHide();}
+  G.helpMode=false; cleanHelp();
   G.history.push({ante:G.ante,chips:G.chips,target:G.target,cleared:false,boss:G.boss?G.boss.id:null,failed:true});
   if(G.chips>RUN.bestRound)RUN.bestRound=G.chips;
   if(G.chips>Store.data.stats.bestChips){Store.data.stats.bestChips=G.chips;RUN.newBestChips=true;}
@@ -789,6 +816,7 @@ function render(){
     tb+='<div class="col">'+inner+'</div>';}
   let autoBtn=canAutoCollect()?'<div class="auto-clear" data-act="autoclear">'+svg('star')+' AUTO-RÄUMEN</div>':'';
   $('board').innerHTML='<div id="top"><div class="founds">'+f+'</div><div class="spacer"></div>'+st+w+'</div><div id="tab">'+tb+'</div>'+autoBtn;
+  if(G.helpMode)addHelpLabels();
   saveGame(); evalAch();   // persist + check achievements after every state change
 }
 
@@ -834,7 +862,7 @@ function renderFAQ(){
     return '<div class="faq-item" data-faq="'+i+'"><div class="faq-q">'+f.q+'</div><div class="faq-a">'+f.a+'</div></div>';
   }).join('');
 }
-function clStatus(msg,ok){const s=$('cl-status');if(!s)return;s.textContent=msg;s.style.color=(ok===false)?'var(--pink)':(ok?'var(--mint)':'#8fbfa6');}
+function clStatus(msg,ok){const s=$('cl-status');if(!s)return;s.textContent=msg;s.style.color=(ok===false)?'var(--pink)':(ok?'var(--mint)':'#8fbfa6');s.classList.toggle('loading-pulse',msg.endsWith('…'));}
 function renderCloud(){
   const m=Store.data.meta; let h='';
   if(m.cloudCode){
@@ -858,7 +886,7 @@ function renderCloud(){
 }
 function renderRang(){
   var body=$('rang-body');
-  body.innerHTML='<div class="ach-prog" style="color:#8fbfa6">Lade …</div>';
+  body.innerHTML='<div class="ach-prog loading-pulse" style="color:#8fbfa6">Lade …</div>';
   clRpc('kl_leaderboard',{p_limit:50}).then(function(rows){
     if(!rows||!rows.length){
       body.innerHTML='<div class="ach-prog" style="color:#8fbfa6">Noch keine Einträge – spiel eine Runde mit aktivierter Cloud!</div>';
@@ -997,7 +1025,7 @@ function renderOpts(){
   document.querySelectorAll('#scaleset .sbtn').forEach(b=>b.classList.toggle('on',!o.fit&&parseFloat(b.dataset.scale)===(o.scale||1)));
   $('scaleset').classList.toggle('disabled',!!o.fit);
   // theme rendering
-  var selTheme=Store.data.meta.selectedTheme||'neon';
+  var selTheme=Store.data.meta.selectedTheme||'og';
   $('theme-set').innerHTML=Object.keys(THEMES).map(function(k){
     var t=THEMES[k];
     var active=k===selTheme?' theme-active':'';
@@ -1007,7 +1035,7 @@ function renderOpts(){
 
 function applyOpts(){ const v=Store.data.opts.crt||0; document.documentElement.style.setProperty('--crt-opacity',v); document.body.classList.toggle('crt-off',v===0); applyTheme(); }
 function applyTheme(){
-  var t=THEMES[Store.data.meta.selectedTheme]||THEMES.neon, app=$('app');
+  var t=THEMES[Store.data.meta.selectedTheme]||THEMES.og, app=$('app');
   if(!app)return;
   app.style.setProperty('--mint',t.mint);
   app.style.setProperty('--gold',t.gold);
@@ -1015,14 +1043,16 @@ function applyTheme(){
   app.style.setProperty('--felt',t.felt);
   app.style.setProperty('--panel',t.panel);
   var bg=$('bgfx'),tint=$('bgtint');
-  if(bg&&t.bg){
-    var x0=hexRgb(t.bg[0]);
-    bg.style.background=
-      'radial-gradient(45% 45% at 28% 32%, rgba('+x0.r+','+x0.g+','+x0.b+',.70), transparent 70%),'+
-      'radial-gradient(50% 50% at 76% 70%, rgba('+x0.r+','+x0.g+','+x0.b+',.60), transparent 72%),'+
-      'radial-gradient(42% 42% at 60% 18%, rgba('+x0.r+','+x0.g+','+x0.b+',.40), transparent 75%)';
+  if(bg){
+    if(t.bg){
+      var x0=hexRgb(t.bg[0]);
+      bg.style.background=
+        'radial-gradient(45% 45% at 28% 32%, rgba('+x0.r+','+x0.g+','+x0.b+',.70), transparent 70%),'+
+        'radial-gradient(50% 50% at 76% 70%, rgba('+x0.r+','+x0.g+','+x0.b+',.60), transparent 72%),'+
+        'radial-gradient(42% 42% at 60% 18%, rgba('+x0.r+','+x0.g+','+x0.b+',.40), transparent 75%)';
+    }else bg.style.background='none';
   }
-  if(tint){tint.style.background='rgba('+hexRgb(t.bg[0]).r+','+hexRgb(t.bg[0]).g+','+hexRgb(t.bg[0]).b+',.65)';}
+  if(tint){tint.style.background=t.bg?'rgba('+hexRgb(t.bg[0]).r+','+hexRgb(t.bg[0]).g+','+hexRgb(t.bg[0]).b+',.65)':'none';}
 }
 /* UI scaling. transform:scale keeps layout/clientWidth unscaled, so fitCards()
    is unaffected and the whole UI scales uniformly (text + cards + buttons). */
@@ -1122,7 +1152,7 @@ $('overlay').addEventListener('click',function(e){
   else if(act==='winmenu'){runActive=false;clearSave();SFX.click();showScene('menu');}
 });
 // top bar: home pauses to menu (run stays); items + give up
-$('homebtn').addEventListener('click',function(){SFX.click();showScene('menu');});
+$('homebtn').addEventListener('click',function(){SFX.click();showScene('menu'); if(G)G.helpMode=false;});
 $('itemsbtn').addEventListener('click',function(){SFX.click();showItems();});
 $('undobtn').addEventListener('click',function(){doUndo();});
 $('helpbtn').addEventListener('click',function(){SFX.click();showHelp();});

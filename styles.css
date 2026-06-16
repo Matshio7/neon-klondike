@@ -58,7 +58,7 @@ body.crt-off #stage::before{display:none}
 
 /* ---- scene container (every screen is a framed neon panel) ---- */
 .scene{background:var(--panel);border:2px solid #1c3a2b;border-radius:14px;padding:10px;
-  box-shadow:0 0 22px rgba(54,224,160,.08)}
+  box-shadow:0 0 22px color-mix(in srgb,var(--mint) 8%,transparent)}
 .scene[hidden]{display:none !important}
 
 /* shared headers / back buttons used by sub-screens */
@@ -72,9 +72,9 @@ body.crt-off #stage::before{display:none}
 #scene-menu{min-height:auto;display:flex;flex-direction:column;align-items:center;justify-content:center;
   gap:0;padding:26px 16px 24px;position:relative;overflow:hidden}
 .logo{text-align:center;font-size:22px;line-height:1.5;letter-spacing:2px;white-space:nowrap;color:var(--mint);
-  text-shadow:0 0 8px rgba(54,224,160,.8),0 0 18px rgba(54,224,160,.4);animation:glow 2.4s ease-in-out infinite}
-.logo .h{color:var(--pink);text-shadow:0 0 8px rgba(255,91,127,.8)}
-.logo .d{color:var(--gold);text-shadow:0 0 8px rgba(255,210,63,.8)}
+  text-shadow:0 0 8px color-mix(in srgb,var(--mint) 80%,transparent),0 0 18px color-mix(in srgb,var(--mint) 40%,transparent);animation:glow 2.4s ease-in-out infinite}
+.logo .h{color:var(--pink);text-shadow:0 0 8px color-mix(in srgb,var(--pink) 80%,transparent)}
+.logo .d{color:var(--gold);text-shadow:0 0 8px color-mix(in srgb,var(--gold) 80%,transparent)}
 @keyframes glow{0%,100%{filter:brightness(1)}50%{filter:brightness(1.35)}}
 .tag{font-size:8px;color:#7fae98;letter-spacing:1px;text-align:center;margin-top:-8px}
 .menu-btns{display:flex;flex-direction:column;gap:10px;width:100%;max-width:300px}
@@ -82,12 +82,12 @@ body.crt-off #stage::before{display:none}
   border:2px solid #2c5a43;background:#0d2419;color:var(--mint);cursor:pointer;letter-spacing:1px;
   display:flex;align-items:center;gap:10px;justify-content:flex-start;transition:transform .05s,box-shadow .15s}
 .mbtn:active{transform:scale(.98)}
-.mbtn:hover{box-shadow:0 0 14px rgba(54,224,160,.35)}
+.mbtn:hover{box-shadow:0 0 14px color-mix(in srgb,var(--mint) 35%,transparent)}
 .mbtn .mi{font-size:13px;width:18px;text-align:center}
 .mbtn.gold{border-color:#6b5410;color:var(--gold);background:#241d07}
-.mbtn.gold:hover{box-shadow:0 0 14px rgba(255,210,63,.35)}
+.mbtn.gold:hover{box-shadow:0 0 14px color-mix(in srgb,var(--gold) 35%,transparent)}
 .mbtn.danger{border-color:#5a2238;color:var(--pink);background:#240913}
-.mbtn.danger:hover{box-shadow:0 0 14px rgba(255,91,127,.35)}
+.mbtn.danger:hover{box-shadow:0 0 14px color-mix(in srgb,var(--pink) 35%,transparent)}
 .menu-foot{font-size:8px;color:#5f8f78;text-align:center;line-height:2;margin-top:4px}
 .menu-foot b{color:var(--gold)}
 .diff-dot{display:inline-flex;align-items:center;justify-content:center;width:20px;height:20px;border-radius:50%;font-size:9px;margin:0 2px;cursor:pointer;border:1.5px solid #2c5a43;background:#0d2419;color:#5f8f78;vertical-align:middle;line-height:1}
@@ -141,9 +141,6 @@ body.crt-off #stage::before{display:none}
 @media (max-width:480px){#postit{right:-6px;top:88px}}   /* on phones keep the note on-panel so it isn't clipped */
 
 /* =================== GAME (core, preserved) =================== */
-#topbar{display:flex;align-items:center;gap:6px;margin:2px 0 8px}
-#title{flex:1;text-align:center;font-size:11px;color:var(--mint);letter-spacing:1px}
-#title .h{color:var(--pink)}#title .d{color:var(--gold)}
 #hud{display:flex;justify-content:space-between;align-items:flex-start;font-size:11px;line-height:1.5;margin-bottom:6px;gap:6px}
 #hud .lbl{color:#5f8f78;font-size:9px}
 #hud .val{font-size:12px}
@@ -158,6 +155,8 @@ body.crt-off #stage::before{display:none}
 #stage::before{content:"";position:absolute;inset:0;pointer-events:none;background:repeating-linear-gradient(rgba(0,0,0,0) 0 2px,rgba(0,0,0,.18) 2px 3px);border-radius:10px;z-index:50}
 #board{position:relative;z-index:2}
 #top{display:flex;align-items:flex-start;gap:4px;margin-bottom:10px}
+.loading-pulse{animation:lpulse 1.1s ease-in-out infinite}
+@keyframes lpulse{0%,100%{opacity:.4}50%{opacity:1}}
 .founds{display:flex;gap:4px}.spacer{flex:1}
 .col{display:flex;flex-direction:column;align-items:center}
 #tab{display:flex;gap:4px;justify-content:space-between}
@@ -175,7 +174,7 @@ body.crt-off #stage::before{display:none}
 .fan{margin-top:var(--fanUp)}.fan.dn{margin-top:var(--fanDn)}
 .scorepop{position:absolute;left:50%;top:36px;font-size:14px;color:var(--gold);z-index:70;pointer-events:none;animation:floatUp .8s ease forwards}
 @keyframes floatUp{0%{opacity:0;transform:translate(-50%,8px)}20%{opacity:1}100%{opacity:0;transform:translate(-50%,-30px)}}
-.btn{flex:1;font-family:'Press Start 2P',monospace;font-size:10px;padding:11px 4px;border-radius:8px;border:1.5px solid #2c5a43;background:#0d2419;color:var(--mint);cursor:pointer;line-height:1.4}
+.btn{flex:1;font-family:'Press Start 2P',monospace;font-size:10px;padding:11px 4px;border-radius:8px;border:1.5px solid #2c5a43;background:#0d2419;color:var(--mint);cursor:pointer;line-height:1.4;word-break:break-word;hyphens:auto}
 /* ---- inline SVG icon sizing ---- */
 .svgi{display:inline-flex;align-items:center;justify-content:center;vertical-align:middle}
 .svgi svg{width:1em;height:1em;display:block}
@@ -196,19 +195,18 @@ body.crt-off #stage::before{display:none}
 #recchip .svgi{font-size:14px;color:var(--mint)}
 #recchip b{color:var(--mint);font-size:12px}
 #recchip.last .svgi,#recchip.last b{color:var(--pink)}
-.diffchip{font-size:8px;color:var(--gold);text-align:center;padding:6px 0 2px;letter-spacing:1px}
 .reclast{color:var(--pink);font-size:8px;letter-spacing:.5px;animation:recblink 1s steps(2,start) infinite}
 @keyframes recblink{50%{opacity:.45}}
 /* tutorial coach + highlight glow */
 .tut-glow{box-shadow:0 0 0 3px var(--gold),0 0 14px rgba(255,210,63,.7)!important;animation:tutpulse 1.1s ease-in-out infinite}
 @keyframes tutpulse{50%{box-shadow:0 0 0 3px var(--gold),0 0 22px rgba(255,210,63,.95)!important}}
 #hud.tutglow{outline:2px solid var(--gold);outline-offset:3px;border-radius:6px}
-.tutbox{margin-top:8px;background:#15200a;border:1.5px solid #6b5410;border-radius:10px;padding:11px 12px;display:flex;flex-direction:column;gap:9px;align-items:center;text-align:center}
+.tutbox{margin-top:8px;background:#15200a;border:1.5px solid color-mix(in srgb,var(--gold) 60%,#000);border-radius:10px;padding:11px 12px;display:flex;flex-direction:column;gap:9px;align-items:center;text-align:center}
 .tutbox[hidden]{display:none}
 #tuttext{font-size:9px;color:#ffe8a8;line-height:1.85}
 #tuttext b{color:var(--gold)}
 .tuthint{font-size:8px;color:var(--gold);animation:recblink 1s steps(2,start) infinite}
-.tut-skip{font-size:7px;color:#7a5c00;background:none;border:none;cursor:pointer;text-decoration:underline}
+.tut-skip{font-size:7px;color:color-mix(in srgb,var(--gold) 70%,#000);background:none;border:none;cursor:pointer;text-decoration:underline}
 /* ---- in-game ITEMS panel (rendered in #overlay) ---- */
 .items-list{display:flex;flex-direction:column;gap:7px;width:100%;max-width:360px;margin:0 auto}
 .ideck{font-size:8px;color:var(--gold);border:1px solid #6b5410;background:#241d07;border-radius:8px;padding:9px 10px;text-align:left;line-height:1.7}
@@ -269,7 +267,7 @@ body.crt-off #overlay::before{display:none}
 /* theme selector in options */
 .theme-set{display:flex;flex-wrap:wrap;gap:6px}
 .theme-btn{flex:1;min-width:60px;display:flex;flex-direction:column;align-items:center;gap:4px;font-family:'Press Start 2P',monospace;font-size:7px;padding:8px 4px;border-radius:8px;border:1.5px solid #2c5a43;background:#0d2419;color:#7fae98;cursor:pointer;line-height:1.4}
-.theme-btn:hover{box-shadow:0 0 8px rgba(54,224,160,.3)}
+.theme-btn:hover{box-shadow:0 0 8px color-mix(in srgb,var(--mint) 30%,transparent)}
 .theme-btn.theme-active{border-color:var(--gold);color:var(--gold);background:#241d07;box-shadow:0 0 8px rgba(255,210,63,.3)}
 .theme-swatch{width:20px;height:12px;border-radius:3px;border:1px solid rgba(255,255,255,.15)}
 /* =================== OPTIONS =================== */
@@ -281,9 +279,9 @@ body.crt-off #overlay::before{display:none}
 .tgl.on{border-color:#2c5a43;background:#0d2419;color:var(--mint)}
 .tgl:active{transform:scale(.97)}
 input.vol{-webkit-appearance:none;appearance:none;width:100%;height:18px;background:transparent;cursor:pointer;margin:0}
-input.vol::-webkit-slider-runnable-track{height:6px;border-radius:4px;background:#0e2418;border:1px solid #2c5a43}
+input.vol::-webkit-slider-runnable-track{height:6px;border-radius:4px;background:var(--felt);border:1px solid #2c5a43}
 input.vol::-webkit-slider-thumb{-webkit-appearance:none;appearance:none;width:16px;height:16px;border-radius:3px;background:var(--mint);border:1px solid #0a0f0b;margin-top:-6px;box-shadow:0 0 6px rgba(54,224,160,.5)}
-input.vol::-moz-range-track{height:6px;border-radius:4px;background:#0e2418;border:1px solid #2c5a43}
+input.vol::-moz-range-track{height:6px;border-radius:4px;background:var(--felt);border:1px solid #2c5a43}
 input.vol::-moz-range-thumb{width:15px;height:15px;border-radius:3px;background:var(--mint);border:1px solid #0a0f0b;box-shadow:0 0 6px rgba(54,224,160,.5)}
 .opt-reset{font-family:'Press Start 2P',monospace;font-size:9px;width:100%;padding:12px;border-radius:8px;border:1.5px solid #5a2238;background:#1a0a10;color:var(--pink);cursor:pointer;margin-top:6px;line-height:1.6}
 .opt-about{font-size:8px;color:#5f8f78;text-align:center;line-height:2;margin-top:14px}
@@ -316,12 +314,22 @@ input.vol::-moz-range-thumb{width:15px;height:15px;border-radius:3px;background:
 .sbtn:active{transform:scale(.96)}
 /* subtle help affordance on HUD + in-game help panel */
 #hud [title]{cursor:help}
-.help-list{display:flex;flex-direction:column;gap:6px;width:100%;text-align:left;max-width:360px;margin:0 auto}
-.hrow{background:#0e2418;border:1px solid #244;border-radius:8px;padding:8px 10px}
-.hrow .hk{font-size:9px;color:var(--mint)}
-.hrow .hv{font-size:8px;color:#9fc7b4;line-height:1.7;margin-top:4px}
-.hrow.formula{border-color:#6b5410}
-.hrow.formula .hk{color:var(--gold)}
+/* help highlights + floating labels */
+.hlp-glow{position:relative;z-index:5}
+.hlp-glow-found{box-shadow:0 0 0 2px var(--mint),0 0 12px color-mix(in srgb,var(--mint) 60%,transparent)!important;border-radius:4px}
+.hlp-glow-stock{box-shadow:0 0 0 2px var(--gold),0 0 12px color-mix(in srgb,var(--gold) 60%,transparent)!important;border-radius:4px}
+.hlp-glow-tab{box-shadow:inset 0 0 0 2px var(--pink),0 0 14px color-mix(in srgb,var(--pink) 40%,transparent)!important;border-radius:6px}
+.hlp-glow-hud{filter:brightness(1.3)}
+/* floating labels between stage top and the board */
+.hlp-label{font-size:8px;color:#bfe6d4;line-height:1.5;padding:5px 8px;margin:0 0 6px;background:rgba(0,0,0,.8);border-radius:5px;text-align:center}
+.hlp-label b{color:var(--gold)}
+.hlp-label-found{border-left:3px solid var(--mint)}
+.hlp-label-stock{border-left:3px solid var(--gold)}
+.hlp-label-tab{border-left:3px solid var(--pink)}
+/* goal banner inside the stage */
+.hlp-goal{position:absolute;bottom:42px;left:8px;right:8px;font-size:7px;color:#bfe6d4;text-align:center;padding:5px 8px;background:rgba(0,0,0,.75);border:1px solid #6b5410;border-radius:5px;line-height:1.5;z-index:40}
+.hlp-goal b{color:var(--gold)}
+.hlp-dismiss{position:absolute;bottom:6px;left:50%;transform:translateX(-50%);z-index:45;width:26px;height:26px;border-radius:50%;border:1.5px solid var(--pink);background:rgba(0,0,0,.8);color:var(--pink);font-size:12px;cursor:pointer;font-family:'Press Start 2P',monospace;line-height:0}
 /* round-clear reward breakdown (stacked + readable) */
 .rwd{display:flex;flex-direction:column;gap:6px;width:100%;max-width:280px;margin:2px auto 0}
 .rwd .rr{display:flex;justify-content:space-between;align-items:baseline;gap:10px;font-size:9px;line-height:1.4}
@@ -332,7 +340,7 @@ input.vol::-moz-range-thumb{width:15px;height:15px;border-radius:3px;background:
 /* =================== GAME OVER =================== */
 #scene-over{min-height:62vh;display:flex;flex-direction:column;gap:12px}
 .go-title{text-align:center;font-size:18px;color:var(--pink);letter-spacing:2px;margin:6px 0 2px;
-  text-shadow:0 0 10px rgba(255,91,127,.7);animation:gofx .5s ease}
+  text-shadow:0 0 10px color-mix(in srgb,var(--pink) 70%,transparent);animation:gofx .5s ease}
 @keyframes gofx{0%{transform:scale(.6);opacity:0}60%{transform:scale(1.12)}100%{transform:scale(1);opacity:1}}
 .go-sub{text-align:center;font-size:9px;color:#7fae98;line-height:1.9}
 .go-records{display:flex;flex-wrap:wrap;gap:5px;justify-content:center}
