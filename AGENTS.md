@@ -66,6 +66,7 @@ Status-Marker: `- [ ]` offen · `- [~] (name)` in Arbeit · `- [x]` erledigt (mi
 - [ ] **BL-8** · Run-Historie & Statistik-Screen — Prio: niedrig
 - [x] **BL-9** · Barrierefreiheit (Farbenblind, große Karten) — Prio: niedrig *(Vier-Farben-Deck: erledigt 19.06.2026; Große Karten: verworfen, mobil nicht praktikabel)*
 - [ ] **BL-10** · Deal-3-Modus + echter Stock/Waste-Fächer — Prio: niedrig
+- [ ] **BL-11** · In-App-Ankündigungen / Update-Benachrichtigungen — Prio: mittel
 
 ---
 
@@ -118,6 +119,11 @@ Status-Marker: `- [ ]` offen · `- [~] (name)` in Arbeit · `- [x]` erledigt (mi
 - **Ziel:** Näher am echten Klondike, mehr Varianz.
 - **Umsetzung:** Option oder Deck-Variante: beim Stock-Ziehen 3 Karten aufdecken (nur oberste spielbar), Waste als Fächer zeigen. Betrifft Stock/Waste-Zug- und Render-Logik sowie Recycle-Zählung.
 - **Fertig wenn:** umschaltbar, Regeln korrekt, kurzer Tutorial-Hinweis.
+
+**BL-11 · In-App-Ankündigungen / Update-Benachrichtigungen**
+- **Ziel:** Mats kann Spieler über wichtige Updates (z.B. „Großes Update v0.8") informieren, ohne sofort implementieren zu müssen.
+- **Umsetzung (Vorschlag):** Supabase-Tabelle `announcements(id, message, active, min_version, max_version, created_at, dismiss_days)` + RPC `kl_announcement(p_version text)`. Client ruft beim Start/Hauptmenü auf und zeigt Banner/Modal, wenn eine aktive Nachricht noch nicht dismissed wurde. `localStorage` merkt sich zuletzt gesehene/dismissed ID. Optional später Erweiterung zu echten Web-Push-Benachrichtigungen (erfordert Service-Worker-Push, VAPID-Keys, iOS-Berechtigungen).
+- **Fertig wenn:** Aktive Ankündigung erscheint beim App-Start; Spieler kann sie dismissen; ohne Backend-Deploy änderbar.
 
 ---
 
