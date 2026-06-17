@@ -1310,6 +1310,7 @@ $('opt-reset').addEventListener('click',function(){
   if(confirm('Allen Fortschritt (Erfolge, Rekorde, VOLT & Decks) wirklich löschen?')){Store.reset();renderOpts();SFX.click();alert('Fortschritt zurückgesetzt.');}
 });
 $('opt-tut').addEventListener('click',function(){Store.data.meta.tutDone=false;Store.save();SFX.click();alert('Tutorial wird beim nächsten START gezeigt.');});
+$('opt-daily').addEventListener('click',function(){Store.data.meta.dailyDone='';Store.save();renderMenu();SFX.click();alert('Tages-Lock zurückgesetzt – du kannst die Challenge erneut testen.');});
 // tutorial coach buttons (Weiter / Los / Überspringen)
 $('tutbox').addEventListener('click',function(e){const b=e.target.closest('[data-tut]');if(!b)return;SFX.click();if(b.dataset.tut==='skip')endTutorial();else tutNext();});
 // game over buttons
