@@ -552,9 +552,9 @@ function handleStock(){
   G.sel=null;render();checkStuck();tutGate('stock');
 }
 function doFound(suit){pushUndo();const cs=moving();const c=cs[0];const s=c.joker?suit:c.s;G.found[s].push(c);if(G.sel.p==='waste')G.waste.pop();else{G.tab[G.sel.col].pop();flip(G.tab[G.sel.col]);}const r=bankGain(c);var m=effMult();if(Store.data.opts.testMult)m=5;if(Store.data.opts.effects!==false&&m>3){shake();}if(Store.data.opts.effects!==false&&navigator.vibrate)navigator.vibrate(8);G.sel=null;tutGate('bank');check();if(r.sources.length)setTimeout(function(){animateMultTags(r.sources,r.gain,m);},30);else pop(r.gain,m);}
-function doTab(col){pushUndo();const cs=moving();if(G.sel.p==='waste')G.waste.pop();else if(G.sel.p==='found'){const c=G.found[G.sel.suit].pop();unbank(c);}else G.tab[G.sel.col].splice(G.sel.idx);cs.forEach(c=>G.tab[col].push(c));if(G.sel.p==='tab')flip(G.tab[G.sel.col]);if(G.sel.p!=='found')SFX.buy();G.sel=null;render();checkStuck();}
+function doTab(col){pushUndo();const cs=moving();if(G.sel.p==='waste'){G.waste.pop();}else if(G.sel.p==='found'){const c=G.found[G.sel.suit].pop();unbank(c);}else G.tab[G.sel.col].splice(G.sel.idx);cs.forEach(c=>G.tab[col].push(c));if(G.sel.p==='tab')flip(G.tab[G.sel.col]);if(G.sel.p!=='found'){SFX.buy();}G.sel=null;render();checkStuck();}
 function same(p,col,idx){return G.sel&&G.sel.p===p&&G.sel.col===col&&G.sel.idx===idx;}
-function shake(){SFX.denied();const s=$('stage');s.classList.add('shake');setTimeout(()=>s.classList.remove('shake'),180);}
+function shake(){const s=$('stage');s.classList.add('shake');setTimeout(()=>s.classList.remove('shake'),180);}
 function multTags(){
   var tags=[];
   if(!G)return tags;
@@ -602,7 +602,7 @@ function doUndo(){
   if(G.dd&&G.dd.noUndo)return;
   if(G.phase!=='play'||!G.undo||!G.undo.length)return;
   const cost=undoCost();
-  if(G.coins<cost){shake();return;}
+  if(G.coins<cost){SFX.denied();shake();return;}
   const s=JSON.parse(G.undo.pop());
   G.tab=s.tab;G.waste=s.waste;G.stock=s.stock;G.found=s.found;
   G.chips=s.chips;G.roundMult=s.roundMult;G.rec=s.rec;
@@ -667,13 +667,13 @@ function onClick(e){
   const cs=moving();
   if(p==='found'){
     if(G.sel.p==='found'){G.sel=null;render();return;}        // a Bank card can't go onto the Bank
-    if(cs.length===1&&canFound(cs[0],suit))doFound(suit);else shake();return;
+    if(cs.length===1&&canFound(cs[0],suit))doFound(suit);else{SFX.denied();shake();}return;
   }
   if(p==='tab'){
     if(canTab(cs,col)){doTab(col);return;}
     const c=idx>=0?G.tab[col][idx]:null;
     if(c&&c.up&&validSeq(G.tab[col].slice(idx))){G.sel={p:'tab',col,idx};render();return;}
-    shake();return;
+    SFX.denied();shake();return;
   }
   if(p==='waste'){G.sel=null;selWaste();render();return;}
 }
