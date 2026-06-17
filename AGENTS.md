@@ -171,7 +171,7 @@ Suche nach diesen Namen statt nach Zeilennummern (die wandern):
 
 ## 8. Changelog (neueste zuerst, kurz)
 
-- **BL-6** (20.06.2026) — Score-Pop skaliert mit Multiplikator, Screen-Shake + Vibration bei hohem Mult, neuer Options-Schalter EFFEKTE, `prefers-reduced-motion` respektiert.
+- **BL-6** (20.06.2026) — Permanente Mult-Tags unter MULT-Anzeige mit Trigger-Animation beim Banking; Score-Pop skaliert mit Multiplikator, Screen-Shake + Vibration bei hohem Mult, neuer Options-Schalter EFFEKTE, TestMult-Toggle, `prefers-reduced-motion` respektiert.
 - **v0.7.2** (17.06.2026) — Release: seedbarer Zufall (BL-1, deterministische Runs) + Vier-Farben-Deck (BL-9) offiziell veröffentlicht; Versionsstand an allen 3 Stellen auf v0.7.2 gezogen (sw.js/opt-about/PATCH_NOTES) + kurze Patch-Notes ergänzt. (Push ausstehend.)
 - **v0.7.1-bl9** (19.06.2026) — BL-9 Barrierefreiheit: Vier-Farben-Deck-Toggle in OPTIONS (Farbenblind-Hilfe: getrennte Suit-Farben für Karo/Kreuz).
 - **feature/bl-1** (17.06.2026) — BL-1: Seedbarer Zufall via mulberry32-RNG, `G.seed` in `newRun/snapRun/restoreRun`, RNG-State für Resume, alle spielrelevanten `Math.random()` durch `RNG()` ersetzt, Seed-Anzeige im Game-Over-Screen.
