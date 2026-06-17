@@ -846,22 +846,26 @@ function renderNews(){
   ).join('')||'<div class="ach-prog">NOCH KEINE EINTRÄGE</div>';
 }
 const FAQ=[
-  {q:'Was ist Klondaire?',a:'Ein Roguelike-Solitär – kombiniert klassisches Klondike mit Balatro-artigem Chip/Mult-Scoring. Baue Karten auf die Bank, sammle Chips, erreiche das Ziel und kaufe Perks im Shop.'},
-  {q:'Wie funktioniert das Scoring?',a:'Jede gebankte Karte gibt BASIS-CHIPS × MULT. Basis-Chips starten bei 10 und werden durch Perks erhöht. MULT startet bei 1.0 und steigt durch Perks wie FIEBER, COMBO und ASS-MULT. Dein Ziel ist es, mit diesen Chips das ANTE-ZIEL zu erreichen.'},
-  {q:'Was sind Antes?',a:'Antes sind die Runden. Mit jedem Sieg steigt die Ante und das Ziel wird höher. Jede 3. Ante ist ein Boss mit einer Spezialregel, die es schwerer macht.'},
-  {q:'Was sind Perks?',a:'Perks sind passive Upgrades, die du im SHOP zwischen den Runden kaufst. Sie erhöhen Chips oder MULT. Manche Perks sind permanent (m), andere wirken jede Runde neu.'},
-  {q:'Was sind Bosse?',a:'Bosse erscheinen alle 3 Antes. Jeder Boss hat eine negative Regel: z.B. STEUER (+40% Ziel), DÜRRE (nur 1 Recycle), HALBE KRAFT (alle Chips halbiert). Bosse besiegen gibt extra Belohnung.'},
-  {q:'Was ist VOLT?',a:'VOLT ist die persistente Währung, die du nach jedem Run bekommst – auch wenn du verlierst. Damit kaufst du neue Decks im DECKS-Menü. Erfolge geben einmalig VOLT dazu.'},
-  {q:'Wie schalte ich Decks frei?',a:'Im DECKS-Menü kaufst du Decks mit VOLT. Jedes Deck hat Vor- und Nachteile. Das BOSS-STURM-Deck wird durch den Erfolg THRONRÄUBER freigeschaltet.'},
-  {q:'Was bedeuten die Schwierigkeitsgrade?',a:'Nach einem Sieg (Ante 8) schaltest du den nächsten Schwierigkeitsgrad frei. Höhere Grade erhöhen das Ziel, reduzieren Coins/Recycles, schalten Zinsen oder Undo aus – und bringen Bosse öfter.'},
-  {q:'Was passiert nach Ante 8?',a:'Ante 8 zu schaffen = RUN GEWONNEN. Du kannst im ENDLOS-Modus weiterspielen, um deinen Highscore zu verbessern. Oder du gehst ins Hauptmenü und startest mit einem höheren Schwierigkeitsgrad.'},
-  {q:'Wie funktioniert der Cloud-Save?',a:'Aktiviere die Cloud im CLOUD-Menü mit einem Benutzernamen. Du bekommst einen 8-stelligen Code. Dein Fortschritt wird automatisch nach jeder Runde gespeichert. Mit dem Code lädst du ihn auf jedem Gerät.'},
-  {q:'Was sind Spezialkarten?',a:'Spezialkarten (Joker, Goldkarte, Mult-Karte) tauchen zufällig im Shop auf. Sie sind WILD – überall anlegbar – und geben Bonus-Chips oder MULT. Sie wachsen deinem Deck dauerhaft bei.'},
+  {c:'G',q:'Was ist Klondaire?',a:'Ein Roguelike-Solitär – kombiniert klassisches Klondike mit Balatro-artigem Chip/Mult-Scoring. Baue Karten auf die Bank, sammle Chips, erreiche das Ziel und kaufe Perks im Shop.'},
+  {c:'G',q:'Wie funktioniert das Scoring?',a:'Jede gebankte Karte gibt BASIS-CHIPS × MULT. Basis-Chips starten bei 10 und werden durch Perks erhöht. MULT startet bei 1.0 und steigt durch Perks wie FIEBER, COMBO und ASS-MULT. Dein Ziel ist es, mit diesen Chips das ANTE-ZIEL zu erreichen.'},
+  {c:'G',q:'Was sind Antes?',a:'Antes sind die Runden. Mit jedem Sieg steigt die Ante und das Ziel wird höher. Jede 3. Ante ist ein Boss mit einer Spezialregel, die es schwerer macht.'},
+  {c:'P',q:'Was sind Perks?',a:'Perks sind passive Upgrades, die du im SHOP zwischen den Runden kaufst. Sie erhöhen Chips oder MULT. Manche Perks sind permanent (m), andere wirken jede Runde neu.'},
+  {c:'P',q:'Was sind Bosse?',a:'Bosse erscheinen alle 3 Antes. Jeder Boss hat eine negative Regel: z.B. STEUER (+40% Ziel), DÜRRE (nur 1 Recycle), HALBE KRAFT (alle Chips halbiert). Bosse besiegen gibt extra Belohnung.'},
+  {c:'P',q:'Was passiert nach Ante 8?',a:'Ante 8 zu schaffen = RUN GEWONNEN. Du kannst im ENDLOS-Modus weiterspielen, um deinen Highscore zu verbessern. Oder du gehst ins Hauptmenü und startest mit einem höheren Schwierigkeitsgrad.'},
+  {c:'V',q:'Was ist VOLT?',a:'VOLT ist die persistente Währung, die du nach jedem Run bekommst – auch wenn du verlierst. Damit kaufst du neue Decks im DECKS-Menü. Erfolge geben einmalig VOLT dazu.'},
+  {c:'V',q:'Wie schalte ich Decks frei?',a:'Im DECKS-Menü kaufst du Decks mit VOLT. Jedes Deck hat Vor- und Nachteile. Das BOSS-STURM-Deck wird durch den Erfolg THRONRÄUBER freigeschaltet.'},
+  {c:'V',q:'Was bedeuten die Schwierigkeitsgrade?',a:'Nach einem Sieg (Ante 8) schaltest du den nächsten Schwierigkeitsgrad frei. Höhere Grade erhöhen das Ziel, reduzieren Coins/Recycles, schalten Zinsen oder Undo aus – und bringen Bosse öfter.'},
+  {c:'F',q:'Wie funktioniert der Cloud-Save?',a:'Aktiviere die Cloud im CLOUD-Menü mit einem Benutzernamen. Du bekommst einen 8-stelligen Code. Dein Fortschritt wird automatisch nach jeder Runde gespeichert. Mit dem Code lädst du ihn auf jedem Gerät.'},
+  {c:'F',q:'Was sind Spezialkarten?',a:'Spezialkarten (Joker, Goldkarte, Mult-Karte) tauchen zufällig im Shop auf. Sie sind WILD – überall anlegbar – und geben Bonus-Chips oder MULT. Sie wachsen deinem Deck dauerhaft bei.'},
 ];
 function renderFAQ(){
-  $('faq-list').innerHTML=FAQ.map(function(f,i){
-    return '<div class="faq-item" data-faq="'+i+'"><div class="faq-q">'+f.q+'</div><div class="faq-a">'+f.a+'</div></div>';
-  }).join('');
+  var cats={G:{n:'GRUNDLAGEN',ic:'star'},P:{n:'GAMEPLAY',ic:'trophy'},V:{n:'FORTSCHRITT',ic:'volt'},F:{n:'FEATURES',ic:'cloud'}};
+  var html='', last='';
+  FAQ.forEach(function(f,i){
+    if(f.c!==last){last=f.c;var c=cats[f.c];html+='<div class="faq-cat"><span class="faq-cat-ic">'+svg(c.ic)+'</span>'+c.n+'</div>';}
+    html+='<div class="faq-item" data-faq="'+i+'"><div class="faq-q"><span>'+f.q+'</span></div><div class="faq-a"><span>'+f.a+'</span></div></div>';
+  });
+  $('faq-list').innerHTML=html;
 }
 function clStatus(msg,ok){const s=$('cl-status');if(!s)return;s.textContent=msg;s.style.color=(ok===false)?'var(--pink)':(ok?'var(--mint)':'#8fbfa6');s.classList.toggle('loading-pulse',msg.endsWith('…'));}
 function renderCloud(){

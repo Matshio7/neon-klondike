@@ -14,7 +14,7 @@
 3. Wähle eine Aufgabe und **markiere sie in Abschnitt 3 als in Arbeit** mit deinem Namen, z. B. `- [~] (opencode) …`.
 4. Arbeite nach den **Konventionen (Abschnitt 4)**. Nach Code-Änderung: **`node --check game.js`**.
 5. **Aktualisiere diese Datei**: Stand (Abschnitt 2), TODO (Abschnitt 3), Changelog (Abschnitt 8).
-6. **`git commit`** (Format siehe 4) **+ `git push`**. Wird der Push abgelehnt: `git pull --rebase`, Konflikte lösen, erneut pushen.
+6. **`git commit`** (Format siehe 4). **Vor `git push` immer den Nutzer fragen / Freigabe einholen.** Erst nach explizitem OK pushen. Wird der Push abgelehnt: `git pull --rebase`, Konflikte lösen, erneut freigeben lassen.
 
 **Parallelbetrieb:** Möglichst **nicht dieselbe Datei gleichzeitig** von zwei Agents bearbeiten lassen. Immer `pull` vor und `push` nach jeder Änderung — so bleiben alle synchron und Merge-Konflikte klein.
 
@@ -37,7 +37,7 @@
 - **Deploy:** `git commit` + `git push` auf `main` → GitHub Pages baut automatisch (~1–2 Min). *Kein manuelles Hochladen mehr.*
 - **Build:** `node --check game.js` läuft sauber. Arbeitsverzeichnis i. d. R. clean.
 - **Echte Spieler aktiv** (Cloud-Rangliste wird genutzt).
-- **Zuletzt:** Help-Mode überarbeitet (Board-Highlights + floating Labels statt Overlay), Dead Code entfernt (#diffchip, #title), Farben theme-konsistent (color-mix statt Hex), Slider-Track via --felt, Keyboard-Hint (LEERTASTE) entfernt, Lade-Indikator für Cloud/Rangliste, OG-Thema (Neon umbenannt, bg:null = kein Hintergrund-Filter), Spielhilfe auf Basics reduziert.
+- **Zuletzt:** FAQ-Seite überarbeitet: Kategorien (Grundlagen/Gameplay/Fortschritt/Features) mit Icons, gleitendes Auf/Zuklappen, helleres Layout. Davor: Help-Mode überarbeitet (Board-Highlights + floating Labels statt Overlay), Dead Code entfernt (#diffchip, #title), Farben theme-konsistent (color-mix statt Hex), Slider-Track via --felt, Keyboard-Hint (LEERTASTE) entfernt, Lade-Indikator für Cloud/Rangliste, OG-Thema (Neon umbenannt, bg:null = kein Hintergrund-Filter), Spielhilfe auf Basics reduziert.
 - **Cleanup (17.06.2026):** XSS-Helfer `esc()` eingebaut und in `renderRang()` + `renderCloud()` genutzt, `sw.js` VER auf `klondaire-v0.7.1` gezogen, `music_orig/` aus dem Repo entfernt und ins `.gitignore` aufgenommen.
 
 ---
@@ -109,7 +109,7 @@ Suche nach diesen Namen statt nach Zeilennummern (die wandern):
 
 ## 8. Changelog (neueste zuerst, kurz)
 
-- **v0.7.1** (16.–17.06.2026) — FAQ-Button, Farb-Themes (Neon/Pink/Amber/Midnight/Blood, tönen den Hintergrund), feinerer Musik-Regler; danach UI/UX-Aufräum-Pass (Dead Code raus, Hilfe-Modus mit Board-Highlights, Default-Theme „Neon"→„OG", Farben theme-konsistent, Slider-Track via --felt, Lade-Indikator).
+- **v0.7.1** (16.–18.06.2026) — FAQ-Button, Farb-Themes (Neon/Pink/Amber/Midnight/Blood, tönen den Hintergrund), feinerer Musik-Regler; UI/UX-Aufräum-Pass (Dead Code raus, Hilfe-Modus mit Board-Highlights, Default-Theme „Neon"→„OG", Farben theme-konsistent, Slider-Track via --felt, Lade-Indikator, FAQ-Seite visuell überarbeitet mit Kategorien & Animation).
 - **v0.7.1-cleanup** (17.06.2026) — Sicherheit: `esc()`-Helfer gegen Stored-XSS in `renderRang()` / `renderCloud()`; `sw.js` Cache-Version auf `klondaire-v0.7.1` synchronisiert; `music_orig/` (~27 MB) aus dem Repository entfernt und ins `.gitignore` aufgenommen.
 - **v0.7** (15.06.2026) — Schwierigkeitssystem (Auswahl im Menü), stufenloser CRT-Regler, AUTO-RÄUMEN (Auto-Einbanken), Erfolg „Voll im Blick", Musik auf 128 kbps komprimiert.
 - **v0.6.1** (15.06.2026) — Rangliste/Bestenliste (Client), kräftigerer CRT-Filter, UI-Tweaks.
@@ -118,4 +118,4 @@ Suche nach diesen Namen statt nach Zeilennummern (die wandern):
 
 ---
 
-*Letzte Aktualisierung dieser Datei: 17.06.2026 (Session 3 — Kimi-Code-CLI).*
+*Letzte Aktualisierung dieser Datei: 18.06.2026.*
