@@ -71,7 +71,7 @@ Status-Marker: `- [ ]` offen · `- [~] (name)` in Arbeit · `- [x]` erledigt (mi
   Das Menü-Label „build vX" leitet sich aus `PATCH_NOTES[0].v` ab.
 - **Sicherheit:** Jegliche **User-Eingabe** (v. a. Benutzernamen aus der Cloud) vor `innerHTML` **escapen**. Niemals den Supabase **`service_role`-Key** in den Client/das Repo schreiben — im Client wird ausschließlich der **publishable** Key benutzt (steht im `CLOUD`-Objekt in `game.js`, ist bewusst öffentlich; Tabelle ist per RLS gesichert).
 - **Verifizieren:** nach Code-Änderung `node --check game.js`; bei UI-Änderungen im Browser gegentesten.
-- **Deploy:** nur über `git push` (siehe 0). Assets (`music/`, `img/`) liegen mit im Repo.
+- **Deploy:** nur über `git push` (siehe 0) — **vor dem Push immer Nutzer-Freigabe einholen.** Assets (`music/`, `img/`) liegen mit im Repo.
 
 ---
 
