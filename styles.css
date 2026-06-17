@@ -310,9 +310,11 @@ input.vol::-moz-range-thumb{width:15px;height:15px;border-radius:3px;background:
 .cl-status{min-height:14px;font-size:8px;line-height:1.8;color:#8fbfa6;text-align:center;margin-top:2px}
 
 /* ---- leaderboard / rangliste ---- */
-.lb-toggle{display:flex;gap:6px;justify-content:center;margin-bottom:10px}
-.lb-tab{font-family:'Press Start 2P',monospace;font-size:9px;padding:8px 12px;border-radius:7px;border:1.5px solid #2c5a43;background:#0d2419;color:#7fae98;cursor:pointer}
+.lb-toggle{display:flex;gap:6px;justify-content:center;margin:0 auto 10px;max-width:360px}
+.lb-tab{flex:1;font-family:'Press Start 2P',monospace;font-size:9px;padding:10px 4px;border-radius:7px;border:1.5px solid #2c5a43;background:#0d2419;color:#7fae98;cursor:pointer;text-align:center;line-height:1.3}
+.lb-tab:hover{box-shadow:0 0 10px color-mix(in srgb,var(--mint) 25%,transparent)}
 .lb-tab.active{border-color:var(--gold);color:var(--gold);background:#241d07;box-shadow:0 0 8px rgba(255,210,63,.25)}
+.lb-tab.active:hover{box-shadow:0 0 10px color-mix(in srgb,var(--gold) 35%,transparent)}
 .lb-body{display:flex;flex-direction:column;gap:5px;max-height:54vh;overflow:auto;padding-right:2px;max-width:360px;margin:0 auto}
 .lb-row{display:flex;justify-content:space-between;align-items:center;gap:8px;background:#0e2418;border:1px solid #244;border-radius:8px;padding:9px 10px;font-size:9px;line-height:1.5}
 .lb-rank{color:var(--gold);min-width:22px;text-align:center;font-size:11px;font-weight:bold}
