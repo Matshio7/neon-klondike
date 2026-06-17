@@ -494,33 +494,41 @@ function handleStock(){
   else if(G.rec>0&&G.waste.length){while(G.waste.length){const c=G.waste.pop();c.up=false;G.stock.push(c);}G.rec--;}
   G.sel=null;render();checkStuck();tutGate('stock');
 }
-function doFound(suit){pushUndo();const cs=moving();const c=cs[0];const s=c.joker?suit:c.s;G.found[s].push(c);if(G.sel.p==='waste')G.waste.pop();else{G.tab[G.sel.col].pop();flip(G.tab[G.sel.col]);}const r=bankGain(c);var m=effMult();if(Store.data.opts.testMult)m=5;showBankChain(r.sources,r.gain,m);if(Store.data.opts.effects!==false&&m>3){shake();}if(Store.data.opts.effects!==false&&navigator.vibrate)navigator.vibrate(8);G.sel=null;tutGate('bank');check();}
+function doFound(suit){pushUndo();const cs=moving();const c=cs[0];const s=c.joker?suit:c.s;G.found[s].push(c);if(G.sel.p==='waste')G.waste.pop();else{G.tab[G.sel.col].pop();flip(G.tab[G.sel.col]);}const r=bankGain(c);var m=effMult();if(Store.data.opts.testMult)m=5;animateMultTags(r.sources,r.gain,m);if(Store.data.opts.effects!==false&&m>3){shake();}if(Store.data.opts.effects!==false&&navigator.vibrate)navigator.vibrate(8);G.sel=null;tutGate('bank');check();}
 function doTab(col){pushUndo();const cs=moving();if(G.sel.p==='waste')G.waste.pop();else if(G.sel.p==='found'){const c=G.found[G.sel.suit].pop();unbank(c);}else G.tab[G.sel.col].splice(G.sel.idx);cs.forEach(c=>G.tab[col].push(c));if(G.sel.p==='tab')flip(G.tab[G.sel.col]);G.sel=null;render();checkStuck();}
 function same(p,col,idx){return G.sel&&G.sel.p===p&&G.sel.col===col&&G.sel.idx===idx;}
 function shake(){const s=$('stage');s.classList.add('shake');setTimeout(()=>s.classList.remove('shake'),180);}
-function showBankChain(sources,gain,mult){
-  const el=$('multchain');if(!el)return;
+function multTags(){
+  var tags=[];
+  if(!G)return tags;
+  if(G.perks.includes('streak'))tags.push({label:'Streak',add:0.1});
+  if(G.perks.includes('ace'))tags.push({label:'Ass',add:0.5});
+  if(G.perks.includes('comboplus'))tags.push({label:'Combo+',add:0.2});
+  return tags;
+}
+function renderMultTags(){
+  var el=$('multtags');if(!el)return;
   el.innerHTML='';
-  if(!sources.length){pop(gain,mult);return;}
-  sources.forEach(function(src){
-    const r=document.createElement('div');r.className='mc-row';r.textContent='+'+src.add.toFixed(1)+' '+src.label;
-    el.appendChild(r);
+  multTags().forEach(function(t){
+    var d=document.createElement('div');d.className='mtag';d.dataset.tag=t.label;
+    d.textContent=t.label+' +'+t.add.toFixed(1);
+    el.appendChild(d);
   });
-  const tt=document.createElement('div');tt.className='mc-total';tt.textContent='= x'+mult.toFixed(1);
-  el.appendChild(tt);el.classList.remove('hidden');
-  const rows=el.querySelectorAll('.mc-row');
+}
+function animateMultTags(sources,gain,mult){
+  var el=$('multtags');if(!el)return;
+  if(!sources.length){pop(gain,mult);return;}
   var cur=mult-sources.reduce(function(s,src){return s+src.add;},0);
   function step(i){
     if(i>=sources.length){
       $('mult').innerHTML='x'+mult.toFixed(1);
-      tt.classList.add('mc-active');
       pop(gain,mult);
-      setTimeout(function(){el.classList.add('hidden');},1200);
+      setTimeout(function(){el.querySelectorAll('.mtag').forEach(function(t){t.classList.remove('mtag-hit');});},800);
       return;
     }
     cur+=sources[i].add;
     $('mult').innerHTML='x'+cur.toFixed(1);
-    rows[i].classList.add('mc-active');
+    el.querySelectorAll('.mtag').forEach(function(t){if(t.dataset.tag===sources[i].label)t.classList.add('mtag-hit');});
     setTimeout(function(){step(i+1);},220);
   }
   step(0);
@@ -865,6 +873,7 @@ function render(){
   $('board').innerHTML='<div id="top"><div class="founds">'+f+'</div><div class="spacer"></div>'+st+w+'</div><div id="tab">'+tb+'</div>'+autoBtn;
   if(G.helpMode)addHelpLabels();
   saveGame(); evalAch();   // persist + check achievements after every state change
+  renderMultTags();
 }
 
 /* ============================================================
