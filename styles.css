@@ -172,6 +172,7 @@ body.crt-off #stage::before{display:none}
 .card .pip{position:absolute;bottom:3px;right:4px;font-size:calc(var(--cw)*0.40);line-height:1}
 .card .pip .svgi{display:block}
 .card.red{color:#d8332f}.card.blk{color:#16110a}
+.four-color .s-2{color:#2266dd}.four-color .s-3{color:#33aa55}
 .card.down{background:#13261c;border:1px solid var(--mint);background-image:repeating-linear-gradient(45deg,#163a29 0 6px,#0f2a1e 6px 12px)}
 .card.spec{background:#f3e7a6;border:1px solid #6b5410;box-shadow:0 0 7px rgba(255,210,63,.6)}
 .card.spec .cn,.card.spec .pip{color:#7a5c00}
