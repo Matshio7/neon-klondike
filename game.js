@@ -359,6 +359,8 @@ function newRun(daily){
 function doDaily(){
   const day=todayStr();
   if(Store.data.meta.dailyDone===day){SFX.click();alert('Tages-Challenge bereits gespielt. Morgen gibt es eine neue!');return;}
+  SFX.click();
+  if(!confirm('TAGES-CHALLENGE\n\nFür alle Spieler heute derselbe Seed.\nNur EIN Versuch pro Tag.\n\nStarten?'))return;
   showScene('game');fitCards();newRun(true);
 }
 function dailySubmit(){
@@ -1006,8 +1008,9 @@ function renderMenu(){
   $('m-deck').textContent=DECK(Store.data.meta.selectedDeck).name;
   $('m-wins').textContent=Store.data.stats.wins||0;
   $('btn-resume').hidden=!(runActive||hasSave());   // show FORTSETZEN for a paused run or a saved one
-  const bd=$('btn-daily');
-  if(bd){bd.disabled=(Store.data.meta.dailyDone===todayStr()); bd.innerHTML='<span class="mi" data-ic="star"></span> TÄGLICH'+(bd.disabled?' ✓':'');}
+  const bd=$('btn-daily'),chk=$('daily-check');
+  if(bd){bd.disabled=(Store.data.meta.dailyDone===todayStr());}
+  if(chk){chk.textContent=(Store.data.meta.dailyDone===todayStr()?' ✓':'');}
   $('menu-build').textContent='build '+((PATCH_NOTES[0]&&PATCH_NOTES[0].v)||'?');
   $('iostip').hidden=true;             // close the iPhone tip when (re)entering the menu
   // difficulty selector
