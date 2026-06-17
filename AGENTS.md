@@ -37,7 +37,7 @@
 - **Deploy:** `git commit` + `git push` auf `main` → GitHub Pages baut automatisch (~1–2 Min). *Kein manuelles Hochladen mehr.*
 - **Build:** `node --check game.js` läuft sauber. Arbeitsverzeichnis i. d. R. clean.
 - **Echte Spieler aktiv** (Cloud-Rangliste wird genutzt).
-- **Zuletzt:** TEST-MULT aus Options ins Dev-Menü verschoben; FAQ-Eintrag zum Namen „Klondaire" hinzugefügt.
+- **Zuletzt:** FAQ-Eintrag zum Namen „Klondaire" hinzugefügt.
 - **Cleanup (17.06.2026):** XSS-Helfer `esc()` eingebaut und in `renderRang()` + `renderCloud()` genutzt, `sw.js` VER auf `klondaire-v0.7.1` gezogen, `music_orig/` aus dem Repo entfernt und ins `.gitignore` aufgenommen.
 
 ---

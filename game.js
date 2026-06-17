@@ -173,10 +173,9 @@ function paintIcons(root){(root||document).querySelectorAll('[data-ic]').forEach
    Format: { v:'Titel', date:'optional', notes:['Punkt 1','Punkt 2', ...] }
    ============================================================ */
 const PATCH_NOTES=[
- {v:'v0.7.5', date:'17.06.2026', notes:[
-   'TEST-MULT aus Options ins geheime Dev-Menü verschoben.',
-   'FAQ: Erklärung zum Namen „Klondaire" hinzugefügt.',
- ]},
+  {v:'v0.7.5', date:'17.06.2026', notes:[
+    'FAQ: Erklärung zum Namen „Klondaire" hinzugefügt.',
+  ]},
  {v:'v0.7.4', date:'17.06.2026', notes:[
    'Option: Reihenfolge der Bank-Farben frei anpassen.',
  ]},
@@ -1385,7 +1384,7 @@ $('opt-reset').addEventListener('click',function(){
   if(confirm('Allen Fortschritt (Erfolge, Rekorde, VOLT & Decks) wirklich löschen?')){Store.reset();renderOpts();SFX.click();alert('Fortschritt zurückgesetzt.');}
 });
 $('opt-tut').addEventListener('click',function(){Store.data.meta.tutDone=false;Store.save();SFX.click();alert('Tutorial wird beim nächsten START gezeigt.');});
-// secret dev menu: tap build label 10 times to toggle
+// dev menu: tap build label 10 times to toggle
 (function(){
   let devTaps=0, devTimer=null, devShown=false;
   const build=$('menu-build'), panel=$('dev-panel');
