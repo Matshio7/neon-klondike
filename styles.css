@@ -161,6 +161,9 @@ body.crt-off #stage::before{display:none}
 #tgt{color:var(--gold)} #coins{color:var(--gold)} #ante{color:var(--pink)}
 #multline{font-size:9px;color:#5f8f78;margin-top:3px}
 #mult{color:var(--pink);font-size:11px}
+#multtags{display:flex;gap:3px;justify-content:center;flex-wrap:wrap;margin-top:3px;min-height:16px}
+.mtag{font-size:7px;padding:1px 4px;border-radius:3px;background:rgba(255,210,63,.1);border:1px solid rgba(255,210,63,.2);color:var(--gold);transition:background .15s,transform .15s}
+.mtag.mtag-hit{background:rgba(255,210,63,.4);transform:scale(1.15)}
 #bossstrip{font-size:8px;color:var(--pink);border:1px solid #5a2238;background:#240913;border-radius:6px;padding:5px 7px;margin-bottom:7px;line-height:1.7;text-align:center}
 #bossstrip.hidden{display:none}
 #stage{position:relative;background:var(--felt);border-radius:10px;padding:8px;min-height:62vh;border:1px solid #173a28;overflow:hidden}
@@ -261,7 +264,7 @@ body.crt-off #overlay::before{display:none}
 .deck-aktiv{font-size:9px;color:var(--gold);border:1.5px solid #6b5410;background:#241d07;border-radius:6px;padding:9px 11px;white-space:nowrap}
 #stage.shake{animation:shk .18s}
 @keyframes shk{25%{transform:translateX(-4px)}75%{transform:translateX(4px)}}
-
+@media(prefers-reduced-motion:reduce){#stage.shake{animation:none}}
 /* =================== ACHIEVEMENTS =================== */
 #scene-ach{min-height:62vh}
 .ach-prog{text-align:center;font-size:9px;color:#7fae98;margin-bottom:10px}

@@ -66,7 +66,7 @@
     </div>
     <div id="hud">
       <div title="ANTE — aktuelle Runde. Steigt nach jedem Sieg; jede 3. Ante ist ein Boss."><div class="lbl">ANTE</div><div class="val" id="ante">1</div></div>
-      <div style="text-align:center" title="CHIPS — dein Score / Ziel. Jede gebankte Karte: Basis-Chips × MULT."><div class="lbl">CHIPS</div><div class="val"><span id="chips">0</span><span style="color:#456">/</span><span id="tgt">60</span></div><div id="multline" title="MULT — Multiplikator. Score = Chips × MULT.">MULT <span id="mult">&#215;1.0</span></div></div>
+      <div style="text-align:center" title="CHIPS — dein Score / Ziel. Jede gebankte Karte: Basis-Chips × MULT."><div class="lbl">CHIPS</div><div class="val"><span id="chips">0</span><span style="color:#456">/</span><span id="tgt">60</span></div><div id="multline" title="MULT — Multiplikator. Score = Chips × MULT.">MULT <span id="mult">&#215;1.0</span></div><div id="multtags"></div></div>
       <div style="text-align:right" title="COINS — Währung für den Shop zwischen den Runden."><div class="lbl">COINS</div><div class="val" id="coins">4</div></div>
     </div>
     <div id="bossstrip" class="hidden"></div>
@@ -150,13 +150,21 @@
       <div><div class="ol">VIER-FARBEN-DECK</div><div class="od">Farbenblind-Hilfe: Karo blau, Kreuz grün</div></div>
       <button class="tgl" id="opt-fourcolor" data-opt="fourColor">AUS</button>
     </div>
+    <div class="orow">
+      <div><div class="ol">EFFEKTE</div><div class="od">Shake + Vibration bei hohem Multiplikator</div></div>
+      <button class="tgl" id="opt-effects" data-opt="effects">AN</button>
+    </div>
+    <div class="orow" style="opacity:.5">
+      <div><div class="ol">TEST-MULT</div><div class="od">Erzwungener Multiplikator x5 (Test)</div></div>
+      <button class="tgl" id="opt-testmult" data-opt="testMult">AUS</button>
+    </div>
     <div class="orow" style="flex-direction:column;align-items:stretch;gap:9px">
       <div><div class="ol">FARBTHEMA</div><div class="od">Optik des Spiels anpassen</div></div>
       <div class="theme-set" id="theme-set"></div>
     </div>
     <button class="opt-reset" id="opt-tut" style="border-color:#2c5a43;background:#0d2419;color:var(--mint)">TUTORIAL ZURÜCKSETZEN</button>
     <button class="opt-reset" id="opt-reset">FORTSCHRITT ZURÜCKSETZEN</button>
-    <div class="opt-about">KLONDAIRE &middot; v0.7.2<br>RETRO ROGUELIKE SOLITAIRE</div>
+    <div class="opt-about">KLONDAIRE &middot; v0.7.3<br>RETRO ROGUELIKE SOLITAIRE</div>
   </section>
 
   <!-- ===================== GAME OVER ===================== -->

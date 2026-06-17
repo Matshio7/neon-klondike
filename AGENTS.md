@@ -33,11 +33,11 @@
 
 ## 2. Aktueller Stand  ← hier zuerst schauen
 
-- **Version:** v0.7.2 (Release-Bump vorbereitet — Push ausstehend; v0.7.1 ist aktuell live)
+- **Version:** v0.7.3 (live & gepusht)
 - **Deploy:** `git commit` + `git push` auf `main` → GitHub Pages baut automatisch (~1–2 Min). *Kein manuelles Hochladen mehr.*
 - **Build:** `node --check game.js` läuft sauber. Arbeitsverzeichnis i. d. R. clean.
 - **Echte Spieler aktiv** (Cloud-Rangliste wird genutzt).
-- **Zuletzt:** BL-9 Barrierefreiheit: Vier-Farben-Deck (Farbenblind-Hilfe) in OPTIONS eingebaut. Davor: FAQ-Seite überarbeitet: Kategorien (Grundlagen/Gameplay/Fortschritt/Features) mit Icons, gleitendes Auf/Zuklappen, helleres Layout. Davor: Help-Mode überarbeitet (Board-Highlights + floating Labels statt Overlay), Dead Code entfernt (#diffchip, #title), Farben theme-konsistent (color-mix statt Hex), Slider-Track via --felt, Keyboard-Hint (LEERTASTE) entfernt, Lade-Indikator für Cloud/Rangliste, OG-Thema (Neon umbenannt, bg:null = kein Hintergrund-Filter), Spielhilfe auf Basics reduziert.
+- **Zuletzt:** v0.7.3 Release mit Tages-Challenge (BL-2) und mehr Juice (BL-6).
 - **Cleanup (17.06.2026):** XSS-Helfer `esc()` eingebaut und in `renderRang()` + `renderCloud()` genutzt, `sw.js` VER auf `klondaire-v0.7.1` gezogen, `music_orig/` aus dem Repo entfernt und ins `.gitignore` aufgenommen.
 
 ---
@@ -61,7 +61,7 @@ Status-Marker: `- [ ]` offen · `- [~] (name)` in Arbeit · `- [x]` erledigt (mi
 - [ ] **BL-3** · Einmal-Karten / Verbrauchsgegenstände — Prio: hoch
 - [ ] **BL-4** · Perk-Seltenheitsstufen + Synergien — Prio: hoch
 - [ ] **BL-5** · Boss-Vorschau + Endboss + mehr Bosse — Prio: mittel
-- [ ] **BL-6** · Mehr „Juice" (Feedback/Animation/Haptik) — Prio: mittel
+- [x] **BL-6** · Mehr „Juice" (Feedback/Animation/Haptik) — Prio: mittel *(opencode, 20.06.2026)*
 - [ ] **BL-7** · Anti-Cheat / Plausibilität fürs Leaderboard — Prio: mittel *(sobald Rangliste ernster)*
 - [ ] **BL-8** · Run-Historie & Statistik-Screen — Prio: niedrig
 - [x] **BL-9** · Barrierefreiheit (Farbenblind, große Karten) — Prio: niedrig *(Vier-Farben-Deck: erledigt 19.06.2026; Große Karten: verworfen, mobil nicht praktikabel)*
@@ -177,8 +177,8 @@ Suche nach diesen Namen statt nach Zeilennummern (die wandern):
 
 ## 8. Changelog (neueste zuerst, kurz)
 
-- **v0.7.2** (17.06.2026) — Release: seedbarer Zufall (BL-1, deterministische Runs) + Vier-Farben-Deck (BL-9) offiziell veröffentlicht; Versionsstand an allen 3 Stellen auf v0.7.2 gezogen (sw.js/opt-about/PATCH_NOTES) + kurze Patch-Notes ergänzt.
-- **feature/bl-2** (17.06.2026) — BL-2: Tages-Challenge mit festem Tages-Seed, "TÄGLICH"-Button im Menü, 1 Versuch/Tag via `dailyDone`, Score-Submit an `kl_daily_submit`, Umschalter GESAMT/HEUTE in der Rangliste, Backend-Kommentare für `daily_scores` + RPCs.
+- **v0.7.3** (20.06.2026) — Tages-Challenge mit täglichem festen Seed + Rangliste GESAMT/HEUTE; mehr Juice mit EFFEKTE-Option, Screen-Shake, Vibration und skalierenden Score-Pops.
+- **v0.7.2** (17.06.2026) — Seedbarer Zufall (BL-1) + Vier-Farben-Deck (BL-9) veröffentlicht.
 - **v0.7.1-bl9** (19.06.2026) — BL-9 Barrierefreiheit: Vier-Farben-Deck-Toggle in OPTIONS (Farbenblind-Hilfe: getrennte Suit-Farben für Karo/Kreuz).
 - **feature/bl-1** (17.06.2026) — BL-1: Seedbarer Zufall via mulberry32-RNG, `G.seed` in `newRun/snapRun/restoreRun`, RNG-State für Resume, alle spielrelevanten `Math.random()` durch `RNG()` ersetzt, Seed-Anzeige im Game-Over-Screen.
 - **v0.7.1** (16.–18.06.2026) — FAQ-Button, Farb-Themes (Neon/Pink/Amber/Midnight/Blood, tönen den Hintergrund), feinerer Musik-Regler; UI/UX-Aufräum-Pass (Dead Code raus, Hilfe-Modus mit Board-Highlights, Default-Theme „Neon"→„OG", Farben theme-konsistent, Slider-Track via --felt, Lade-Indikator, FAQ-Seite visuell überarbeitet mit Kategorien & Animation).

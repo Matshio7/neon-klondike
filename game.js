@@ -20,7 +20,7 @@ const Store={
     d.stats=Object.assign({totalRuns:0,bestAnte:0,bestChips:0,bestRunChips:0,boardClears:0,bossesBeaten:[],wins:0},d.stats||{});
     if(!Array.isArray(d.stats.bossesBeaten))d.stats.bossesBeaten=[];
     d.ach=Array.isArray(d.ach)?d.ach:[];
-    d.opts=Object.assign({crt:0.3,scale:1,fit:false,sfxVol:0.75,musicVol:0.25,fourColor:false},d.opts||{});
+    d.opts=Object.assign({crt:0.3,scale:1,fit:false,sfxVol:0.75,musicVol:0.25,fourColor:false,effects:true,testMult:false},d.opts||{});
     if(typeof d.opts.sound==='boolean'){ d.opts.sfxVol=d.opts.sound?0.75:0; delete d.opts.sound; }      // migrate old on/off
     if(typeof d.opts.music==='boolean'){ d.opts.musicVol=d.opts.music?0.25:0; delete d.opts.music; }
     if(typeof d.opts.crt==='boolean')d.opts.crt=d.opts.crt?0.3:0;  // migrate old boolean to opacity
@@ -173,6 +173,11 @@ function paintIcons(root){(root||document).querySelectorAll('[data-ic]').forEach
    Format: { v:'Titel', date:'optional', notes:['Punkt 1','Punkt 2', ...] }
    ============================================================ */
 const PATCH_NOTES=[
+ {v:'v0.7.3', date:'20.06.2026', notes:[
+   'Tages-Challenge: Jeden Tag derselbe Seed für alle Spieler.',
+   'Rangliste: Umschalter zwischen GESAMT und HEUTE.',
+   'Mehr Juice: EFFEKTE-Option, Screen-Shake, Vibration und größere Score-Pops bei hohem Mult.',
+ ]},
  {v:'v0.7.2', date:'17.06.2026', notes:[
    'Technische Verbesserungen unter der Haube.',
    'Neue Bedienungshilfe: Vier-Farben-Deck für bessere Lesbarkeit (Karo blau, Kreuz grün).',
@@ -495,19 +500,20 @@ function chipsFor(c){if(c.special){const sp=SPECIAL(c.special);return sp?sp.chip
 function bankGain(c){
   let multAdd=0;
   const ramp=!(G.boss&&G.boss.id==='flaute');   // FLAUTE-Boss: kein Mult-Aufbau aus Perks
+  const sources=[];
   if(ramp){
-    if(G.perks.includes('streak')){G.roundMult+=0.1;multAdd+=0.1;}
-    if(G.perks.includes('ace')&&c.r===1){G.roundMult+=0.5;multAdd+=0.5;}
-    if(G.perks.includes('comboplus')){G.roundMult+=0.2;multAdd+=0.2;}
+    if(G.perks.includes('streak')){G.roundMult+=0.1;multAdd+=0.1;sources.push({label:'Streak',add:0.1});}
+    if(G.perks.includes('ace')&&c.r===1){G.roundMult+=0.5;multAdd+=0.5;sources.push({label:'Ass',add:0.5});}
+    if(G.perks.includes('comboplus')){G.roundMult+=0.2;multAdd+=0.2;sources.push({label:'Combo+',add:0.2});}
   }
-  if(c.special){const sp=SPECIAL(c.special);if(sp&&sp.mult){G.roundMult+=sp.mult;multAdd+=sp.mult;}}
+  if(c.special){const sp=SPECIAL(c.special);if(sp&&sp.mult){G.roundMult+=sp.mult;multAdd+=sp.mult;sources.push({label:sp.name||'Spezial',add:sp.mult});}}
   const m=effMult(); if(m>RUN.maxMult)RUN.maxMult=m;
   const gain=Math.round(chipsFor(c)*m);
   G.chips+=gain; RUN.banked++; RUN.totalChips+=gain;
   c.gain=gain; c.multAdd=multAdd;   // recorded so taking the card back can reverse it exactly
   SFX.bank();
   evalAch();
-  return gain;
+  return {gain:gain,sources:sources};
 }
 /* take a card back out of the Bank -> reverse its chip + mult contribution (no exploits) */
 function unbank(c){
@@ -515,7 +521,7 @@ function unbank(c){
   if(c.multAdd){G.roundMult=Math.max(0,G.roundMult-c.multAdd);c.multAdd=0;}
 }
 function flip(arr){if(arr.length&&!arr[arr.length-1].up)arr[arr.length-1].up=true;}
-function pop(g){if(g<=0)return;const d=document.createElement('div');d.className='scorepop';d.textContent='+'+g;$('stage').appendChild(d);setTimeout(()=>d.remove(),800);}
+function pop(g,scale){if(g<=0)return;const d=document.createElement('div');d.className='scorepop';d.textContent='+'+g;if(scale&&scale>2)d.style.fontSize=(11+scale*2.5)+'px';$('stage').appendChild(d);setTimeout(()=>d.remove(),800);}
 function handleStock(){
   if(!(G.stock.length||(G.rec>0&&G.waste.length)))return; // nothing to draw/recycle
   pushUndo();
@@ -523,10 +529,45 @@ function handleStock(){
   else if(G.rec>0&&G.waste.length){while(G.waste.length){const c=G.waste.pop();c.up=false;G.stock.push(c);}G.rec--;}
   G.sel=null;render();checkStuck();tutGate('stock');
 }
-function doFound(suit){pushUndo();const cs=moving();const c=cs[0];const s=c.joker?suit:c.s;G.found[s].push(c);if(G.sel.p==='waste')G.waste.pop();else{G.tab[G.sel.col].pop();flip(G.tab[G.sel.col]);}const g=bankGain(c);pop(g);G.sel=null;tutGate('bank');check();}
+function doFound(suit){pushUndo();const cs=moving();const c=cs[0];const s=c.joker?suit:c.s;G.found[s].push(c);if(G.sel.p==='waste')G.waste.pop();else{G.tab[G.sel.col].pop();flip(G.tab[G.sel.col]);}const r=bankGain(c);var m=effMult();if(Store.data.opts.testMult)m=5;if(Store.data.opts.effects!==false&&m>3){shake();}if(Store.data.opts.effects!==false&&navigator.vibrate)navigator.vibrate(8);G.sel=null;tutGate('bank');check();if(r.sources.length)setTimeout(function(){animateMultTags(r.sources,r.gain,m);},30);else pop(r.gain,m);}
 function doTab(col){pushUndo();const cs=moving();if(G.sel.p==='waste')G.waste.pop();else if(G.sel.p==='found'){const c=G.found[G.sel.suit].pop();unbank(c);}else G.tab[G.sel.col].splice(G.sel.idx);cs.forEach(c=>G.tab[col].push(c));if(G.sel.p==='tab')flip(G.tab[G.sel.col]);G.sel=null;render();checkStuck();}
 function same(p,col,idx){return G.sel&&G.sel.p===p&&G.sel.col===col&&G.sel.idx===idx;}
 function shake(){const s=$('stage');s.classList.add('shake');setTimeout(()=>s.classList.remove('shake'),180);}
+function multTags(){
+  var tags=[];
+  if(!G)return tags;
+  if(G.perks.includes('streak'))tags.push({label:'Streak',add:0.1});
+  if(G.perks.includes('ace'))tags.push({label:'Ass',add:0.5});
+  if(G.perks.includes('comboplus'))tags.push({label:'Combo+',add:0.2});
+  return tags;
+}
+function renderMultTags(){
+  var el=$('multtags');if(!el)return;
+  el.innerHTML='';
+  multTags().forEach(function(t){
+    var d=document.createElement('div');d.className='mtag';d.dataset.tag=t.label;
+    d.textContent=t.label+' +'+t.add.toFixed(1);
+    el.appendChild(d);
+  });
+}
+function animateMultTags(sources,gain,mult){
+  var el=$('multtags');if(!el)return;
+  if(!sources.length){pop(gain,mult);return;}
+  var cur=mult-sources.reduce(function(s,src){return s+src.add;},0);
+  function step(i){
+    if(i>=sources.length){
+      $('mult').innerHTML='x'+mult.toFixed(1);
+      pop(gain,mult);
+      setTimeout(function(){el.querySelectorAll('.mtag').forEach(function(t){t.classList.remove('mtag-hit');});},800);
+      return;
+    }
+    cur+=sources[i].add;
+    $('mult').innerHTML='x'+cur.toFixed(1);
+    el.querySelectorAll('.mtag').forEach(function(t){if(t.dataset.tag===sources[i].label)t.classList.add('mtag-hit');});
+    setTimeout(function(){step(i+1);},220);
+  }
+  step(0);
+}
 function selWaste(){if(G.waste.length)G.sel={p:'waste'};}
 /* ---- UNDO: snapshot before each move; each undo costs escalating coins (per run) ---- */
 function pushUndo(){
@@ -868,6 +909,7 @@ function render(){
   $('board').innerHTML='<div id="top"><div class="founds">'+f+'</div><div class="spacer"></div>'+st+w+'</div><div id="tab">'+tb+'</div>'+autoBtn;
   if(G.helpMode)addHelpLabels();
   saveGame(); evalAch();   // persist + check achievements after every state change
+  renderMultTags();
 }
 
 /* ============================================================
@@ -1081,6 +1123,8 @@ function renderOpts(){
   $('opt-crt').value=cr; $('crt-pct').textContent=cr+'%';
   const fb=$('opt-fit'); fb.textContent=o.fit?'AN':'AUS'; fb.classList.toggle('on',!!o.fit);
   const fc=$('opt-fourcolor'); if(fc){fc.textContent=o.fourColor?'AN':'AUS';fc.classList.toggle('on',!!o.fourColor);}
+  const ef=$('opt-effects'); if(ef){ef.textContent=o.effects!==false?'AN':'AUS';ef.classList.toggle('on',o.effects!==false);}
+  const tm=$('opt-testmult'); if(tm){tm.textContent=o.testMult?'x5':'AUS';tm.classList.toggle('on',!!o.testMult);}
   const sp=Math.round(o.sfxVol*100), mp=Math.round(o.musicVol*100);
   $('opt-sfx').value=sp; $('sfx-pct').textContent=sp+'%';
   $('opt-musicvol').value=mp; $('music-pct').textContent=mp+'%';
