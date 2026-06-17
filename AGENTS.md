@@ -33,7 +33,7 @@
 
 ## 2. Aktueller Stand  ← hier zuerst schauen
 
-- **Version:** v0.7.1 (live & gepusht)
+- **Version:** v0.7.2 (Release-Bump vorbereitet — Push ausstehend; v0.7.1 ist aktuell live)
 - **Deploy:** `git commit` + `git push` auf `main` → GitHub Pages baut automatisch (~1–2 Min). *Kein manuelles Hochladen mehr.*
 - **Build:** `node --check game.js` läuft sauber. Arbeitsverzeichnis i. d. R. clean.
 - **Echte Spieler aktiv** (Cloud-Rangliste wird genutzt).
@@ -171,6 +171,7 @@ Suche nach diesen Namen statt nach Zeilennummern (die wandern):
 
 ## 8. Changelog (neueste zuerst, kurz)
 
+- **v0.7.2** (17.06.2026) — Release: seedbarer Zufall (BL-1, deterministische Runs) + Vier-Farben-Deck (BL-9) offiziell veröffentlicht; Versionsstand an allen 3 Stellen auf v0.7.2 gezogen (sw.js/opt-about/PATCH_NOTES) + kurze Patch-Notes ergänzt. (Push ausstehend.)
 - **v0.7.1-bl9** (19.06.2026) — BL-9 Barrierefreiheit: Vier-Farben-Deck-Toggle in OPTIONS (Farbenblind-Hilfe: getrennte Suit-Farben für Karo/Kreuz).
 - **feature/bl-1** (17.06.2026) — BL-1: Seedbarer Zufall via mulberry32-RNG, `G.seed` in `newRun/snapRun/restoreRun`, RNG-State für Resume, alle spielrelevanten `Math.random()` durch `RNG()` ersetzt, Seed-Anzeige im Game-Over-Screen.
 - **v0.7.1** (16.–18.06.2026) — FAQ-Button, Farb-Themes (Neon/Pink/Amber/Midnight/Blood, tönen den Hintergrund), feinerer Musik-Regler; UI/UX-Aufräum-Pass (Dead Code raus, Hilfe-Modus mit Board-Highlights, Default-Theme „Neon"→„OG", Farben theme-konsistent, Slider-Track via --felt, Lade-Indikator, FAQ-Seite visuell überarbeitet mit Kategorien & Animation).

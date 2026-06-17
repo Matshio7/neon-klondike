@@ -172,6 +172,10 @@ function paintIcons(root){(root||document).querySelectorAll('[data-ic]').forEach
    Format: { v:'Titel', date:'optional', notes:['Punkt 1','Punkt 2', ...] }
    ============================================================ */
 const PATCH_NOTES=[
+ {v:'v0.7.2', date:'17.06.2026', notes:[
+   'Technische Verbesserungen unter der Haube.',
+   'Neue Bedienungshilfe: Vier-Farben-Deck für bessere Lesbarkeit (Karo blau, Kreuz grün).',
+ ]},
  {v:'v0.7.1', date:'16.06.2026', notes:[
    'Feat: FAQ-Button rechts unten im Hauptmenü mit ausklappbaren Fragen & Antworten.',
    'Feat: Farb-Themes (Neon, Pink, Amber, Midnight, Blood) in den Optionen – färbt auch den Hintergrund ein. (Danke für den Wunsch, liebe*r Spieler*in! 💜)',
