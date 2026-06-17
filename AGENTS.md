@@ -33,11 +33,11 @@
 
 ## 2. Aktueller Stand  ← hier zuerst schauen
 
-- **Version:** v0.7.4 (Release vorbereitet)
+- **Version:** v0.7.5 (Release vorbereitet)
 - **Deploy:** `git commit` + `git push` auf `main` → GitHub Pages baut automatisch (~1–2 Min). *Kein manuelles Hochladen mehr.*
 - **Build:** `node --check game.js` läuft sauber. Arbeitsverzeichnis i. d. R. clean.
 - **Echte Spieler aktiv** (Cloud-Rangliste wird genutzt).
-- **Zuletzt:** Option zum freien Anpassen der Bank-Reihenfolge (Foundation-Order) in OPTIONS hinzugefügt.
+- **Zuletzt:** TEST-MULT aus Options ins Dev-Menü verschoben; FAQ-Eintrag zum Namen „Klondaire" hinzugefügt.
 - **Cleanup (17.06.2026):** XSS-Helfer `esc()` eingebaut und in `renderRang()` + `renderCloud()` genutzt, `sw.js` VER auf `klondaire-v0.7.1` gezogen, `music_orig/` aus dem Repo entfernt und ins `.gitignore` aufgenommen.
 
 ---
@@ -177,6 +177,7 @@ Suche nach diesen Namen statt nach Zeilennummern (die wandern):
 
 ## 8. Changelog (neueste zuerst, kurz)
 
+- **v0.7.5** (17.06.2026) — TEST-MULT aus Options entfernt; FAQ-Eintrag zur Herkunft des Namens „Klondaire" hinzugefügt.
 - **v0.7.4** (17.06.2026) — Option zum freien Anpassen der Bank-Reihenfolge in OPTIONS.
 - **v0.7.3** (17.06.2026) — Tages-Challenge mit täglichem festen Seed + Rangliste GESAMT/HEUTE; mehr Juice mit EFFEKTE-Option, Screen-Shake, Vibration und skalierenden Score-Pops.
 - **v0.7.2** (17.06.2026) — Seedbarer Zufall (BL-1) + Vier-Farben-Deck (BL-9) veröffentlicht.

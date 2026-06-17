@@ -173,6 +173,10 @@ function paintIcons(root){(root||document).querySelectorAll('[data-ic]').forEach
    Format: { v:'Titel', date:'optional', notes:['Punkt 1','Punkt 2', ...] }
    ============================================================ */
 const PATCH_NOTES=[
+ {v:'v0.7.5', date:'17.06.2026', notes:[
+   'TEST-MULT aus Options ins geheime Dev-Menü verschoben.',
+   'FAQ: Erklärung zum Namen „Klondaire" hinzugefügt.',
+ ]},
  {v:'v0.7.4', date:'17.06.2026', notes:[
    'Option: Reihenfolge der Bank-Farben frei anpassen.',
  ]},
@@ -943,6 +947,7 @@ function renderNews(){
 }
 const FAQ=[
   {c:'G',q:'Was ist Klondaire?',a:'Ein Roguelike-Solitär – kombiniert klassisches Klondike mit Balatro-artigem Chip/Mult-Scoring. Baue Karten auf die Bank, sammle Chips, erreiche das Ziel und kaufe Perks im Shop.'},
+  {c:'G',q:'Warum heißt das Spiel Klondaire?',a:'Der Name ist ein Wortspiel aus „Klondike" (die bekannteste Solitaire-Variante) und „Solitär". So wie Balatro seinen Namen aus dem Kartenspiel-Jargon nimmt und zu etwas Eigenem verdreht, steht Klondaire für: klassisches Solitaire – aber verdreht zu einem rasanten Roguelike-Deckbuilder.'},
   {c:'G',q:'Wie funktioniert das Scoring?',a:'Jede gebankte Karte gibt BASIS-CHIPS × MULT. Basis-Chips starten bei 10 und werden durch Perks erhöht. MULT startet bei 1.0 und steigt durch Perks wie FIEBER, COMBO und ASS-MULT. Dein Ziel ist es, mit diesen Chips das ANTE-ZIEL zu erreichen.'},
   {c:'G',q:'Was sind Antes?',a:'Antes sind die Runden. Mit jedem Sieg steigt die Ante und das Ziel wird höher. Jede 3. Ante ist ein Boss mit einer Spezialregel, die es schwerer macht.'},
   {c:'P',q:'Was sind Perks?',a:'Perks sind passive Upgrades, die du im SHOP zwischen den Runden kaufst. Sie erhöhen Chips oder MULT. Manche Perks sind permanent (m), andere wirken jede Runde neu.'},
@@ -1129,7 +1134,6 @@ function renderOpts(){
   const fb=$('opt-fit'); fb.textContent=o.fit?'AN':'AUS'; fb.classList.toggle('on',!!o.fit);
   const fc=$('opt-fourcolor'); if(fc){fc.textContent=o.fourColor?'AN':'AUS';fc.classList.toggle('on',!!o.fourColor);}
   const ef=$('opt-effects'); if(ef){ef.textContent=o.effects!==false?'AN':'AUS';ef.classList.toggle('on',o.effects!==false);}
-  const tm=$('opt-testmult'); if(tm){tm.textContent=o.testMult?'x5':'AUS';tm.classList.toggle('on',!!o.testMult);}
   const sp=Math.round(o.sfxVol*100), mp=Math.round(o.musicVol*100);
   $('opt-sfx').value=sp; $('sfx-pct').textContent=sp+'%';
   $('opt-musicvol').value=mp; $('music-pct').textContent=mp+'%';
@@ -1385,6 +1389,8 @@ $('opt-tut').addEventListener('click',function(){Store.data.meta.tutDone=false;S
 (function(){
   let devTaps=0, devTimer=null, devShown=false;
   const build=$('menu-build'), panel=$('dev-panel');
+  const tm=$('dev-testmult');
+  function updateDevTestMult(){if(tm)tm.textContent='TEST-MULT: '+(Store.data.opts.testMult?'x5':'AUS');}
   if(!build||!panel)return;
   build.addEventListener('click',function(){
     devTaps++;
@@ -1393,13 +1399,15 @@ $('opt-tut').addEventListener('click',function(){Store.data.meta.tutDone=false;S
     if(devTaps>=10){
       devTaps=0; if(devTimer)clearTimeout(devTimer); devTimer=null;
       devShown=!devShown; panel.hidden=!devShown; build.classList.toggle('dev-active',devShown);
-      if(devShown)SFX.buy(); else SFX.click();
+      if(devShown){SFX.buy();updateDevTestMult();}
+      else SFX.click();
     }
   });
   $('dev-daily').addEventListener('click',function(){
     if(!confirm('Tages-Lock wirklich zurücksetzen?'))return;
     Store.data.meta.dailyDone='';Store.save();renderMenu();SFX.click();alert('Tages-Lock zurückgesetzt – du kannst die Challenge erneut testen.');
   });
+  if(tm){tm.addEventListener('click',function(){Store.data.opts.testMult=!Store.data.opts.testMult;Store.save();updateDevTestMult();SFX.click();});}
 })();
 // tutorial coach buttons (Weiter / Los / Überspringen)
 $('tutbox').addEventListener('click',function(e){const b=e.target.closest('[data-tut]');if(!b)return;SFX.click();if(b.dataset.tut==='skip')endTutorial();else tutNext();});
