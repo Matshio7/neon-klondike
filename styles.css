@@ -98,7 +98,10 @@ body.crt-off #stage::before{display:none}
 .diff-dot:active{transform:scale(.92)}
 .diff-desc{font-size:7px;color:#7fae98;line-height:1.6;margin-top:2px}
 /* build version: pinned to the very bottom, intentionally near-invisible (dark on dark) */
-.menu-build{position:absolute;bottom:5px;left:0;right:0;text-align:center;font-size:7px;letter-spacing:1.5px;color:#17261d;z-index:1;pointer-events:none;user-select:none}
+.menu-build{position:absolute;bottom:5px;left:0;right:0;text-align:center;font-size:7px;letter-spacing:1.5px;color:#17261d;z-index:1;pointer-events:auto;user-select:none;cursor:default}
+.menu-build.dev-active{color:var(--mint)}
+.dev-panel{position:absolute;bottom:22px;left:0;right:0;display:flex;justify-content:center;z-index:3;padding:0 10px}
+.dev-panel .opt-reset{font-size:8px;padding:8px 12px}
 .menu-ios{position:absolute;bottom:4px;left:8px;z-index:3;font-family:'Press Start 2P',monospace;font-size:7px;letter-spacing:.5px;color:#3a6b54;background:none;border:none;cursor:pointer;padding:2px}
 .menu-ios:hover{color:var(--mint)}
 .menu-faq{position:absolute;bottom:4px;right:8px;z-index:3;font-family:'Press Start 2P',monospace;font-size:7px;letter-spacing:1px;color:#3a6b54;background:none;border:none;cursor:pointer;padding:2px}
