@@ -188,6 +188,7 @@ function paintIcons(root){(root||document).querySelectorAll('[data-ic]').forEach
 const PATCH_NOTES=[
   {v:'v0.7.5', date:'17.06.2026', notes:[
     'FAQ: Erklärung zum Namen „Klondaire" hinzugefügt.',
+    'Neue Sounds: Eigene Soundeffekte für Klicks, Banking, Card-Moves, Erfolge und Game-Over – in den Optionen regulierbar.',
   ]},
  {v:'v0.7.4', date:'17.06.2026', notes:[
    'Option: Reihenfolge der Bank-Farben frei anpassen.',
@@ -1027,15 +1028,16 @@ function renderRang(){
   });
 }
 
-/* the menu post-it shows the latest version + its first 5 points */
+/* the menu post-it shows the latest 2 versions */
 function renderPostit(){
-  const p=PATCH_NOTES[0];
+  const p=PATCH_NOTES[0], p2=PATCH_NOTES[1];
   if(!p){$('postit').style.display='none';return;}
   $('postit-ver').textContent='NEU · '+p.v;
   $('postit-list').innerHTML=p.notes.slice(0,2).map(n=>'<li>'+n+'</li>').join('');
-  $('postit-more').style.display='block';   // always show the tear-off fringe (laschen)
-  const tear=document.querySelector('#postit-more .pt-tear'); if(tear)tear.style.display=(p.notes.length>2)?'block':'none';  // "und noch mehr" only when there's more
-  document.querySelectorAll('#postit-fringe span.torn').forEach(s=>s.classList.remove('torn')); // regrow tabs
+  if(p2){$('postit-list').innerHTML+='<li class="pt-old"><b>'+p2.v+'</b>: '+p2.notes.slice(0,1).join(', ')+'</li>';}
+  $('postit-more').style.display='block';
+  const tear=document.querySelector('#postit-more .pt-tear'); if(tear)tear.style.display=(p.notes.length>2)?'block':'none';
+  document.querySelectorAll('#postit-fringe span.torn').forEach(s=>s.classList.remove('torn'));
 }
 /* Easter egg: tear off a fringe tab -> a little souvenir note + a secret achievement. */
 const FORTUNES=[

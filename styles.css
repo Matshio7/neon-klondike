@@ -140,6 +140,7 @@ body.crt-off #stage::before{display:none}
 #postit .pt-h{font-size:8px;color:#7a5c00;letter-spacing:.5px;margin-bottom:7px}
 #postit ul{margin:0;padding-left:10px}
 #postit li{font-size:7px;line-height:1.55;margin-bottom:4px;color:#2a2410;overflow-wrap:break-word;word-break:break-word}
+#postit .pt-old{font-size:6px;color:#5c4e2a;margin-top:5px;border-top:1px dashed rgba(42,36,16,.3);padding-top:4px}
 #postit .pt-more{margin-top:6px;border-top:1px dashed rgba(42,36,16,.5)}
 #postit .pt-tear{font-size:7px;color:#7a5c00;text-align:center;line-height:1.4;padding:5px 0 6px}
 #postit .pt-fringe{display:flex;gap:3px;height:14px;margin:0 -10px -14px}
