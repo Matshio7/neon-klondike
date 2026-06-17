@@ -173,7 +173,7 @@ function paintIcons(root){(root||document).querySelectorAll('[data-ic]').forEach
    Format: { v:'Titel', date:'optional', notes:['Punkt 1','Punkt 2', ...] }
    ============================================================ */
 const PATCH_NOTES=[
- {v:'v0.7.3', date:'20.06.2026', notes:[
+ {v:'v0.7.3', date:'17.06.2026', notes:[
    'Tages-Challenge: Jeden Tag derselbe Seed für alle Spieler.',
    'Rangliste: Umschalter zwischen GESAMT und HEUTE.',
    'Mehr Juice: EFFEKTE-Option, Screen-Shake, Vibration und größere Score-Pops bei hohem Mult.',

@@ -61,7 +61,7 @@ Status-Marker: `- [ ]` offen · `- [~] (name)` in Arbeit · `- [x]` erledigt (mi
 - [ ] **BL-3** · Einmal-Karten / Verbrauchsgegenstände — Prio: hoch
 - [ ] **BL-4** · Perk-Seltenheitsstufen + Synergien — Prio: hoch
 - [ ] **BL-5** · Boss-Vorschau + Endboss + mehr Bosse — Prio: mittel
-- [x] **BL-6** · Mehr „Juice" (Feedback/Animation/Haptik) — Prio: mittel *(opencode, 20.06.2026)*
+- [x] **BL-6** · Mehr „Juice" (Feedback/Animation/Haptik) — Prio: mittel *(opencode, 17.06.2026)*
 - [ ] **BL-7** · Anti-Cheat / Plausibilität fürs Leaderboard — Prio: mittel *(sobald Rangliste ernster)*
 - [ ] **BL-8** · Run-Historie & Statistik-Screen — Prio: niedrig
 - [x] **BL-9** · Barrierefreiheit (Farbenblind, große Karten) — Prio: niedrig *(Vier-Farben-Deck: erledigt 19.06.2026; Große Karten: verworfen, mobil nicht praktikabel)*
@@ -177,7 +177,7 @@ Suche nach diesen Namen statt nach Zeilennummern (die wandern):
 
 ## 8. Changelog (neueste zuerst, kurz)
 
-- **v0.7.3** (20.06.2026) — Tages-Challenge mit täglichem festen Seed + Rangliste GESAMT/HEUTE; mehr Juice mit EFFEKTE-Option, Screen-Shake, Vibration und skalierenden Score-Pops.
+- **v0.7.3** (17.06.2026) — Tages-Challenge mit täglichem festen Seed + Rangliste GESAMT/HEUTE; mehr Juice mit EFFEKTE-Option, Screen-Shake, Vibration und skalierenden Score-Pops.
 - **v0.7.2** (17.06.2026) — Seedbarer Zufall (BL-1) + Vier-Farben-Deck (BL-9) veröffentlicht.
 - **v0.7.1-bl9** (19.06.2026) — BL-9 Barrierefreiheit: Vier-Farben-Deck-Toggle in OPTIONS (Farbenblind-Hilfe: getrennte Suit-Farben für Karo/Kreuz).
 - **feature/bl-1** (17.06.2026) — BL-1: Seedbarer Zufall via mulberry32-RNG, `G.seed` in `newRun/snapRun/restoreRun`, RNG-State für Resume, alle spielrelevanten `Math.random()` durch `RNG()` ersetzt, Seed-Anzeige im Game-Over-Screen.
@@ -190,4 +190,4 @@ Suche nach diesen Namen statt nach Zeilennummern (die wandern):
 
 ---
 
-*Letzte Aktualisierung dieser Datei: 19.06.2026.*
+*Letzte Aktualisierung dieser Datei: 17.06.2026.*
