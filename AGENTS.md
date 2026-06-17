@@ -37,7 +37,7 @@
 - **Deploy:** `git commit` + `git push` auf `main` → GitHub Pages baut automatisch (~1–2 Min). *Kein manuelles Hochladen mehr.*
 - **Build:** `node --check game.js` läuft sauber. Arbeitsverzeichnis i. d. R. clean.
 - **Echte Spieler aktiv** (Cloud-Rangliste wird genutzt).
-- **Zuletzt:** FAQ-Seite überarbeitet: Kategorien (Grundlagen/Gameplay/Fortschritt/Features) mit Icons, gleitendes Auf/Zuklappen, helleres Layout. Davor: Help-Mode überarbeitet (Board-Highlights + floating Labels statt Overlay), Dead Code entfernt (#diffchip, #title), Farben theme-konsistent (color-mix statt Hex), Slider-Track via --felt, Keyboard-Hint (LEERTASTE) entfernt, Lade-Indikator für Cloud/Rangliste, OG-Thema (Neon umbenannt, bg:null = kein Hintergrund-Filter), Spielhilfe auf Basics reduziert.
+- **Zuletzt:** BL-9 Barrierefreiheit: Vier-Farben-Deck (Farbenblind-Hilfe) in OPTIONS eingebaut. Davor: FAQ-Seite überarbeitet: Kategorien (Grundlagen/Gameplay/Fortschritt/Features) mit Icons, gleitendes Auf/Zuklappen, helleres Layout. Davor: Help-Mode überarbeitet (Board-Highlights + floating Labels statt Overlay), Dead Code entfernt (#diffchip, #title), Farben theme-konsistent (color-mix statt Hex), Slider-Track via --felt, Keyboard-Hint (LEERTASTE) entfernt, Lade-Indikator für Cloud/Rangliste, OG-Thema (Neon umbenannt, bg:null = kein Hintergrund-Filter), Spielhilfe auf Basics reduziert.
 - **Cleanup (17.06.2026):** XSS-Helfer `esc()` eingebaut und in `renderRang()` + `renderCloud()` genutzt, `sw.js` VER auf `klondaire-v0.7.1` gezogen, `music_orig/` aus dem Repo entfernt und ins `.gitignore` aufgenommen.
 
 ---
@@ -64,7 +64,7 @@ Status-Marker: `- [ ]` offen · `- [~] (name)` in Arbeit · `- [x]` erledigt (mi
 - [ ] **BL-6** · Mehr „Juice" (Feedback/Animation/Haptik) — Prio: mittel
 - [ ] **BL-7** · Anti-Cheat / Plausibilität fürs Leaderboard — Prio: mittel *(sobald Rangliste ernster)*
 - [ ] **BL-8** · Run-Historie & Statistik-Screen — Prio: niedrig
-- [ ] **BL-9** · Barrierefreiheit (Farbenblind, große Karten) — Prio: niedrig
+- [x] **BL-9** · Barrierefreiheit (Farbenblind, große Karten) — Prio: niedrig *(Vier-Farben-Deck: erledigt 19.06.2026; Große Karten: verworfen, mobil nicht praktikabel)*
 - [ ] **BL-10** · Deal-3-Modus + echter Stock/Waste-Fächer — Prio: niedrig
 
 ---
@@ -171,6 +171,7 @@ Suche nach diesen Namen statt nach Zeilennummern (die wandern):
 
 ## 8. Changelog (neueste zuerst, kurz)
 
+- **v0.7.1-bl9** (19.06.2026) — BL-9 Barrierefreiheit: Vier-Farben-Deck-Toggle in OPTIONS (Farbenblind-Hilfe: getrennte Suit-Farben für Karo/Kreuz).
 - **v0.7.1** (16.–18.06.2026) — FAQ-Button, Farb-Themes (Neon/Pink/Amber/Midnight/Blood, tönen den Hintergrund), feinerer Musik-Regler; UI/UX-Aufräum-Pass (Dead Code raus, Hilfe-Modus mit Board-Highlights, Default-Theme „Neon"→„OG", Farben theme-konsistent, Slider-Track via --felt, Lade-Indikator, FAQ-Seite visuell überarbeitet mit Kategorien & Animation).
 - **v0.7.1-cleanup** (17.06.2026) — Sicherheit: `esc()`-Helfer gegen Stored-XSS in `renderRang()` / `renderCloud()`; `sw.js` Cache-Version auf `klondaire-v0.7.1` synchronisiert; `music_orig/` (~27 MB) aus dem Repository entfernt und ins `.gitignore` aufgenommen.
 - **v0.7** (15.06.2026) — Schwierigkeitssystem (Auswahl im Menü), stufenloser CRT-Regler, AUTO-RÄUMEN (Auto-Einbanken), Erfolg „Voll im Blick", Musik auf 128 kbps komprimiert.
@@ -180,4 +181,4 @@ Suche nach diesen Namen statt nach Zeilennummern (die wandern):
 
 ---
 
-*Letzte Aktualisierung dieser Datei: 18.06.2026.*
+*Letzte Aktualisierung dieser Datei: 19.06.2026.*

@@ -20,7 +20,7 @@ const Store={
     d.stats=Object.assign({totalRuns:0,bestAnte:0,bestChips:0,bestRunChips:0,boardClears:0,bossesBeaten:[],wins:0},d.stats||{});
     if(!Array.isArray(d.stats.bossesBeaten))d.stats.bossesBeaten=[];
     d.ach=Array.isArray(d.ach)?d.ach:[];
-    d.opts=Object.assign({crt:0.3,scale:1,fit:false,sfxVol:0.75,musicVol:0.25},d.opts||{});
+    d.opts=Object.assign({crt:0.3,scale:1,fit:false,sfxVol:0.75,musicVol:0.25,fourColor:false},d.opts||{});
     if(typeof d.opts.sound==='boolean'){ d.opts.sfxVol=d.opts.sound?0.75:0; delete d.opts.sound; }      // migrate old on/off
     if(typeof d.opts.music==='boolean'){ d.opts.musicVol=d.opts.music?0.25:0; delete d.opts.music; }
     if(typeof d.opts.crt==='boolean')d.opts.crt=d.opts.crt?0.3:0;  // migrate old boolean to opacity
@@ -763,8 +763,8 @@ function gameOver(){
 
 function showOv(html){const o=$('overlay');o.innerHTML=html;o.classList.remove('hidden');}
 function hideOv(){$('overlay').classList.add('hidden');}
-function fitCards(){const inner=$('stage').clientWidth-16;let cw=Math.floor((inner-6*4)/7);cw=Math.max(34,Math.min(cw,60));const ch=Math.round(cw*1.36);const r=document.documentElement.style;r.setProperty('--cw',cw+'px');r.setProperty('--ch',ch+'px');r.setProperty('--fanUp',(-Math.round(ch*0.7))+'px');r.setProperty('--fanDn',(-Math.round(ch*0.8))+'px');}
-function cardEl(c,attr,extra){if(!c.up)return '<div class="card down '+(extra||'')+'" '+attr+'></div>';if(c.special){const sp=SPECIAL(c.special),mk=sp?sp.mark:'?';return '<div class="card spec '+(extra||'')+'" '+attr+'><span class="cn">'+mk+'</span><span class="pip">'+mk+'</span></div>';}return '<div class="card '+(RED(c.s)?'red':'blk')+' '+(extra||'')+'" '+attr+'><span class="cn">'+RANKS[c.r]+suitSvg(c.s)+'</span><span class="pip">'+suitSvg(c.s)+'</span></div>';}
+function fitCards(){const inner=$('stage').clientWidth-16;let cw=Math.floor((inner-6*4)/7);cw=Math.max(34,Math.min(cw,60));const ch=Math.round(cw*1.36);const app=$('app');if(!app)return;app.style.setProperty('--cw',cw+'px');app.style.setProperty('--ch',ch+'px');app.style.setProperty('--fanUp',(-Math.round(ch*0.7))+'px');app.style.setProperty('--fanDn',(-Math.round(ch*0.8))+'px');}
+function cardEl(c,attr,extra){if(!c.up)return '<div class="card down '+(extra||'')+'" '+attr+'></div>';if(c.special){const sp=SPECIAL(c.special),mk=sp?sp.mark:'?';return '<div class="card spec '+(extra||'')+'" '+attr+'><span class="cn">'+mk+'</span><span class="pip">'+mk+'</span></div>';}return '<div class="card '+(RED(c.s)?'red':'blk')+' s-'+c.s+' '+(extra||'')+'" '+attr+'><span class="cn">'+RANKS[c.r]+suitSvg(c.s)+'</span><span class="pip">'+suitSvg(c.s)+'</span></div>';}
 function autoCollect(){
   if(!canAutoCollect())return;
   G.sel=null;
@@ -1024,6 +1024,7 @@ function renderOpts(){
   const cr=Math.round((o.crt||0)*100);
   $('opt-crt').value=cr; $('crt-pct').textContent=cr+'%';
   const fb=$('opt-fit'); fb.textContent=o.fit?'AN':'AUS'; fb.classList.toggle('on',!!o.fit);
+  const fc=$('opt-fourcolor'); if(fc){fc.textContent=o.fourColor?'AN':'AUS';fc.classList.toggle('on',!!o.fourColor);}
   const sp=Math.round(o.sfxVol*100), mp=Math.round(o.musicVol*100);
   $('opt-sfx').value=sp; $('sfx-pct').textContent=sp+'%';
   $('opt-musicvol').value=mp; $('music-pct').textContent=mp+'%';
@@ -1038,7 +1039,7 @@ function renderOpts(){
   }).join('');
 }
 
-function applyOpts(){ const v=Store.data.opts.crt||0; document.documentElement.style.setProperty('--crt-opacity',v); document.body.classList.toggle('crt-off',v===0); applyTheme(); }
+function applyOpts(){ const v=Store.data.opts.crt||0; document.documentElement.style.setProperty('--crt-opacity',v); document.body.classList.toggle('crt-off',v===0); applyTheme(); var app=$('app'); if(app)app.classList.toggle('four-color',!!Store.data.opts.fourColor); fitCards(); }
 function applyTheme(){
   var t=THEMES[Store.data.meta.selectedTheme]||THEMES.og, app=$('app');
   if(!app)return;
