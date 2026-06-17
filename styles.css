@@ -255,7 +255,7 @@ body.crt-off #overlay::before{display:none}
 .deck-aktiv{font-size:9px;color:var(--gold);border:1.5px solid #6b5410;background:#241d07;border-radius:6px;padding:9px 11px;white-space:nowrap}
 #stage.shake{animation:shk .18s}
 @keyframes shk{25%{transform:translateX(-4px)}75%{transform:translateX(4px)}}
-
+@media(prefers-reduced-motion:reduce){#stage.shake{animation:none}}
 /* =================== ACHIEVEMENTS =================== */
 #scene-ach{min-height:62vh}
 .ach-prog{text-align:center;font-size:9px;color:#7fae98;margin-bottom:10px}
