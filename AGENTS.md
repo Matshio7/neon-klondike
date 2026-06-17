@@ -38,6 +38,7 @@
 - **Build:** `node --check game.js` läuft sauber. Arbeitsverzeichnis i. d. R. clean.
 - **Echte Spieler aktiv** (Cloud-Rangliste wird genutzt).
 - **Zuletzt:** Help-Mode überarbeitet (Board-Highlights + floating Labels statt Overlay), Dead Code entfernt (#diffchip, #title), Farben theme-konsistent (color-mix statt Hex), Slider-Track via --felt, Keyboard-Hint (LEERTASTE) entfernt, Lade-Indikator für Cloud/Rangliste, OG-Thema (Neon umbenannt, bg:null = kein Hintergrund-Filter), Spielhilfe auf Basics reduziert.
+- **Cleanup (17.06.2026):** XSS-Helfer `esc()` eingebaut und in `renderRang()` + `renderCloud()` genutzt, `sw.js` VER auf `klondaire-v0.7.1` gezogen, `music_orig/` aus dem Repo entfernt und ins `.gitignore` aufgenommen.
 
 ---
 
@@ -46,9 +47,9 @@
 Status-Marker: `- [ ]` offen · `- [~] (name)` in Arbeit · `- [x]` erledigt (mit Datum).
 
 **Sollte als Nächstes:**
-- [ ] **Sicherheit:** In `renderRang()` den Benutzernamen vor dem Einfügen ins HTML **escapen** (Stored-XSS möglich, da Namen frei wählbar & allen angezeigt). Mini-Helfer `esc()` nutzen, auch bei allen anderen Stellen, die User-Text in `innerHTML` schreiben.
-- [ ] **`sw.js` VER** auf die App-Version ziehen (steht auf `klondaire-v0.6.2`, App ist v0.7.1). Bei JEDEM Release mitziehen.
-- [ ] **`music_orig/`** (~27 MB unkomprimierte Originale) aus dem Repo nehmen bzw. in `.gitignore` — Backup gehört nicht in den Live-Stand.
+- [x] **Sicherheit:** In `renderRang()` den Benutzernamen vor dem Einfügen ins HTML **escapen** (Stored-XSS möglich, da Namen frei wählbar & allen angezeigt). Mini-Helfer `esc()` nutzen, auch bei allen anderen Stellen, die User-Text in `innerHTML` schreiben. *(erledigt 17.06.2026)*
+- [x] **`sw.js` VER** auf die App-Version ziehen (steht auf `klondaire-v0.6.2`, App ist v0.7.1). Bei JEDEM Release mitziehen. *(erledigt 17.06.2026)*
+- [x] **`music_orig/`** (~27 MB unkomprimierte Originale) aus dem Repo nehmen bzw. in `.gitignore` — Backup gehört nicht in den Live-Stand. *(erledigt 17.06.2026)*
 
 **Ideen / später:**
 - [ ] Mehr multiplikative Perks (seltene „Legendary"-Perks, die Runs definieren).
@@ -102,15 +103,14 @@ Suche nach diesen Namen statt nach Zeilennummern (die wandern):
 
 ## 7. Bekannte Probleme
 
-- ⚠️ **XSS:** `renderRang()` schreibt `username` ungefiltert ins HTML (siehe TODO).
-- `sw.js` VER hinkt der App-Version hinterher (`v0.6.2` vs `v0.7.1`). Network-first liefert trotzdem aktuell, aber bei Release mitziehen.
-- `music_orig/` bläht das Repo auf (~27 MB).
+- (keine offenen Blocker — letzter Cleanup erledigt 17.06.2026)
 
 ---
 
 ## 8. Changelog (neueste zuerst, kurz)
 
 - **v0.7.1** (16.–17.06.2026) — FAQ-Button, Farb-Themes (Neon/Pink/Amber/Midnight/Blood, tönen den Hintergrund), feinerer Musik-Regler; danach UI/UX-Aufräum-Pass (Dead Code raus, Hilfe-Modus mit Board-Highlights, Default-Theme „Neon"→„OG", Farben theme-konsistent, Slider-Track via --felt, Lade-Indikator).
+- **v0.7.1-cleanup** (17.06.2026) — Sicherheit: `esc()`-Helfer gegen Stored-XSS in `renderRang()` / `renderCloud()`; `sw.js` Cache-Version auf `klondaire-v0.7.1` synchronisiert; `music_orig/` (~27 MB) aus dem Repository entfernt und ins `.gitignore` aufgenommen.
 - **v0.7** (15.06.2026) — Schwierigkeitssystem (Auswahl im Menü), stufenloser CRT-Regler, AUTO-RÄUMEN (Auto-Einbanken), Erfolg „Voll im Blick", Musik auf 128 kbps komprimiert.
 - **v0.6.1** (15.06.2026) — Rangliste/Bestenliste (Client), kräftigerer CRT-Filter, UI-Tweaks.
 - **v0.6** (15.06.2026) — Cloud-Speicherstand (geräteübergreifend, 8-stelliger Code), Auto-Updater (Service Worker), dynamischer Hintergrund, Code-Split in index/styles/game.
@@ -118,4 +118,4 @@ Suche nach diesen Namen statt nach Zeilennummern (die wandern):
 
 ---
 
-*Letzte Aktualisierung dieser Datei: 17.06.2026 (Session 2).*
+*Letzte Aktualisierung dieser Datei: 17.06.2026 (Session 3 — Kimi-Code-CLI).*

@@ -312,6 +312,7 @@ let RUN={};   // per-run tracking (resets each new run)
 let runActive=false; // true while a run is in progress (resumable from the menu)
 
 function $(id){return document.getElementById(id);}
+function esc(s){return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');}
 function shuffle(a){for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a;}
 function target(n){return Math.round(60*Math.pow(1.55,n-1)/5)*5;}
 function recBase(){return 2+(G.perks.includes('rec')?1:0)+(G.deck?G.deck.recDelta:0);}
@@ -867,7 +868,7 @@ function renderCloud(){
   const m=Store.data.meta; let h='';
   if(m.cloudCode){
     h+='<div class="cloud-card"><div class="cl-lbl">DEIN CODE</div><div class="cl-code">'+m.cloudCode+'</div>'+
-       '<div class="cl-sub">Benutzer: '+(m.cloudName||'—')+'<br>Wird automatisch nach jeder Runde gespeichert.</div>'+
+       '<div class="cl-sub">Benutzer: '+esc(m.cloudName||'—')+'<br>Wird automatisch nach jeder Runde gespeichert.</div>'+
        '<button class="btn" data-act="cl-copy" style="flex:0;padding:9px 14px">CODE KOPIEREN</button></div>';
   }else{
     h+='<div class="cloud-card"><div class="cl-lbl">CLOUD AKTIVIEREN</div>'+
@@ -896,7 +897,7 @@ function renderRang(){
       var rank=r.rank||(i+1);
       var st=rank===1?'color:var(--gold)':(rank===2?'color:#c0c0c0':(rank===3?'color:#cd7f32':''));
       var cls=(r.username===Store.data.meta.cloudName)?' lb-me':'';
-      return '<div class="lb-row'+cls+'"><span class="lb-rank" style="'+st+'">'+rank+'</span><span class="lb-name">'+r.username+'</span><span class="lb-score">ANTE '+r.best_ante+' · '+(r.best_chips||0).toLocaleString('de-DE')+' CHIPS</span></div>';
+      return '<div class="lb-row'+cls+'"><span class="lb-rank" style="'+st+'">'+rank+'</span><span class="lb-name">'+esc(r.username)+'</span><span class="lb-score">ANTE '+r.best_ante+' · '+(r.best_chips||0).toLocaleString('de-DE')+' CHIPS</span></div>';
     }).join('');
   }).catch(function(){
     body.innerHTML='<div class="ach-prog" style="color:var(--pink)">Rangliste nicht erreichbar – bist du online?</div>';
