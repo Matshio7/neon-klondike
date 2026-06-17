@@ -47,15 +47,27 @@ const Store={
 };
 
 /* ============================================================
-   AUDIO  -  tiny WebAudio SFX engine (no asset files).
+   AUDIO  -  WebAudio SFX engine. Falls back to oscillator tones
+   if the audio files fail to load (no asset files needed).
    ============================================================ */
 const SFX={
-  ctx:null,
+  ctx:null, els:{},
   ensure(){ if(this.ctx)return; try{this.ctx=new (window.AudioContext||window.webkitAudioContext)();}catch(e){} },
   resume(){ if(this.ctx&&this.ctx.state==='suspended')this.ctx.resume(); },
+  preload(){
+    ['click','achievement','denied','card-moving-1','card-moving-2','card-moving-3','gameover'].forEach(function(id){
+      var a=new Audio('sfx/'+id+'.mp3');a.volume=0;a.load();SFX.els[id]=a;
+    });
+  },
+  play(name,synth){
+    var sv=Store.data.opts.sfxVol; if(!sv)return;
+    var a=this.els[name];
+    if(a&&a.readyState>=2){a.volume=sv;a.currentTime=0;a.play().catch(function(){});return;}
+    if(synth)this.tone(synth.f,synth.d,synth.t||'square',synth.v||0.2);
+  },
   tone(freq,dur,type,vol){
-    var sv=Store.data.opts.sfxVol; if(!sv||!this.ctx)return;
-    type=type||'square'; vol=(vol||0.20)*sv;
+    if(!this.ctx)return;
+    type=type||'square'; vol=(vol||0.20)*Store.data.opts.sfxVol;
     const t=this.ctx.currentTime;
     const o=this.ctx.createOscillator(), g=this.ctx.createGain();
     o.type=type; o.frequency.value=freq;
@@ -64,12 +76,13 @@ const SFX={
     o.connect(g).connect(this.ctx.destination);
     o.start(t); o.stop(t+dur);
   },
-  click(){this.tone(420,0.05);},
-  bank(){this.tone(660,0.07);setTimeout(()=>this.tone(880,0.06),40);},
-  buy(){this.tone(520,0.08);setTimeout(()=>this.tone(820,0.08),60);},
-  unlock(){[660,990,1320].forEach((f,i)=>setTimeout(()=>this.tone(f,0.12,'square',0.22),i*80));},
-  win(){[523,659,784,1047].forEach((f,i)=>setTimeout(()=>this.tone(f,0.12,'square',0.22),i*90));},
-  lose(){[440,330,220,165].forEach((f,i)=>setTimeout(()=>this.tone(f,0.18,'sawtooth',0.22),i*120));},
+  click(){this.play('click',{f:420,d:0.05});},
+  bank(){this.play('card-moving-'+Math.ceil(Math.random()*3),{f:660,d:0.07});},
+  buy(){this.play('card-moving-'+Math.ceil(Math.random()*3),{f:520,d:0.08});},
+  unlock(){this.play('achievement',{f:660,d:0.12});},
+  win(){[523,659,784,1047].forEach(function(f,i){setTimeout(function(){SFX.tone(f,0.12,'square',0.22);},i*90);});},
+  lose(){this.play('gameover',{f:440,d:0.18,t:'sawtooth',v:0.22});},
+  denied(){this.play('denied',{f:220,d:0.12,t:'sawtooth'});},
 };
 
 /* ============================================================
@@ -175,6 +188,7 @@ function paintIcons(root){(root||document).querySelectorAll('[data-ic]').forEach
 const PATCH_NOTES=[
   {v:'v0.7.5', date:'17.06.2026', notes:[
     'FAQ: Erklärung zum Namen „Klondaire" hinzugefügt.',
+    'Neue Sounds: Eigene Soundeffekte für Klicks, Banking, Card-Moves, Erfolge und Game-Over – in den Optionen regulierbar.',
   ]},
  {v:'v0.7.4', date:'17.06.2026', notes:[
    'Option: Reihenfolge der Bank-Farben frei anpassen.',
@@ -534,12 +548,13 @@ function handleStock(){
   pushUndo();
   if(G.stock.length){const c=G.stock.pop();c.up=true;G.waste.push(c);}
   else if(G.rec>0&&G.waste.length){while(G.waste.length){const c=G.waste.pop();c.up=false;G.stock.push(c);}G.rec--;}
+  SFX.bank();
   G.sel=null;render();checkStuck();tutGate('stock');
 }
 function doFound(suit){pushUndo();const cs=moving();const c=cs[0];const s=c.joker?suit:c.s;G.found[s].push(c);if(G.sel.p==='waste')G.waste.pop();else{G.tab[G.sel.col].pop();flip(G.tab[G.sel.col]);}const r=bankGain(c);var m=effMult();if(Store.data.opts.testMult)m=5;if(Store.data.opts.effects!==false&&m>3){shake();}if(Store.data.opts.effects!==false&&navigator.vibrate)navigator.vibrate(8);G.sel=null;tutGate('bank');check();if(r.sources.length)setTimeout(function(){animateMultTags(r.sources,r.gain,m);},30);else pop(r.gain,m);}
-function doTab(col){pushUndo();const cs=moving();if(G.sel.p==='waste')G.waste.pop();else if(G.sel.p==='found'){const c=G.found[G.sel.suit].pop();unbank(c);}else G.tab[G.sel.col].splice(G.sel.idx);cs.forEach(c=>G.tab[col].push(c));if(G.sel.p==='tab')flip(G.tab[G.sel.col]);G.sel=null;render();checkStuck();}
+function doTab(col){pushUndo();const cs=moving();if(G.sel.p==='waste')G.waste.pop();else if(G.sel.p==='found'){const c=G.found[G.sel.suit].pop();unbank(c);}else G.tab[G.sel.col].splice(G.sel.idx);cs.forEach(c=>G.tab[col].push(c));if(G.sel.p==='tab')flip(G.tab[G.sel.col]);if(G.sel.p!=='found')SFX.buy();G.sel=null;render();checkStuck();}
 function same(p,col,idx){return G.sel&&G.sel.p===p&&G.sel.col===col&&G.sel.idx===idx;}
-function shake(){const s=$('stage');s.classList.add('shake');setTimeout(()=>s.classList.remove('shake'),180);}
+function shake(){SFX.denied();const s=$('stage');s.classList.add('shake');setTimeout(()=>s.classList.remove('shake'),180);}
 function multTags(){
   var tags=[];
   if(!G)return tags;
@@ -593,7 +608,7 @@ function doUndo(){
   G.chips=s.chips;G.roundMult=s.roundMult;G.rec=s.rec;
   G.coins-=cost;G.undoUses=(G.undoUses||0)+1;G.sel=null;G._last=G.chips;
   const d=document.createElement('div');d.className='scorepop';d.style.color='var(--pink)';d.textContent='-'+cost+' COINS';$('stage').appendChild(d);setTimeout(function(){d.remove();},800);
-  SFX.tone(320,0.08);setTimeout(function(){SFX.tone(200,0.1);},60);
+  SFX.play('denied',{f:320,d:0.08});setTimeout(function(){SFX.play('denied',{f:200,d:0.1});},60);
   render();
 }
 
@@ -726,6 +741,7 @@ function roundClear(cleared){
 }
 function openShop(){
   G.phase='shop';
+  SFX.buy();
   const avail=POOL.filter(p=>!G.perks.includes(p.id));
   G.offers=shuffle(avail.slice()).slice(0,3);
   G.specialOffer=(G.dd&&G.dd.noSpec)?null:(RNG()<0.45)?SPECIALS[Math.floor(RNG()*SPECIALS.length)].id:null;  // luck-based special
@@ -1012,15 +1028,16 @@ function renderRang(){
   });
 }
 
-/* the menu post-it shows the latest version + its first 5 points */
+/* the menu post-it shows the latest 2 versions */
 function renderPostit(){
-  const p=PATCH_NOTES[0];
+  const p=PATCH_NOTES[0], p2=PATCH_NOTES[1];
   if(!p){$('postit').style.display='none';return;}
   $('postit-ver').textContent='NEU · '+p.v;
   $('postit-list').innerHTML=p.notes.slice(0,2).map(n=>'<li>'+n+'</li>').join('');
-  $('postit-more').style.display='block';   // always show the tear-off fringe (laschen)
-  const tear=document.querySelector('#postit-more .pt-tear'); if(tear)tear.style.display=(p.notes.length>2)?'block':'none';  // "und noch mehr" only when there's more
-  document.querySelectorAll('#postit-fringe span.torn').forEach(s=>s.classList.remove('torn')); // regrow tabs
+  if(p2){$('postit-list').innerHTML+='<li class="pt-old"><b>'+p2.v+'</b>: '+p2.notes.slice(0,1).join(', ')+'</li>';}
+  $('postit-more').style.display='block';
+  const tear=document.querySelector('#postit-more .pt-tear'); if(tear)tear.style.display=(p.notes.length>2)?'block':'none';
+  document.querySelectorAll('#postit-fringe span.torn').forEach(s=>s.classList.remove('torn'));
 }
 /* Easter egg: tear off a fringe tab -> a little souvenir note + a secret achievement. */
 const FORTUNES=[
@@ -1268,8 +1285,8 @@ $('overlay').addEventListener('click',function(e){
   const b=e.target.closest('[data-buy]');if(b){buy(+b.dataset.buy);return;}
   const sb=e.target.closest('[data-spec-buy]');if(sb){buySpecial(sb.dataset.specBuy);return;}
   const a=e.target.closest('[data-act]');if(!a)return;const act=a.dataset.act;
-  if(act==='shop')openShop();
-  else if(act==='next'){G.ante++;newRound();}
+  if(act==='shop'){SFX.click();openShop();}
+  else if(act==='next'){SFX.click();G.ante++;newRound();}
   else if(act==='reroll')reroll();
   else if(act==='items-close')hideOv();
   else if(act==='endless'){G.endless=true;SFX.click();openShop();}     // keep playing past the win
@@ -1425,7 +1442,7 @@ window.addEventListener('keydown',function(e){
   if(e.code==='Space'||e.key===' '){e.preventDefault();handleStock();}
 });
 // resume audio on first user gesture (mobile autoplay policy)
-window.addEventListener('pointerdown',function init(){SFX.ensure();SFX.resume();Music.kick();window.removeEventListener('pointerdown',init);},{once:true});
+window.addEventListener('pointerdown',function init(){SFX.ensure();SFX.resume();SFX.preload();Music.kick();window.removeEventListener('pointerdown',init);},{once:true});
 document.addEventListener('visibilitychange',function(){if(document.hidden){if(Music.el)Music.el.pause();}else{Music.sync();}});
 
 /* ============================================================
