@@ -1329,7 +1329,10 @@ $('opt-tut').addEventListener('click',function(){Store.data.meta.tutDone=false;S
       if(devShown)SFX.buy(); else SFX.click();
     }
   });
-  $('dev-daily').addEventListener('click',function(){Store.data.meta.dailyDone='';Store.save();renderMenu();SFX.click();alert('Tages-Lock zurückgesetzt – du kannst die Challenge erneut testen.');});
+  $('dev-daily').addEventListener('click',function(){
+    if(!confirm('Tages-Lock wirklich zurücksetzen?'))return;
+    Store.data.meta.dailyDone='';Store.save();renderMenu();SFX.click();alert('Tages-Lock zurückgesetzt – du kannst die Challenge erneut testen.');
+  });
 })();
 // tutorial coach buttons (Weiter / Los / Überspringen)
 $('tutbox').addEventListener('click',function(e){const b=e.target.closest('[data-tut]');if(!b)return;SFX.click();if(b.dataset.tut==='skip')endTutorial();else tutNext();});
