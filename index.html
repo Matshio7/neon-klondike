@@ -29,6 +29,7 @@
       <div class="menu-btns">
         <button class="mbtn gold" data-go="resume" id="btn-resume" hidden><span class="mi" data-ic="play"></span> FORTSETZEN</button>
         <button class="mbtn gold" data-go="start"><span class="mi" data-ic="play"></span> START</button>
+        <button class="mbtn" data-go="daily" id="btn-daily"><span class="mi" data-ic="star"></span> TÄGLICH</button>
         <button class="mbtn" data-go="decks"><span class="mi" data-ic="spade"></span> DECKS</button>
         <button class="mbtn" data-go="ach"><span class="mi" data-ic="trophy"></span> ERFOLGE</button>
         <button class="mbtn" data-go="rang"><span class="mi" data-ic="star"></span> RANGLISTE</button>
@@ -205,7 +206,11 @@
       <div class="ht">RANGLISTE</div>
       <div style="width:34px"></div>
     </div>
-    <div class="ach-prog">BESTE ANTE · DANN CHIPS</div>
+    <div class="ach-prog" id="rang-sub">BESTE ANTE · DANN CHIPS</div>
+    <div class="lb-toggle" id="rang-toggle">
+      <button class="lb-tab active" data-lb="all">GESAMT</button>
+      <button class="lb-tab" data-lb="daily">HEUTE</button>
+    </div>
     <div class="lb-body" id="rang-body"></div>
   </section>
 
