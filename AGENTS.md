@@ -67,6 +67,7 @@ Status-Marker: `- [ ]` offen · `- [~] (name)` in Arbeit · `- [x]` erledigt (mi
 - [x] **BL-9** · Barrierefreiheit (Farbenblind, große Karten) — Prio: niedrig *(Vier-Farben-Deck: erledigt 19.06.2026; Große Karten: verworfen, mobil nicht praktikabel)*
 - [ ] **BL-10** · Deal-3-Modus + echter Stock/Waste-Fächer — Prio: niedrig
 - [ ] **BL-11** · In-App-Ankündigungen / Update-Benachrichtigungen — Prio: mittel
+- [x] **BL-12** · Soundeffekte (Dateien + Integration) — Prio: mittel *(opencode, 20.06.2026; feature/bl-12)*
 
 ---
 
@@ -177,6 +178,7 @@ Suche nach diesen Namen statt nach Zeilennummern (die wandern):
 
 ## 8. Changelog (neueste zuerst, kurz)
 
+- **BL-12** (20.06.2026) — Soundeffekte als MP3-Dateien integriert (click, card-moving, achievement, denied, gameover); `SFX.preload()` + `play()` mit Fallback auf Synthesizer; Trigger an allen Spiel-Stellen (Stock, Tab-Move, Shop, Undo, ungültige Aktion); Post-it zeigt jetzt 2 Versionen.
 - **v0.7.5** (17.06.2026) — TEST-MULT aus Options entfernt; FAQ-Eintrag zur Herkunft des Namens „Klondaire" hinzugefügt.
 - **v0.7.4** (17.06.2026) — Option zum freien Anpassen der Bank-Reihenfolge in OPTIONS.
 - **v0.7.3** (17.06.2026) — Tages-Challenge mit täglichem festen Seed + Rangliste GESAMT/HEUTE; mehr Juice mit EFFEKTE-Option, Screen-Shake, Vibration und skalierenden Score-Pops.
