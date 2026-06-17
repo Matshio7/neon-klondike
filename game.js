@@ -465,19 +465,20 @@ function chipsFor(c){if(c.special){const sp=SPECIAL(c.special);return sp?sp.chip
 function bankGain(c){
   let multAdd=0;
   const ramp=!(G.boss&&G.boss.id==='flaute');   // FLAUTE-Boss: kein Mult-Aufbau aus Perks
+  const sources=[];
   if(ramp){
-    if(G.perks.includes('streak')){G.roundMult+=0.1;multAdd+=0.1;}
-    if(G.perks.includes('ace')&&c.r===1){G.roundMult+=0.5;multAdd+=0.5;}
-    if(G.perks.includes('comboplus')){G.roundMult+=0.2;multAdd+=0.2;}
+    if(G.perks.includes('streak')){G.roundMult+=0.1;multAdd+=0.1;sources.push({label:'Streak',add:0.1});}
+    if(G.perks.includes('ace')&&c.r===1){G.roundMult+=0.5;multAdd+=0.5;sources.push({label:'Ass',add:0.5});}
+    if(G.perks.includes('comboplus')){G.roundMult+=0.2;multAdd+=0.2;sources.push({label:'Combo+',add:0.2});}
   }
-  if(c.special){const sp=SPECIAL(c.special);if(sp&&sp.mult){G.roundMult+=sp.mult;multAdd+=sp.mult;}}
+  if(c.special){const sp=SPECIAL(c.special);if(sp&&sp.mult){G.roundMult+=sp.mult;multAdd+=sp.mult;sources.push({label:sp.name||'Spezial',add:sp.mult});}}
   const m=effMult(); if(m>RUN.maxMult)RUN.maxMult=m;
   const gain=Math.round(chipsFor(c)*m);
   G.chips+=gain; RUN.banked++; RUN.totalChips+=gain;
   c.gain=gain; c.multAdd=multAdd;   // recorded so taking the card back can reverse it exactly
   SFX.bank();
   evalAch();
-  return gain;
+  return {gain:gain,sources:sources};
 }
 /* take a card back out of the Bank -> reverse its chip + mult contribution (no exploits) */
 function unbank(c){
@@ -493,10 +494,37 @@ function handleStock(){
   else if(G.rec>0&&G.waste.length){while(G.waste.length){const c=G.waste.pop();c.up=false;G.stock.push(c);}G.rec--;}
   G.sel=null;render();checkStuck();tutGate('stock');
 }
-function doFound(suit){pushUndo();const cs=moving();const c=cs[0];const s=c.joker?suit:c.s;G.found[s].push(c);if(G.sel.p==='waste')G.waste.pop();else{G.tab[G.sel.col].pop();flip(G.tab[G.sel.col]);}const g=bankGain(c);var m=effMult();if(Store.data.opts.testMult)m=5;pop(g,m);if(Store.data.opts.effects!==false&&m>3){shake();}if(Store.data.opts.effects!==false&&navigator.vibrate)navigator.vibrate(8);G.sel=null;tutGate('bank');check();}
+function doFound(suit){pushUndo();const cs=moving();const c=cs[0];const s=c.joker?suit:c.s;G.found[s].push(c);if(G.sel.p==='waste')G.waste.pop();else{G.tab[G.sel.col].pop();flip(G.tab[G.sel.col]);}const r=bankGain(c);var m=effMult();if(Store.data.opts.testMult)m=5;showBankChain(r.sources,r.gain,m);if(Store.data.opts.effects!==false&&m>3){shake();}if(Store.data.opts.effects!==false&&navigator.vibrate)navigator.vibrate(8);G.sel=null;tutGate('bank');check();}
 function doTab(col){pushUndo();const cs=moving();if(G.sel.p==='waste')G.waste.pop();else if(G.sel.p==='found'){const c=G.found[G.sel.suit].pop();unbank(c);}else G.tab[G.sel.col].splice(G.sel.idx);cs.forEach(c=>G.tab[col].push(c));if(G.sel.p==='tab')flip(G.tab[G.sel.col]);G.sel=null;render();checkStuck();}
 function same(p,col,idx){return G.sel&&G.sel.p===p&&G.sel.col===col&&G.sel.idx===idx;}
 function shake(){const s=$('stage');s.classList.add('shake');setTimeout(()=>s.classList.remove('shake'),180);}
+function showBankChain(sources,gain,mult){
+  const el=$('multchain');if(!el)return;
+  el.innerHTML='';
+  if(!sources.length){pop(gain,mult);return;}
+  sources.forEach(function(src){
+    const r=document.createElement('div');r.className='mc-row';r.textContent='+'+src.add.toFixed(1)+' '+src.label;
+    el.appendChild(r);
+  });
+  const tt=document.createElement('div');tt.className='mc-total';tt.textContent='= x'+mult.toFixed(1);
+  el.appendChild(tt);el.classList.remove('hidden');
+  const rows=el.querySelectorAll('.mc-row');
+  var cur=mult-sources.reduce(function(s,src){return s+src.add;},0);
+  function step(i){
+    if(i>=sources.length){
+      $('mult').innerHTML='x'+mult.toFixed(1);
+      tt.classList.add('mc-active');
+      pop(gain,mult);
+      setTimeout(function(){el.classList.add('hidden');},1200);
+      return;
+    }
+    cur+=sources[i].add;
+    $('mult').innerHTML='x'+cur.toFixed(1);
+    rows[i].classList.add('mc-active');
+    setTimeout(function(){step(i+1);},220);
+  }
+  step(0);
+}
 function selWaste(){if(G.waste.length)G.sel={p:'waste'};}
 /* ---- UNDO: snapshot before each move; each undo costs escalating coins (per run) ---- */
 function pushUndo(){
