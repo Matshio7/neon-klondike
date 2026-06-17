@@ -29,7 +29,7 @@ Vanilla JavaScript, kein Build, keine Frameworks: `index.html` + `styles.css` + 
 
 ## Status
 
-Aktuelle Version: **v0.6** · in aktiver Entwicklung.
+Aktuelle Version: **v0.7.5** · in aktiver Entwicklung.
 
 ---
 
