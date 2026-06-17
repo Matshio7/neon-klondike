@@ -51,11 +51,73 @@ Status-Marker: `- [ ]` offen · `- [~] (name)` in Arbeit · `- [x]` erledigt (mi
 - [x] **`sw.js` VER** auf die App-Version ziehen (steht auf `klondaire-v0.6.2`, App ist v0.7.1). Bei JEDEM Release mitziehen. *(erledigt 17.06.2026)*
 - [x] **`music_orig/`** (~27 MB unkomprimierte Originale) aus dem Repo nehmen bzw. in `.gitignore` — Backup gehört nicht in den Live-Stand. *(erledigt 17.06.2026)*
 
-**Ideen / später:**
-- [ ] Mehr multiplikative Perks (seltene „Legendary"-Perks, die Runs definieren).
-- [ ] Mehr Boss-Typen mit interessanteren Regeln.
-- [ ] Deal-3-Modus + echter Stock/Waste-Fächer.
-- [ ] Rangliste: optional Filter (Top heute / diese Woche) — `kl_leaderboard` könnte ein Zeitfenster bekommen.
+### Feature-Backlog (detaillierte Tickets)
+
+> Jedes Ticket ist eigenständig umsetzbar. **Status nur HIER im Index pflegen** (Marker + `(name)` + Datum); die Details darunter sind Referenz. Reihenfolge = grobe Priorität. Code-Anker beziehen sich auf `game.js` (mit Funktionsnamen suchen, nicht Zeilennummern).
+
+**Index:**
+- [ ] **BL-1** · Seedbarer Zufall (Fundament) — Prio: hoch
+- [ ] **BL-2** · Tages-Challenge + Tagesrangliste — Prio: hoch *(braucht BL-1)*
+- [ ] **BL-3** · Einmal-Karten / Verbrauchsgegenstände — Prio: hoch
+- [ ] **BL-4** · Perk-Seltenheitsstufen + Synergien — Prio: hoch
+- [ ] **BL-5** · Boss-Vorschau + Endboss + mehr Bosse — Prio: mittel
+- [ ] **BL-6** · Mehr „Juice" (Feedback/Animation/Haptik) — Prio: mittel
+- [ ] **BL-7** · Anti-Cheat / Plausibilität fürs Leaderboard — Prio: mittel *(sobald Rangliste ernster)*
+- [ ] **BL-8** · Run-Historie & Statistik-Screen — Prio: niedrig
+- [ ] **BL-9** · Barrierefreiheit (Farbenblind, große Karten) — Prio: niedrig
+- [ ] **BL-10** · Deal-3-Modus + echter Stock/Waste-Fächer — Prio: niedrig
+
+---
+
+**BL-1 · Seedbarer Zufall (Fundament)**
+- **Ziel:** Deterministischer Zufall — gleicher Seed ⇒ identischer Run (Basis für BL-2 & „Seed teilen").
+- **Umsetzung:** mulberry32-RNG ergänzen: `function mkRng(s){return function(){s|=0;s=s+0x6D2B79F5|0;var t=Math.imul(s^s>>>15,1|s);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296;};}` + simple String-Hash. Globales `let RNG=Math.random;` und `function rseed(x){RNG=mkRng(hash(String(x)));}`. Dann **alle spielrelevanten `Math.random()` durch `RNG()` ersetzen**: `shuffle()`, Boss-Wahl in `newRound()`, Special-Offer in `roundClear()`, `reroll()`. (Den Audio-Zufall im `Music`-Objekt NICHT anfassen.) `G.seed` in `newRun()` setzen und in `snapRun()/restoreRun()` mitspeichern (Resume = gleicher Lauf).
+- **Fertig wenn:** Zwei Runs mit gleichem Seed liefern identische Karten/Bosse/Shop-Angebote; Seed in der Game-Over-Ansicht sichtbar; `node --check` ok.
+
+**BL-2 · Tages-Challenge + Tagesrangliste** *(braucht BL-1)*
+- **Ziel:** Täglich fester Seed für alle ⇒ faire, kompetitive Rangliste + Wiederkehr-Grund. (Ersetzt das alte „Rangliste-Zeitfilter"-Item.)
+- **Umsetzung:** Menübutton `data-go="daily"` → `rseed(heuteYYYYMMDD)`, `newRun()` mit `G.daily=datum`. Optional 1 Versuch/Tag via `Store.data.meta.dailyDone`. **Backend** (Muster: bestehende `kl_*`): Tabelle `daily_scores(day date, username, best_ante, best_chips, updated_at, primary key(day,username))`, RLS-locked; RPCs `kl_daily_submit(p_day,p_username,p_ante,p_chips)` (nur verbessern) + `kl_daily_board(p_day,p_limit)`, security definer, an `anon` granten. Client: am Daily-Run-Ende `clRpc('kl_daily_submit',…)`; im Rangliste-Screen Umschalter „Gesamt | Heute".
+- **Fertig wenn:** Zwei Geräte spielen am selben Tag denselben Run; Tages-Board stimmt; keine Codes preisgegeben.
+
+**BL-3 · Einmal-Karten / Verbrauchsgegenstände**
+- **Ziel:** Taktische One-Shot-Items im Run (Balatro-„Tarot"-Prinzip).
+- **Umsetzung:** Array `CONSUMABLES=[{id,name,desc,price,fn}]` (analog `POOL`/`SPECIALS`). Beispiele: `umfaerben` (Farbe einer gewählten Karte ändern), `funke` (+1.0 Mult diese Runde), `spaehen` (nächste 5 Stock-Karten zeigen), `bossbrecher` (Boss-Regel diese Ante aus), `neumischen`. Bestand `G.items=[]` (max. 2 Slots), in `snapRun/restoreRun` persistieren. Im `renderShop()` eine Zeile „Gegenstände" + `buyItem(i)` (analog `buySpecial`). Eigene Items in Topbar/Items-Ansicht mit Tap→`useItem(id)` (ruft `fn`, entfernt Item). Karten-Auswahl über vorhandenes `G.sel`.
+- **Fertig wenn:** kaufbar, einsetzbar, Effekt wirkt, wird verbraucht, übersteht Resume; `node --check` ok.
+
+**BL-4 · Perk-Seltenheitsstufen + Synergien**
+- **Ziel:** Build-Identität durch Raritäten + comboende Perks. (Ersetzt „mehr multiplikative Perks".)
+- **Umsetzung:** `POOL`-Einträge um `rarity:'common'|'selten'|'legendär'` (+ optional `tags:['herz','zahl',…]`) erweitern. Shop-Auswahl (`openShop`/`reroll`) gewichten (z.B. 70/25/5). Optik: CSS-Klassen `.perk-selten`/`.perk-legendaer` (Rahmen/Glow). Mind. 3 neue multiplikative Synergie-Perks (z.B. „Herz-Motor: +0,3 Mult je gebankter Herz-Karte diese Runde").
+- **Fertig wenn:** Raritäten sichtbar & gewichtet; neue Perks funktionieren; grob balanciert.
+
+**BL-5 · Boss-Vorschau + Endboss + mehr Bosse**
+- **Ziel:** Planbarkeit + Höhepunkt. (Ersetzt „mehr Boss-Typen".)
+- **Umsetzung:** Boss-Regel VOR der Boss-Ante anzeigen (im Shop-/Übergang bzw. via `#bossstrip`-Text in `newRound()`: „Nächste Ante: BOSS — <Regel>"). Bei `G.ante===8` einen härteren **Endboss** (eigener `BOSSES`-Eintrag oder Sonderfall). 2–3 neue Regeln in `BOSSES` (z.B. „eine Farbe doppelt, eine zählt 0", „Foundation braucht 2 Durchgänge").
+- **Fertig wenn:** Vorschau sichtbar; Ante-8-Boss greift; neue Bosse laufen.
+
+**BL-6 · Mehr „Juice"**
+- **Ziel:** Befriedigenderes Game-Feel.
+- **Umsetzung:** Score-Pops beim Banking mit Mult skalieren, Combo-Zähler-Visual; leichter Screen-Shake bei großem Mult (CSS-Klasse kurz togglen); Sound-Layer bei Bank-Serien (`SFX` erweitern); Mobile-Haptik `navigator.vibrate(...)` beim Banking/Sieg. In Options abschaltbar; `prefers-reduced-motion` respektieren.
+- **Fertig wenn:** spürbares Feedback, abschaltbar.
+
+**BL-7 · Anti-Cheat / Plausibilität (Backend)**
+- **Ziel:** Offensichtlich gefälschte Scores aus der Rangliste halten (Scores kommen vom Client!).
+- **Umsetzung:** In `kl_save` (und `kl_daily_submit`) serverseitig Grenzen prüfen: `bestAnte` ≤ sinnvolles Maximum, `bestRunChips` plausibel zur Ante; bei Verstoß kappen/abweisen. Hinweis: rein clientseitige Spiele sind nie 100% sicher — Ziel ist „grober Unfug raus".
+- **Fertig wenn:** unrealistische Werte erscheinen nicht mehr im Board.
+
+**BL-8 · Run-Historie & Statistik-Screen**
+- **Ziel:** Vergangene Runs einsehen.
+- **Umsetzung:** Bei Game Over Zusammenfassung in `Store.data.history` (Ring-Puffer, letzte ~20: `{date,seed,ante,chips,deck,win}`). Neue Szene `scene-history` + `renderHistory()` (Muster: `renderNews`/`renderRang`) + Menübutton.
+- **Fertig wenn:** Historie gespeichert & angezeigt, mit Seed pro Eintrag (nachspielbar via BL-1).
+
+**BL-9 · Barrierefreiheit**
+- **Ziel:** Lesbarkeit/Inklusion.
+- **Umsetzung:** Farbenblind-Modus (Rang/Buchstabe + Symbol deutlicher, nicht nur Farbe) als Options-Toggle; „Große Karten"-Option (Kartengröße unabhängig vom UI-Scale). In `Store.data.opts` persistieren.
+- **Fertig wenn:** Toggles in Options wirken & bleiben erhalten.
+
+**BL-10 · Deal-3-Modus + echter Stock/Waste-Fächer**
+- **Ziel:** Näher am echten Klondike, mehr Varianz.
+- **Umsetzung:** Option oder Deck-Variante: beim Stock-Ziehen 3 Karten aufdecken (nur oberste spielbar), Waste als Fächer zeigen. Betrifft Stock/Waste-Zug- und Render-Logik sowie Recycle-Zählung.
+- **Fertig wenn:** umschaltbar, Regeln korrekt, kurzer Tutorial-Hinweis.
 
 ---
 
