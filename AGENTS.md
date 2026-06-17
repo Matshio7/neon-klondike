@@ -56,7 +56,7 @@ Status-Marker: `- [ ]` offen · `- [~] (name)` in Arbeit · `- [x]` erledigt (mi
 > Jedes Ticket ist eigenständig umsetzbar. **Status nur HIER im Index pflegen** (Marker + `(name)` + Datum); die Details darunter sind Referenz. Reihenfolge = grobe Priorität. Code-Anker beziehen sich auf `game.js` (mit Funktionsnamen suchen, nicht Zeilennummern).
 
 **Index:**
-- [ ] **BL-1** · Seedbarer Zufall (Fundament) — Prio: hoch
+- [x] **BL-1** · Seedbarer Zufall (Fundament) — Prio: hoch *(Kimi, 17.06.2026)*
 - [ ] **BL-2** · Tages-Challenge + Tagesrangliste — Prio: hoch *(braucht BL-1)*
 - [ ] **BL-3** · Einmal-Karten / Verbrauchsgegenstände — Prio: hoch
 - [ ] **BL-4** · Perk-Seltenheitsstufen + Synergien — Prio: hoch
@@ -171,6 +171,7 @@ Suche nach diesen Namen statt nach Zeilennummern (die wandern):
 
 ## 8. Changelog (neueste zuerst, kurz)
 
+- **feature/bl-1** (17.06.2026) — BL-1: Seedbarer Zufall via mulberry32-RNG, `G.seed` in `newRun/snapRun/restoreRun`, RNG-State für Resume, alle spielrelevanten `Math.random()` durch `RNG()` ersetzt, Seed-Anzeige im Game-Over-Screen.
 - **v0.7.1** (16.–18.06.2026) — FAQ-Button, Farb-Themes (Neon/Pink/Amber/Midnight/Blood, tönen den Hintergrund), feinerer Musik-Regler; UI/UX-Aufräum-Pass (Dead Code raus, Hilfe-Modus mit Board-Highlights, Default-Theme „Neon"→„OG", Farben theme-konsistent, Slider-Track via --felt, Lade-Indikator, FAQ-Seite visuell überarbeitet mit Kategorien & Animation).
 - **v0.7.1-cleanup** (17.06.2026) — Sicherheit: `esc()`-Helfer gegen Stored-XSS in `renderRang()` / `renderCloud()`; `sw.js` Cache-Version auf `klondaire-v0.7.1` synchronisiert; `music_orig/` (~27 MB) aus dem Repository entfernt und ins `.gitignore` aufgenommen.
 - **v0.7** (15.06.2026) — Schwierigkeitssystem (Auswahl im Menü), stufenloser CRT-Regler, AUTO-RÄUMEN (Auto-Einbanken), Erfolg „Voll im Blick", Musik auf 128 kbps komprimiert.
