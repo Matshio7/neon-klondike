@@ -286,6 +286,14 @@ body.crt-off #overlay::before{display:none}
 .theme-btn:hover{box-shadow:0 0 8px color-mix(in srgb,var(--mint) 30%,transparent)}
 .theme-btn.theme-active{border-color:var(--gold);color:var(--gold);background:#241d07;box-shadow:0 0 8px rgba(255,210,63,.3)}
 .theme-swatch{width:20px;height:12px;border-radius:3px;border:1px solid rgba(255,255,255,.15)}
+
+/* foundation order selector */
+.found-order{display:flex;gap:6px;justify-content:center}
+.fo-suit{flex:1;display:flex;align-items:center;justify-content:center;height:42px;border-radius:8px;border:1.5px solid #2c5a43;background:#0d2419;color:#7fae98;cursor:pointer;font-size:18px;padding:0}
+.fo-suit:hover{box-shadow:0 0 8px color-mix(in srgb,var(--mint) 30%,transparent)}
+.fo-suit.fo-sel{border-color:var(--gold);color:var(--gold);background:#241d07;box-shadow:0 0 8px rgba(255,210,63,.3)}
+.fo-suit svg{width:22px;height:22px}
+
 /* =================== OPTIONS =================== */
 #scene-opts{min-height:62vh}
 .orow{display:flex;justify-content:space-between;align-items:center;gap:10px;background:#0e2418;border:1px solid #244;border-radius:9px;padding:13px 12px;margin-bottom:9px}

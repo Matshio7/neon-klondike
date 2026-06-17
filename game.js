@@ -20,7 +20,7 @@ const Store={
     d.stats=Object.assign({totalRuns:0,bestAnte:0,bestChips:0,bestRunChips:0,boardClears:0,bossesBeaten:[],wins:0},d.stats||{});
     if(!Array.isArray(d.stats.bossesBeaten))d.stats.bossesBeaten=[];
     d.ach=Array.isArray(d.ach)?d.ach:[];
-    d.opts=Object.assign({crt:0.3,scale:1,fit:false,sfxVol:0.75,musicVol:0.25,fourColor:false,effects:true,testMult:false},d.opts||{});
+    d.opts=Object.assign({crt:0.3,scale:1,fit:false,sfxVol:0.75,musicVol:0.25,fourColor:false,effects:true,testMult:false,foundationOrder:[0,1,2,3]},d.opts||{});
     if(typeof d.opts.sound==='boolean'){ d.opts.sfxVol=d.opts.sound?0.75:0; delete d.opts.sound; }      // migrate old on/off
     if(typeof d.opts.music==='boolean'){ d.opts.musicVol=d.opts.music?0.25:0; delete d.opts.music; }
     if(typeof d.opts.crt==='boolean')d.opts.crt=d.opts.crt?0.3:0;  // migrate old boolean to opacity
@@ -173,6 +173,9 @@ function paintIcons(root){(root||document).querySelectorAll('[data-ic]').forEach
    Format: { v:'Titel', date:'optional', notes:['Punkt 1','Punkt 2', ...] }
    ============================================================ */
 const PATCH_NOTES=[
+ {v:'v0.7.4', date:'17.06.2026', notes:[
+   'Option: Reihenfolge der Bank-Farben frei anpassen.',
+ ]},
  {v:'v0.7.3', date:'17.06.2026', notes:[
    'Tages-Challenge: Jeden Tag derselbe Seed für alle Spieler.',
    'Rangliste: Umschalter zwischen GESAMT und HEUTE.',
@@ -322,6 +325,7 @@ let RUN={};   // per-run tracking (resets each new run)
 let runActive=false; // true while a run is in progress (resumable from the menu)
 let RNG=Math.random; // replacable seeded RNG
 let RANG_MODE='all'; // 'all' | 'daily' leaderboard view
+let foundSwapIdx=-1; // selected index in foundation-order UI
 
 function $(id){return document.getElementById(id);}
 function esc(s){return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');}
@@ -900,7 +904,8 @@ function render(){
   if(G.boss){bs.classList.remove('hidden');bs.innerHTML='BOSS · '+G.boss.name+' — '+G.boss.desc;}else bs.classList.add('hidden');
   $('hud').classList.toggle('tutglow',G.tutGlow==='hud');
   const _bg=G.tutGlow==='bank'?' tut-glow':'';
-  let f='';for(let s=0;s<4;s++){const fo=G.found[s];if(fo.length){const fsel=(G.sel&&G.sel.p==='found'&&G.sel.suit===s)?'sel':'';f+=cardEl(fo[fo.length-1],'data-pile="found" data-suit="'+s+'"',fsel+_bg);}else f+='<div class="slot'+_bg+'" data-pile="found" data-suit="'+s+'">'+suitSvg(s)+'</div>';}
+  const fOrder=Store.data.opts.foundationOrder||[0,1,2,3];
+  let f='';for(let i=0;i<4;i++){const s=fOrder[i];const fo=G.found[s];if(fo.length){const fsel=(G.sel&&G.sel.p==='found'&&G.sel.suit===s)?'sel':'';f+=cardEl(fo[fo.length-1],'data-pile="found" data-suit="'+s+'"',fsel+_bg);}else f+='<div class="slot'+_bg+'" data-pile="found" data-suit="'+s+'">'+suitSvg(s)+'</div>';}
   let w;if(G.waste.length){const sel=G.sel&&G.sel.p==='waste'?'sel':'';w=cardEl(G.waste[G.waste.length-1],'data-pile="waste"',sel);}else w='<div class="slot" data-pile="waste"></div>';
   let st;const _sg=G.tutGlow==='stock'?' tut-glow':'';if(G.stock.length)st='<div class="card down'+_sg+'" data-pile="stock"></div>';else st='<div class="slot'+_sg+'" data-pile="stock">'+(G.rec>0?svg('recycle'):svg('close'))+'</div>';
   let tb='';for(let c=0;c<7;c++){const col=G.tab[c];let inner='';if(col.length===0){inner='<div class="slot" data-pile="tab" data-col="'+c+'" data-idx="-1"></div>';}else{col.forEach((card,i)=>{const fanCls=i===0?'':(card.up?'fan':'fan dn');const selThis=G.sel&&G.sel.p==='tab'&&G.sel.col===c&&i>=G.sel.idx?'sel':'';inner+=cardEl(card,'data-pile="tab" data-col="'+c+'" data-idx="'+i+'"',fanCls+' '+selThis);});}
@@ -1137,6 +1142,15 @@ function renderOpts(){
     var active=k===selTheme?' theme-active':'';
     return '<button class="theme-btn'+active+'" data-theme="'+k+'" title="'+t.mint+'/'+t.gold+'/'+t.pink+'"><span class="theme-swatch" style="background:'+t.mint+'"></span>'+k.toUpperCase()+'</button>';
   }).join('');
+  // foundation order rendering
+  const fo=$('found-order');
+  if(fo){
+    const order=o.foundationOrder||[0,1,2,3];
+    fo.innerHTML=order.map(function(s,i){
+      const sel=i===foundSwapIdx?' fo-sel':'';
+      return '<button class="fo-suit'+sel+'" data-fo="'+i+'">'+suitSvg(s)+'</button>';
+    }).join('');
+  }
 }
 
 function applyOpts(){ const v=Store.data.opts.crt||0; document.documentElement.style.setProperty('--crt-opacity',v); document.body.classList.toggle('crt-off',v===0); applyTheme(); var app=$('app'); if(app)app.classList.toggle('four-color',!!Store.data.opts.fourColor); fitCards(); }
@@ -1343,6 +1357,15 @@ $('scene-opts').addEventListener('click',function(e){
   if(t){const k=t.dataset.opt;Store.data.opts[k]=!Store.data.opts[k];Store.save();applyOpts();applyScale();renderOpts();SFX.click();return;}
   const th=e.target.closest('[data-theme]');
   if(th){Store.data.meta.selectedTheme=th.dataset.theme;Store.save();applyOpts();renderOpts();SFX.click();return;}
+  const fo=e.target.closest('[data-fo]');
+  if(fo){
+    const idx=+fo.dataset.fo;
+    const order=(Store.data.opts.foundationOrder||[0,1,2,3]).slice();
+    if(foundSwapIdx===-1){foundSwapIdx=idx;renderOpts();}
+    else if(foundSwapIdx===idx){foundSwapIdx=-1;renderOpts();}
+    else {const tmp=order[foundSwapIdx];order[foundSwapIdx]=order[idx];order[idx]=tmp;Store.data.opts.foundationOrder=order;foundSwapIdx=-1;Store.save();applyOpts();renderOpts();SFX.click();}
+    return;
+  }
 });
 // volume sliders (live)
 $('scene-opts').addEventListener('input',function(e){
