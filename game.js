@@ -310,10 +310,19 @@ const THEMES={
 let G={};
 let RUN={};   // per-run tracking (resets each new run)
 let runActive=false; // true while a run is in progress (resumable from the menu)
+let RNG=Math.random; // replacable seeded RNG
 
 function $(id){return document.getElementById(id);}
 function esc(s){return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');}
-function shuffle(a){for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a;}
+function hash(s){var h=0;for(var i=0;i<s.length;i++){h=(h<<5)-h+s.charCodeAt(i);h|=0;}return h>>>0;}
+function mkRng(s){
+  function next(){s|=0;s=s+0x6D2B79F5|0;var t=Math.imul(s^s>>>15,1|s);t=t+Math.imul(t^t>>>7,61|t)^t;s=t;return((t^t>>>14)>>>0)/4294967296;}
+  next.getState=function(){return s>>>0;};
+  next.setState=function(v){s=v;}; // internal state for resume
+  return next;
+}
+function rseed(x){RNG=mkRng(hash(String(x)));}
+function shuffle(a){for(let i=a.length-1;i>0;i--){const j=Math.floor(RNG()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a;}
 function target(n){return Math.round(60*Math.pow(1.55,n-1)/5)*5;}
 function recBase(){return 2+(G.perks.includes('rec')?1:0)+(G.deck?G.deck.recDelta:0);}
 function baseMult(){var b=(G.deck?G.deck.baseMult:1)+(G.perks.includes('fever')?0.5:0)+(G.perks.includes('bigfever')?1:0);return b-((G.dd&&G.dd.basePen)||0);}
@@ -330,6 +339,8 @@ function newRun(){
   const diffDef=DIFFICULTIES[diffId]||DIFFICULTIES[0];
   G={ante:1,coins:Math.max(1,deck.coins-diffDef.coinPen),perks:deck.startPerks.slice(),history:[],deck:deck,undo:[],undoUses:0,tutorial:tut,tutStep:0,endless:false,specials:[],specialOffer:null,diff:diffId,helpMode:false};
   if(diffId)G.dd=diffDef;
+  G.seed=Math.floor(Math.random()*1e8).toString(36).toUpperCase();
+  rseed(G.seed);
   runActive=true;
   newRound();           // newRound updates bestAnte + saves
   evalAch();            // covers runs10 etc.
@@ -343,6 +354,7 @@ function snapRun(){                                            // serializable c
   if(!runActive||!G||G.phase==='over'||G.tutorial)return null;
   const g=Object.assign({},G); g.undo=[]; g.sel=null;
   g.deckId=g.deck?g.deck.id:'standard'; delete g.deck;
+  if(RNG&&RNG.getState)g.rngState=RNG.getState();
   return {g:g,run:RUN};
 }
 function restoreRun(r){                                        // r = {g, run}
@@ -351,6 +363,8 @@ function restoreRun(r){                                        // r = {g, run}
   if(g.diff&&!g.dd)g.dd=DIFFICULTIES[g.diff];
   G=g; RUN=Object.assign({banked:0,totalChips:0,maxMult:0,bestRound:0,newBestAnte:false,newBestChips:false,newAch:[],voltEarned:0,won:false},r.run||{});
   if(!Array.isArray(RUN.newAch))RUN.newAch=[];
+  if(G.seed)rseed(G.seed);
+  if(G.rngState!==undefined&&RNG&&RNG.setState)RNG.setState(G.rngState);
   runActive=true; return true;
 }
 function saveGame(){ const r=snapRun(); if(!r)return; try{localStorage.setItem(SAVE_KEY,JSON.stringify(Object.assign({v:1},r)));}catch(e){} }
@@ -413,7 +427,7 @@ function newRound(){
   var dd=DIFFICULTIES[G.diff];if(dd&&dd.targetMul!==1)G.target=Math.round(G.target*dd.targetMul/5)*5;
   if(dd&&dd.recPen)G.rec=Math.max(0,G.rec-dd.recPen);
   var bossAnte=(G.ante%3===0)||(G.deck&&G.deck.bossEveryAnte)||(dd&&dd.bossEA);
-  if(bossAnte){G.boss=BOSSES[Math.floor(Math.random()*BOSSES.length)];
+  if(bossAnte){G.boss=BOSSES[Math.floor(RNG()*BOSSES.length)];
     if(G.boss.id==='tax')G.target=Math.round(G.target*1.4/5)*5;
     if(G.boss.id==='bigtax')G.target=Math.round(G.target*1.8/5)*5;
     if(G.boss.id==='drought')G.rec=Math.max(1,G.rec-2);}
@@ -632,7 +646,7 @@ function openShop(){
   G.phase='shop';
   const avail=POOL.filter(p=>!G.perks.includes(p.id));
   G.offers=shuffle(avail.slice()).slice(0,3);
-  G.specialOffer=(G.dd&&G.dd.noSpec)?null:(Math.random()<0.45)?SPECIALS[Math.floor(Math.random()*SPECIALS.length)].id:null;  // luck-based special
+  G.specialOffer=(G.dd&&G.dd.noSpec)?null:(RNG()<0.45)?SPECIALS[Math.floor(RNG()*SPECIALS.length)].id:null;  // luck-based special
   renderShop();
   saveGame();
 }
@@ -1076,7 +1090,8 @@ function applyScale(){
 function renderGameOver(){
   const s=Store.data.stats, h=G.history;
   $('go-sub').innerHTML=(G.endless?'ENDLOSMODUS · ':'')+'RUN BEENDET — ANTE '+G.ante+(G.boss?' · BOSS':'')+'<br>'+
-    'BENÖTIGT '+G.target+' · ERREICHT '+G.chips;
+    'BENÖTIGT '+G.target+' · ERREICHT '+G.chips+'<br>'+
+    '<span style="font-size:.7em;opacity:.75">SEED '+esc(G.seed||'?')+'</span>';
   // records
   const recs=[];
   const achV=(RUN.newAch||[]).reduce((sum,id)=>sum+(ACH_VOLT[id]||0),0);
