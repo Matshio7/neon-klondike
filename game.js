@@ -35,7 +35,8 @@ const Store={
       themesUnlocked:['og'], selectedTheme:'og',
       tutDone:false,             // first-run tutorial shown?
       cloudCode:'', cloudName:'', // cloud-save code + username (set when activated)
-      difficultyUnlocked:0, selectedDifficulty:0 // difficulty tiers 0-7, unlocked by winning
+      difficultyUnlocked:0, selectedDifficulty:0, // difficulty tiers 0-7, unlocked by winning
+      dailyDone:''                // YYYYMMDD of last completed daily challenge
     },d.meta||{});
   },
   save(){
@@ -315,6 +316,7 @@ let G={};
 let RUN={};   // per-run tracking (resets each new run)
 let runActive=false; // true while a run is in progress (resumable from the menu)
 let RNG=Math.random; // replacable seeded RNG
+let RANG_MODE='all'; // 'all' | 'daily' leaderboard view
 
 function $(id){return document.getElementById(id);}
 function esc(s){return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');}
@@ -326,6 +328,7 @@ function mkRng(s){
   return next;
 }
 function rseed(x){RNG=mkRng(hash(String(x)));}
+function todayStr(){const d=new Date();return d.getFullYear()+String(d.getMonth()+1).padStart(2,'0')+String(d.getDate()).padStart(2,'0');}
 function shuffle(a){for(let i=a.length-1;i>0;i--){const j=Math.floor(RNG()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a;}
 function target(n){return Math.round(60*Math.pow(1.55,n-1)/5)*5;}
 function recBase(){return 2+(G.perks.includes('rec')?1:0)+(G.deck?G.deck.recDelta:0);}
@@ -334,20 +337,47 @@ function effMult(){return baseMult()+G.roundMult;}
 
 function resetRun(){RUN={banked:0,totalChips:0,maxMult:0,bestRound:0,newBestAnte:false,newBestChips:false,newAch:[],voltEarned:0,won:false};}
 
-function newRun(){
+function newRun(daily){
   resetRun();
   Store.data.stats.totalRuns++;
-  const tut=!Store.data.meta.tutDone;                          // first ever run -> tutorial
+  const tut=!daily&&!Store.data.meta.tutDone;                          // first ever run -> tutorial (not in daily)
   const deck=tut?DECK('standard'):DECK(Store.data.meta.selectedDeck);  // tutorial always on the standard deck
-  const diffId=tut?0:(Store.data.meta.selectedDifficulty||0);
+  const diffId=tut?0:(daily?0:(Store.data.meta.selectedDifficulty||0));// daily always difficulty 0
   const diffDef=DIFFICULTIES[diffId]||DIFFICULTIES[0];
   G={ante:1,coins:Math.max(1,deck.coins-diffDef.coinPen),perks:deck.startPerks.slice(),history:[],deck:deck,undo:[],undoUses:0,tutorial:tut,tutStep:0,endless:false,specials:[],specialOffer:null,diff:diffId,helpMode:false};
   if(diffId)G.dd=diffDef;
-  G.seed=Math.floor(Math.random()*1e8).toString(36).toUpperCase();
+  if(daily){
+    const day=todayStr();
+    G.daily=day;
+    G.seed=day;
+    Store.data.meta.dailyDone=day;
+    Store.save();
+  }else{
+    G.seed=Math.floor(Math.random()*1e8).toString(36).toUpperCase();
+  }
   rseed(G.seed);
   runActive=true;
   newRound();           // newRound updates bestAnte + saves
   evalAch();            // covers runs10 etc.
+}
+function doDaily(){
+  const day=todayStr();
+  if(Store.data.meta.dailyDone===day){SFX.click();alert('Tages-Challenge bereits gespielt. Morgen gibt es eine neue!');return;}
+  SFX.click();
+  if(!confirm('TAGES-CHALLENGE\n\nFür alle Spieler heute derselbe Seed.\nNur EIN Versuch pro Tag.\n\nStarten?'))return;
+  showScene('game');fitCards();newRun(true);
+}
+function dailySubmit(){
+  if(!G||!G.daily||G.dailySubmitted)return;
+  const m=Store.data.meta;
+  const username=m.cloudName||'Anonym';
+  const dayFormatted=G.daily.slice(0,4)+'-'+G.daily.slice(4,6)+'-'+G.daily.slice(6,8);
+  // Backend (Supabase) erwartet:
+  //   Tabelle daily_scores(day date, username text, best_ante int, best_chips int, updated_at timestamptz, primary key(day,username))
+  //   RPC kl_daily_submit(p_day date, p_username text, p_ante int, p_chips int) -> nur verbessern, security definer, anon grant
+  //   RPC kl_daily_board(p_day date, p_limit int) -> rank, username, best_ante, best_chips (keine Codes)
+  clRpc('kl_daily_submit',{p_day:dayFormatted,p_username:username,p_ante:G.ante,p_chips:RUN.bestRound||0}).catch(function(){});
+  G.dailySubmitted=true;
 }
 /* ============================================================
    SAVEGAME  -  persist the whole run to localStorage so it
@@ -772,6 +802,7 @@ function gameOver(){
   Store.save();
   evalAch();
   awardVolt();
+  dailySubmit(); // submit daily challenge score if applicable
   cloudSync();   // sync final progress (VOLT/stats) at game over
   runActive=false;clearSave();
   SFX.lose();
@@ -908,13 +939,17 @@ function renderCloud(){
   $('cloud-body').innerHTML=h;
 }
 function renderRang(){
-  var body=$('rang-body');
+  var body=$('rang-body'),sub=$('rang-sub'),tog=$('rang-toggle');
+  const today=todayStr();
+  const todayFormatted=today.slice(0,4)+'-'+today.slice(4,6)+'-'+today.slice(6,8);
+  if(sub)sub.textContent=RANG_MODE==='daily'?'TAGES-CHALLENGE · '+today:'BESTE ANTE · DANN CHIPS';
+  if(tog){tog.querySelectorAll('.lb-tab').forEach(b=>b.classList.toggle('active',b.dataset.lb===RANG_MODE));}
   body.innerHTML='<div class="ach-prog loading-pulse" style="color:#8fbfa6">Lade …</div>';
-  clRpc('kl_leaderboard',{p_limit:50}).then(function(rows){
-    if(!rows||!rows.length){
-      body.innerHTML='<div class="ach-prog" style="color:#8fbfa6">Noch keine Einträge – spiel eine Runde mit aktivierter Cloud!</div>';
-      return;
-    }
+  var promise=RANG_MODE==='daily'?clRpc('kl_daily_board',{p_day:todayFormatted,p_limit:50}):clRpc('kl_leaderboard',{p_limit:50});
+  var emptyMsg=RANG_MODE==='daily'?'Noch keine Einträge für heute – sei der Erste!':'Noch keine Einträge – spiel eine Runde mit aktivierter Cloud!';
+  var errMsg=RANG_MODE==='daily'?'Tages-Rangliste nicht erreichbar – bist du online?':'Rangliste nicht erreichbar – bist du online?';
+  promise.then(function(rows){
+    if(!rows||!rows.length){body.innerHTML='<div class="ach-prog" style="color:#8fbfa6">'+emptyMsg+'</div>';return;}
     body.innerHTML=rows.map(function(r,i){
       var rank=r.rank||(i+1);
       var st=rank===1?'color:var(--gold)':(rank===2?'color:#c0c0c0':(rank===3?'color:#cd7f32':''));
@@ -922,7 +957,7 @@ function renderRang(){
       return '<div class="lb-row'+cls+'"><span class="lb-rank" style="'+st+'">'+rank+'</span><span class="lb-name">'+esc(r.username)+'</span><span class="lb-score">ANTE '+r.best_ante+' · '+(r.best_chips||0).toLocaleString('de-DE')+' CHIPS</span></div>';
     }).join('');
   }).catch(function(){
-    body.innerHTML='<div class="ach-prog" style="color:var(--pink)">Rangliste nicht erreichbar – bist du online?</div>';
+    body.innerHTML='<div class="ach-prog" style="color:var(--pink)">'+errMsg+'</div>';
   });
 }
 
@@ -977,6 +1012,9 @@ function renderMenu(){
   $('m-deck').textContent=DECK(Store.data.meta.selectedDeck).name;
   $('m-wins').textContent=Store.data.stats.wins||0;
   $('btn-resume').hidden=!(runActive||hasSave());   // show FORTSETZEN for a paused run or a saved one
+  const bd=$('btn-daily'),chk=$('daily-check');
+  if(bd){bd.disabled=(Store.data.meta.dailyDone===todayStr());}
+  if(chk){chk.textContent=(Store.data.meta.dailyDone===todayStr()?' ✓':'');}
   $('menu-build').textContent='build '+((PATCH_NOTES[0]&&PATCH_NOTES[0].v)||'?');
   $('iostip').hidden=true;             // close the iPhone tip when (re)entering the menu
   // difficulty selector
@@ -1174,7 +1212,7 @@ $('overlay').addEventListener('click',function(e){
   else if(act==='reroll')reroll();
   else if(act==='items-close')hideOv();
   else if(act==='endless'){G.endless=true;SFX.click();openShop();}     // keep playing past the win
-  else if(act==='winmenu'){runActive=false;clearSave();SFX.click();showScene('menu');}
+  else if(act==='winmenu'){dailySubmit();runActive=false;clearSave();SFX.click();showScene('menu');}
 });
 // top bar: home pauses to menu (run stays); items + give up
 $('homebtn').addEventListener('click',function(){SFX.click();showScene('menu'); if(G)G.helpMode=false;});
@@ -1190,6 +1228,7 @@ $('scene-menu').addEventListener('click',function(e){
     const go=b.dataset.go;
     if(go==='resume')doResume();
     else if(go==='start'){showScene('game');fitCards();newRun();}
+    else if(go==='daily')doDaily();
     else if(go==='decks')showScene('decks');
     else if(go==='ach')showScene('ach');
     else if(go==='news')showScene('news');
@@ -1203,6 +1242,11 @@ $('scene-menu').addEventListener('click',function(e){
 });
 // generic back buttons -> menu
 document.querySelectorAll('[data-back]').forEach(b=>b.addEventListener('click',function(){SFX.click();showScene('menu');}));
+// leaderboard toggle: all vs daily
+$('scene-rang').addEventListener('click',function(e){
+  const t=e.target.closest('[data-lb]');
+  if(t){SFX.click();RANG_MODE=t.dataset.lb;renderRang();}
+});
 // update post-it -> full updates screen; tearing a fringe tab is an easter egg
 $('postit').addEventListener('click',function(){SFX.click();showScene('news');});
 $('postit-fringe').addEventListener('click',function(e){const t=e.target.closest('span');if(!t)return;e.stopPropagation();tearTab(t);});
@@ -1270,6 +1314,7 @@ $('opt-reset').addEventListener('click',function(){
   if(confirm('Allen Fortschritt (Erfolge, Rekorde, VOLT & Decks) wirklich löschen?')){Store.reset();renderOpts();SFX.click();alert('Fortschritt zurückgesetzt.');}
 });
 $('opt-tut').addEventListener('click',function(){Store.data.meta.tutDone=false;Store.save();SFX.click();alert('Tutorial wird beim nächsten START gezeigt.');});
+$('opt-daily').addEventListener('click',function(){Store.data.meta.dailyDone='';Store.save();renderMenu();SFX.click();alert('Tages-Lock zurückgesetzt – du kannst die Challenge erneut testen.');});
 // tutorial coach buttons (Weiter / Los / Überspringen)
 $('tutbox').addEventListener('click',function(e){const b=e.target.closest('[data-tut]');if(!b)return;SFX.click();if(b.dataset.tut==='skip')endTutorial();else tutNext();});
 // game over buttons

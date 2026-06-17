@@ -57,7 +57,7 @@ Status-Marker: `- [ ]` offen · `- [~] (name)` in Arbeit · `- [x]` erledigt (mi
 
 **Index:**
 - [x] **BL-1** · Seedbarer Zufall (Fundament) — Prio: hoch *(Kimi, 17.06.2026)*
-- [ ] **BL-2** · Tages-Challenge + Tagesrangliste — Prio: hoch *(braucht BL-1)*
+- [x] **BL-2** · Tages-Challenge + Tagesrangliste — Prio: hoch *(Kimi, 17.06.2026; braucht BL-1)*
 - [ ] **BL-3** · Einmal-Karten / Verbrauchsgegenstände — Prio: hoch
 - [ ] **BL-4** · Perk-Seltenheitsstufen + Synergien — Prio: hoch
 - [ ] **BL-5** · Boss-Vorschau + Endboss + mehr Bosse — Prio: mittel
@@ -171,7 +171,8 @@ Suche nach diesen Namen statt nach Zeilennummern (die wandern):
 
 ## 8. Changelog (neueste zuerst, kurz)
 
-- **v0.7.2** (17.06.2026) — Release: seedbarer Zufall (BL-1, deterministische Runs) + Vier-Farben-Deck (BL-9) offiziell veröffentlicht; Versionsstand an allen 3 Stellen auf v0.7.2 gezogen (sw.js/opt-about/PATCH_NOTES) + kurze Patch-Notes ergänzt. (Push ausstehend.)
+- **v0.7.2** (17.06.2026) — Release: seedbarer Zufall (BL-1, deterministische Runs) + Vier-Farben-Deck (BL-9) offiziell veröffentlicht; Versionsstand an allen 3 Stellen auf v0.7.2 gezogen (sw.js/opt-about/PATCH_NOTES) + kurze Patch-Notes ergänzt.
+- **feature/bl-2** (17.06.2026) — BL-2: Tages-Challenge mit festem Tages-Seed, "TÄGLICH"-Button im Menü, 1 Versuch/Tag via `dailyDone`, Score-Submit an `kl_daily_submit`, Umschalter GESAMT/HEUTE in der Rangliste, Backend-Kommentare für `daily_scores` + RPCs.
 - **v0.7.1-bl9** (19.06.2026) — BL-9 Barrierefreiheit: Vier-Farben-Deck-Toggle in OPTIONS (Farbenblind-Hilfe: getrennte Suit-Farben für Karo/Kreuz).
 - **feature/bl-1** (17.06.2026) — BL-1: Seedbarer Zufall via mulberry32-RNG, `G.seed` in `newRun/snapRun/restoreRun`, RNG-State für Resume, alle spielrelevanten `Math.random()` durch `RNG()` ersetzt, Seed-Anzeige im Game-Over-Screen.
 - **v0.7.1** (16.–18.06.2026) — FAQ-Button, Farb-Themes (Neon/Pink/Amber/Midnight/Blood, tönen den Hintergrund), feinerer Musik-Regler; UI/UX-Aufräum-Pass (Dead Code raus, Hilfe-Modus mit Board-Highlights, Default-Theme „Neon"→„OG", Farben theme-konsistent, Slider-Track via --felt, Lade-Indikator, FAQ-Seite visuell überarbeitet mit Kategorien & Animation).
