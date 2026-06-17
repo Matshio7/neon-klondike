@@ -37,7 +37,7 @@
 - **Deploy:** `git commit` + `git push` auf `main` → GitHub Pages baut automatisch (~1–2 Min). *Kein manuelles Hochladen mehr.*
 - **Build:** `node --check game.js` läuft sauber. Arbeitsverzeichnis i. d. R. clean.
 - **Echte Spieler aktiv** (Cloud-Rangliste wird genutzt).
-- **Zuletzt:** UI/UX-Aufräum-Pass (Dead Code raus, Hilfe-Modus mit Board-Highlights, Default-Theme „Neon"→„OG").
+- **Zuletzt:** Help-Mode überarbeitet (Board-Highlights + floating Labels statt Overlay), Dead Code entfernt (#diffchip, #title), Farben theme-konsistent (color-mix statt Hex), Slider-Track via --felt, Keyboard-Hint (LEERTASTE) entfernt, Lade-Indikator für Cloud/Rangliste, OG-Thema (Neon umbenannt, bg:null = kein Hintergrund-Filter), Spielhilfe auf Basics reduziert.
 
 ---
 
@@ -110,7 +110,7 @@ Suche nach diesen Namen statt nach Zeilennummern (die wandern):
 
 ## 8. Changelog (neueste zuerst, kurz)
 
-- **v0.7.1** (16.06.2026) — FAQ-Button, Farb-Themes (Neon/Pink/Amber/Midnight/Blood, tönen den Hintergrund), feinerer Musik-Regler; danach UI/UX-Aufräum-Pass.
+- **v0.7.1** (16.–17.06.2026) — FAQ-Button, Farb-Themes (Neon/Pink/Amber/Midnight/Blood, tönen den Hintergrund), feinerer Musik-Regler; danach UI/UX-Aufräum-Pass (Dead Code raus, Hilfe-Modus mit Board-Highlights, Default-Theme „Neon"→„OG", Farben theme-konsistent, Slider-Track via --felt, Lade-Indikator).
 - **v0.7** (15.06.2026) — Schwierigkeitssystem (Auswahl im Menü), stufenloser CRT-Regler, AUTO-RÄUMEN (Auto-Einbanken), Erfolg „Voll im Blick", Musik auf 128 kbps komprimiert.
 - **v0.6.1** (15.06.2026) — Rangliste/Bestenliste (Client), kräftigerer CRT-Filter, UI-Tweaks.
 - **v0.6** (15.06.2026) — Cloud-Speicherstand (geräteübergreifend, 8-stelliger Code), Auto-Updater (Service Worker), dynamischer Hintergrund, Code-Split in index/styles/game.
@@ -118,4 +118,4 @@ Suche nach diesen Namen statt nach Zeilennummern (die wandern):
 
 ---
 
-*Letzte Aktualisierung dieser Datei: 17.06.2026.*
+*Letzte Aktualisierung dieser Datei: 17.06.2026 (Session 2).*
