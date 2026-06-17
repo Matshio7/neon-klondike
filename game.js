@@ -174,7 +174,7 @@ function paintIcons(root){(root||document).querySelectorAll('[data-ic]').forEach
    ============================================================ */
 const PATCH_NOTES=[
  {v:'v0.7.5', date:'17.06.2026', notes:[
-   'TEST-MULT aus Options ins geheime Dev-Menü verschoben.',
+   'TEST-MULT aus Options entfernt (nur noch intern für Tests verfügbar).',
    'FAQ: Erklärung zum Namen „Klondaire" hinzugefügt.',
  ]},
  {v:'v0.7.4', date:'17.06.2026', notes:[
