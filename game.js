@@ -186,6 +186,9 @@ function paintIcons(root){(root||document).querySelectorAll('[data-ic]').forEach
    Format: { v:'Titel', date:'optional', notes:['Punkt 1','Punkt 2', ...] }
    ============================================================ */
 const PATCH_NOTES=[
+ {v:'v0.7.8', date:'18.06.2026', notes:[
+   'Cloud-Speichern repariert: leere RPC-Antworten werden jetzt korrekt als Erfolg gewertet.',
+ ]},
  {v:'v0.7.7', date:'18.06.2026', notes:[
    'Fehlerbehebungen rund um Sieg-Belohnung, faire Tages-Challenge und sauberere Chip-Zählung.',
    'Cloud: „Jetzt sichern"-Button + zuverlässigeres Hochladen; Tages-Challenge nur noch einmal pro Tag wertbar.',
@@ -452,7 +455,12 @@ const CLOUD={url:'https://sibloltywapcvaehpsdi.supabase.co',key:'sb_publishable_
 function clRpc(fn,body){
   return fetch(CLOUD.url+'/rest/v1/rpc/'+fn,{method:'POST',
     headers:{'Content-Type':'application/json','apikey':CLOUD.key,'Authorization':'Bearer '+CLOUD.key},
-    body:JSON.stringify(body)}).then(function(r){return r.ok?r.json():Promise.reject(r.status);});
+    body:JSON.stringify(body)}).then(function(r){
+      if(!r.ok)return Promise.reject('HTTP '+r.status);
+      const len=r.headers.get('content-length');
+      if(r.status===204||(len!==null&&+len===0))return null;
+      return r.json().catch(function(e){return null;});
+    });
 }
 function cloudPayload(){ return {v:1,store:{stats:Store.data.stats,ach:Store.data.ach,meta:Store.data.meta},run:snapRun()}; }
 function cloudSaveNow(){ const m=Store.data.meta; if(!m.cloudCode)return Promise.reject('nocode'); return clRpc('kl_save',{p_code:m.cloudCode,p_username:m.cloudName||'',p_data:cloudPayload()}); }
@@ -1388,7 +1396,7 @@ $('scene-cloud').addEventListener('click',function(e){
     else clStatus('Dein Code: '+code,true);
   }else if(act==='cl-upload'){
     clStatus('Lade hoch …');
-    cloudSaveNow().then(function(){clStatus('In der Cloud gesichert ✓',true);},function(){clStatus('Sichern fehlgeschlagen — bist du online?',false);});
+    cloudSaveNow().then(function(){clStatus('In der Cloud gesichert ✓',true);},function(err){console.log('cloudSaveNow error',err);clStatus('Sichern fehlgeschlagen'+(err?': '+err:''),false);});
   }else if(act==='cl-disconnect'){
     Store.data.meta.cloudCode='';Store.data.meta.cloudName='';Store.save();renderCloud();clStatus('Cloud getrennt (lokaler Stand bleibt).',true);
   }
