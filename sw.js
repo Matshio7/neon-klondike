@@ -1,7 +1,7 @@
 /* KLONDAIRE service worker — network-first so the homescreen app always
    loads the newest version when online, and still works offline from cache.
    Bump VER on every release to clear the old cache. */
-const VER = 'klondaire-v0.7.8';
+const VER = 'klondaire-v0.7.9';
 
 self.addEventListener('install', e => { self.skipWaiting(); });
 
@@ -17,8 +17,10 @@ self.addEventListener('fetch', e => {
   if (e.request.method !== 'GET') return;
   const url = new URL(e.request.url);
   if (url.origin !== location.origin) return;   // let cross-origin (web fonts) pass through normally
+  const isAppShell = url.pathname === '/' || /\.(html|js|css|json)$/.test(url.pathname);
+  const req = isAppShell ? new Request(e.request, {cache: 'no-store'}) : e.request;
   e.respondWith(
-    fetch(e.request)
+    fetch(req)
       .then(res => { const copy = res.clone(); caches.open(VER).then(c => c.put(e.request, copy)); return res; })
       .catch(() => caches.match(e.request))      // offline → serve last cached version
   );

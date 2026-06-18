@@ -186,6 +186,9 @@ function paintIcons(root){(root||document).querySelectorAll('[data-ic]').forEach
    Format: { v:'Titel', date:'optional', notes:['Punkt 1','Punkt 2', ...] }
    ============================================================ */
 const PATCH_NOTES=[
+ {v:'v0.7.9', date:'18.06.2026', notes:[
+   'iPhone Homescreen-App aktualisiert sich jetzt zuverlässiger (Service-Worker-Update-Logik + App-Shell ohne Cache).',
+ ]},
  {v:'v0.7.8', date:'18.06.2026', notes:[
    'Cloud-Speichern repariert: leere RPC-Antworten werden jetzt korrekt als Erfolg gewertet.',
  ]},
@@ -1487,5 +1490,24 @@ paintIcons();        // fill all static [data-ic] elements with their SVG
 renderPostit();      // fill the menu sticky note with the latest update
 showScene('menu');
 // auto-update for the iPhone homescreen app (network-first; needs HTTPS hosting)
-if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('sw.js').catch(function(){});});}
+if('serviceWorker' in navigator){
+  window.addEventListener('load',function(){
+    navigator.serviceWorker.register('sw.js',{updateViaCache:'none'}).then(function(reg){
+      // check for updates every 60s while the app is open
+      setInterval(function(){reg.update();},60000);
+      // if a new version is waiting, reload when back in the menu (avoid mid-run reload)
+      reg.addEventListener('updatefound',function(){
+        const newWorker=reg.installing;
+        if(!newWorker)return;
+        newWorker.addEventListener('statechange',function(){
+          if(newWorker.state==='installed'&&navigator.serviceWorker.controller){
+            function tryReload(){if(G&&G.phase!=='play'&&runActive===false){window.location.reload();}}
+            tryReload();
+            setInterval(tryReload,5000);
+          }
+        });
+      });
+    }).catch(function(){});
+  });
+}
 })();

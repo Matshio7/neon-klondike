@@ -33,11 +33,11 @@
 
 ## 2. Aktueller Stand  ← hier zuerst schauen
 
-- **Version:** v0.7.8 (Hotfix)
+- **Version:** v0.7.9 (Hotfix)
 - **Deploy:** `git commit` + `git push` auf `main` → GitHub Pages baut automatisch (~1–2 Min). *Kein manuelles Hochladen mehr.*
 - **Build:** `node --check game.js` läuft sauber. Arbeitsverzeichnis i. d. R. clean.
 - **Echte Spieler aktiv** (Cloud-Rangliste wird genutzt).
-- **Zuletzt:** Cloud-Speichern repariert: leere RPC-Antworten von `kl_save` werden als Erfolg gewertet.
+- **Zuletzt:** iPhone Homescreen-App: Service-Worker-Updates verbessert (App-Shell ohne Cache, regelmäßige Update-Checks).
 - **Cleanup (17.06.2026):** XSS-Helfer `esc()` eingebaut und in `renderRang()` + `renderCloud()` genutzt, `sw.js` VER auf `klondaire-v0.7.1` gezogen, `music_orig/` aus dem Repo entfernt und ins `.gitignore` aufgenommen.
 
 ---
@@ -178,6 +178,7 @@ Suche nach diesen Namen statt nach Zeilennummern (die wandern):
 
 ## 8. Changelog (neueste zuerst, kurz)
 
+- **v0.7.9** (18.06.2026) — iPhone Homescreen-App aktualisiert sich jetzt zuverlässiger (Service-Worker-Update-Logik + App-Shell ohne Cache).
 - **v0.7.8** (18.06.2026) — Cloud-Speichern repariert: leere RPC-Antworten von `kl_save` werden als Erfolg gewertet.
 - **BL-12** (20.06.2026) — Soundeffekte als MP3-Dateien integriert (click, card-moving, achievement, denied, gameover); `SFX.preload()` + `play()` mit Fallback auf Synthesizer; Trigger an allen Spiel-Stellen (Stock, Tab-Move, Shop, Undo, ungültige Aktion); Post-it zeigt jetzt 2 Versionen.
 - **v0.7.6** (17.06.2026) — UMKEHR-Deck: Tableau baut jetzt korrekt A→K auf, Bank bleibt K→A.
