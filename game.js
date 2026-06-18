@@ -359,7 +359,7 @@ function todayStr(){const d=new Date();return d.getFullYear()+String(d.getMonth(
 function shuffle(a){for(let i=a.length-1;i>0;i--){const j=Math.floor(RNG()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a;}
 function target(n){return Math.round(60*Math.pow(1.55,n-1)/5)*5;}
 function recBase(){return 2+(G.perks.includes('rec')?1:0)+(G.deck?G.deck.recDelta:0);}
-function baseMult(){var b=(G.deck?G.deck.baseMult:1)+(G.perks.includes('fever')?0.5:0)+(G.perks.includes('bigfever')?1:0);return b-((G.dd&&G.dd.basePen)||0);}
+function baseMult(){var b=(G.deck?G.deck.baseMult:1)+(G.perks.includes('fever')?0.5:0)+(G.perks.includes('bigfever')?1:0);var dd=G.dd||DIFFICULTIES[G.diff]||{};return b-(dd.basePen||0);}
 function effMult(){return baseMult()+G.roundMult;}
 
 function resetRun(){RUN={banked:0,totalChips:0,maxMult:0,bestRound:0,newBestAnte:false,newBestChips:false,newAch:[],voltEarned:0,won:false};}
@@ -715,7 +715,8 @@ function roundClear(cleared){
     Store.data.stats.bossesBeaten.push(G.boss.id);
   Store.save();
   // ---- reward (unchanged economy) ----
-  const interest=G.dd&&G.dd.noInt?0:Math.min(G.perks.includes('deepinterest')?8:5,Math.floor(G.coins/5));
+  const diffData=G.dd||DIFFICULTIES[G.diff]||{};
+  const interest=diffData.noInt?0:Math.min(G.perks.includes('deepinterest')?8:5,Math.floor(G.coins/5));
   const perf=Math.floor(earned/40);
   const bonus=cleared?6:0;
   const bounty=G.boss?8*((G.deck&&G.deck.bossBountyMul)||1):0;
@@ -725,7 +726,8 @@ function roundClear(cleared){
   cloudSync();   // sync progress after each cleared round
   SFX.win();
   const base=3+(G.deck?G.deck.rewardDelta:0)+(G.perks.includes('richbank')?2:0);
-  const rows=[['Grundbelohnung',base],['Punkte (1 je 40 Chips)',perf],['Zinsen (1 je 5 Coins)',interest]];
+  const rows=[['Grundbelohnung',base],['Punkte (1 je 40 Chips)',perf]];
+  if(interest>0)rows.push(['Zinsen (1 je 5 Coins)',interest]);
   if(cleared)rows.push(['Board geräumt',6]);
   if(bounty)rows.push(['Boss besiegt',bounty]);
   const rh=rows.map(r=>'<div class="rr"><span class="rl">'+r[0]+'</span><span class="rv">+'+r[1]+'</span></div>').join('');
