@@ -186,6 +186,10 @@ function paintIcons(root){(root||document).querySelectorAll('[data-ic]').forEach
    Format: { v:'Titel', date:'optional', notes:['Punkt 1','Punkt 2', ...] }
    ============================================================ */
 const PATCH_NOTES=[
+ {v:'v0.7.7', date:'18.06.2026', notes:[
+   'Fehlerbehebungen rund um Sieg-Belohnung, faire Tages-Challenge und sauberere Chip-Zählung.',
+   'Cloud: „Jetzt sichern"-Button + zuverlässigeres Hochladen; Tages-Challenge nur noch einmal pro Tag wertbar.',
+ ]},
  {v:'v0.7.6', date:'17.06.2026', notes:[
    'UMKEHR-Deck: Tableau baut jetzt korrekt A→K auf (Bank weiterhin K→A).',
    'Soundeffekte: Neue Sounds für Banking, Card-Moves, Klicks, Erfolge, Game-Over und ungültige Aktionen – in OPTIONS regelbar.',
@@ -374,7 +378,7 @@ function newRun(daily){
   resetRun();
   Store.data.stats.totalRuns++;
   const tut=!daily&&!Store.data.meta.tutDone;                          // first ever run -> tutorial (not in daily)
-  const deck=tut?DECK('standard'):DECK(Store.data.meta.selectedDeck);  // tutorial always on the standard deck
+  const deck=(tut||daily)?DECK('standard'):DECK(Store.data.meta.selectedDeck);  // Tutorial + Daily immer Standard-Deck (faire Tages-Challenge)
   const diffId=tut?0:(daily?0:(Store.data.meta.selectedDifficulty||0));// daily always difficulty 0
   const diffDef=DIFFICULTIES[diffId]||DIFFICULTIES[0];
   G={ante:1,coins:Math.max(1,deck.coins-diffDef.coinPen),perks:deck.startPerks.slice(),history:[],deck:deck,undo:[],undoUses:0,tutorial:tut,tutStep:0,endless:false,specials:[],specialOffer:null,diff:diffId,helpMode:false};
@@ -451,7 +455,8 @@ function clRpc(fn,body){
     body:JSON.stringify(body)}).then(function(r){return r.ok?r.json():Promise.reject(r.status);});
 }
 function cloudPayload(){ return {v:1,store:{stats:Store.data.stats,ach:Store.data.ach,meta:Store.data.meta},run:snapRun()}; }
-function cloudSync(){ const m=Store.data.meta; if(!m.cloudCode)return; clRpc('kl_save',{p_code:m.cloudCode,p_username:m.cloudName||'',p_data:cloudPayload()}).catch(function(){}); }
+function cloudSaveNow(){ const m=Store.data.meta; if(!m.cloudCode)return Promise.reject('nocode'); return clRpc('kl_save',{p_code:m.cloudCode,p_username:m.cloudName||'',p_data:cloudPayload()}); }
+function cloudSync(){ if(!Store.data.meta.cloudCode)return; cloudSaveNow().then(function(){cloudSync.lastOk=Date.now();},function(){}); }   // Auto-Sync: Fehler still, aber loggt letzten Erfolg
 function cloudCreate(name){ Store.data.meta.cloudName=name||''; return clRpc('kl_create',{p_username:name||'',p_data:cloudPayload()}).then(function(code){Store.data.meta.cloudCode=code;Store.save();return code;}); }
 function cloudApply(payload){
   if(!payload)return false;
@@ -601,7 +606,7 @@ function selWaste(){if(G.waste.length)G.sel={p:'waste'};}
 /* ---- UNDO: snapshot before each move; each undo costs escalating coins (per run) ---- */
 function pushUndo(){
   if(!G.undo)G.undo=[];
-  G.undo.push(JSON.stringify({tab:G.tab,waste:G.waste,stock:G.stock,found:G.found,chips:G.chips,roundMult:G.roundMult,rec:G.rec}));
+  G.undo.push(JSON.stringify({tab:G.tab,waste:G.waste,stock:G.stock,found:G.found,chips:G.chips,roundMult:G.roundMult,rec:G.rec,rt:RUN.totalChips,rmax:RUN.maxMult,rb:RUN.banked}));
   if(G.undo.length>60)G.undo.shift();
 }
 function undoCost(){return (G.undoUses||0)+1;}
@@ -613,6 +618,7 @@ function doUndo(){
   const s=JSON.parse(G.undo.pop());
   G.tab=s.tab;G.waste=s.waste;G.stock=s.stock;G.found=s.found;
   G.chips=s.chips;G.roundMult=s.roundMult;G.rec=s.rec;
+  if(s.rt!==undefined)RUN.totalChips=s.rt;if(s.rmax!==undefined)RUN.maxMult=s.rmax;if(s.rb!==undefined)RUN.banked=s.rb;   // Run-Summen mit zurücksetzen → kein Chip-Doppelzählen
   G.coins-=cost;G.undoUses=(G.undoUses||0)+1;G.sel=null;G._last=G.chips;
   const d=document.createElement('div');d.className='scorepop';d.style.color='var(--pink)';d.textContent='-'+cost+' COINS';$('stage').appendChild(d);setTimeout(function(){d.remove();},800);
   SFX.play('denied',{f:320,d:0.08});setTimeout(function(){SFX.play('denied',{f:200,d:0.1});},60);
@@ -690,7 +696,7 @@ function anyMove(){
   if(G.rec>0&&G.waste.length)return true;
   const tops=[];if(G.waste.length)tops.push(G.waste[G.waste.length-1]);
   for(let c=0;c<7;c++){const t=G.tab[c];if(t.length&&t[t.length-1].up)tops.push(t[t.length-1]);}
-  for(const c of tops)if(canFound(c))return true;
+  for(const c of tops){if(c.joker)return true;if(canFound(c))return true;}   // Joker ist immer bankbar
   for(let c=0;c<7;c++){const t=G.tab[c];for(let i=0;i<t.length;i++){if(t[i].up&&validSeq(t.slice(i))){const run=t.slice(i);for(let d=0;d<7;d++)if(d!==c&&canTab(run,d))return true;}}}
   if(G.waste.length){const w=[G.waste[G.waste.length-1]];for(let d=0;d<7;d++)if(canTab(w,d))return true;}
   return false;
@@ -862,6 +868,15 @@ function awardVolt(){
   RUN.voltEarned=v;
   Store.save();
 }
+function finalizeRun(){   // Run-Abschluss — läuft GENAU EINMAL pro Run (Sieg ODER Niederlage)
+  if(RUN.finalized)return; RUN.finalized=true;
+  if(G.chips>RUN.bestRound)RUN.bestRound=G.chips;
+  if(RUN.totalChips>Store.data.stats.bestRunChips)Store.data.stats.bestRunChips=RUN.totalChips;
+  Store.save();
+  awardVolt();      // VOLT für die erreichte Tiefe — jetzt AUCH bei sauberem Sieg
+  dailySubmit();    // Tages-Score, falls Daily-Run
+  cloudSync();      // finalen Fortschritt sichern
+}
 
 /* ---- GAME OVER: record, persist, render visualization, switch scene ---- */
 function gameOver(){
@@ -869,14 +884,10 @@ function gameOver(){
   if(G.tutorial){G.tutorial=false;Store.data.meta.tutDone=true;tutHide();}
   G.helpMode=false; cleanHelp();
   G.history.push({ante:G.ante,chips:G.chips,target:G.target,cleared:false,boss:G.boss?G.boss.id:null,failed:true});
-  if(G.chips>RUN.bestRound)RUN.bestRound=G.chips;
   if(G.chips>Store.data.stats.bestChips){Store.data.stats.bestChips=G.chips;RUN.newBestChips=true;}
-  if(RUN.totalChips>Store.data.stats.bestRunChips)Store.data.stats.bestRunChips=RUN.totalChips;
   Store.save();
   evalAch();
-  awardVolt();
-  dailySubmit(); // submit daily challenge score if applicable
-  cloudSync();   // sync final progress (VOLT/stats) at game over
+  finalizeRun();   // bestRunChips + VOLT + Daily + Cloud (einmalig pro Run)
   runActive=false;clearSave();
   SFX.lose();
   renderGameOver();
@@ -889,6 +900,7 @@ function fitCards(){const inner=$('stage').clientWidth-16;let cw=Math.floor((inn
 function cardEl(c,attr,extra){if(!c.up)return '<div class="card down '+(extra||'')+'" '+attr+'></div>';if(c.special){const sp=SPECIAL(c.special),mk=sp?sp.mark:'?';return '<div class="card spec '+(extra||'')+'" '+attr+'><span class="cn">'+mk+'</span><span class="pip">'+mk+'</span></div>';}return '<div class="card '+(RED(c.s)?'red':'blk')+' s-'+c.s+' '+(extra||'')+'" '+attr+'><span class="cn">'+RANKS[c.r]+suitSvg(c.s)+'</span><span class="pip">'+suitSvg(c.s)+'</span></div>';}
 function autoCollect(){
   if(!canAutoCollect())return;
+  pushUndo();   // ganzen Auto-Räum-Vorgang rückgängig machbar (kein Chip-Desync)
   G.sel=null;
   var ids=setInterval(function(){
     for(var c=0;c<7;c++){
@@ -996,9 +1008,9 @@ function clStatus(msg,ok){const s=$('cl-status');if(!s)return;s.textContent=msg;
 function renderCloud(){
   const m=Store.data.meta; let h='';
   if(m.cloudCode){
-    h+='<div class="cloud-card"><div class="cl-lbl">DEIN CODE</div><div class="cl-code">'+m.cloudCode+'</div>'+
+    h+='<div class="cloud-card"><div class="cl-lbl">DEIN CODE</div><div class="cl-code">'+esc(m.cloudCode)+'</div>'+
        '<div class="cl-sub">Benutzer: '+esc(m.cloudName||'—')+'<br>Wird automatisch nach jeder Runde gespeichert.</div>'+
-       '<button class="btn" data-act="cl-copy" style="flex:0;padding:9px 14px">CODE KOPIEREN</button></div>';
+       '<div style="display:flex;gap:6px;width:100%"><button class="btn" data-act="cl-copy" style="flex:1;padding:9px 8px">CODE KOPIEREN</button><button class="btn gold" data-act="cl-upload" style="flex:1;padding:9px 8px">JETZT SICHERN</button></div></div>';
   }else{
     h+='<div class="cloud-card"><div class="cl-lbl">CLOUD AKTIVIEREN</div>'+
        '<div class="cl-sub">Benutzername wählen → du bekommst einen 8-stelligen Code zum Sichern & Übertragen.</div>'+
@@ -1299,7 +1311,7 @@ $('overlay').addEventListener('click',function(e){
   else if(act==='reroll')reroll();
   else if(act==='items-close')hideOv();
   else if(act==='endless'){G.endless=true;SFX.click();openShop();}     // keep playing past the win
-  else if(act==='winmenu'){dailySubmit();runActive=false;clearSave();SFX.click();showScene('menu');}
+  else if(act==='winmenu'){finalizeRun();runActive=false;clearSave();SFX.click();showScene('menu');}
 });
 // top bar: home pauses to menu (run stays); items + give up
 $('homebtn').addEventListener('click',function(){SFX.click();showScene('menu'); if(G)G.helpMode=false;});
@@ -1374,6 +1386,9 @@ $('scene-cloud').addEventListener('click',function(e){
     const code=Store.data.meta.cloudCode||'';
     if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(code).then(function(){clStatus('Code kopiert.',true);},function(){clStatus('Dein Code: '+code,true);});}
     else clStatus('Dein Code: '+code,true);
+  }else if(act==='cl-upload'){
+    clStatus('Lade hoch …');
+    cloudSaveNow().then(function(){clStatus('In der Cloud gesichert ✓',true);},function(){clStatus('Sichern fehlgeschlagen — bist du online?',false);});
   }else if(act==='cl-disconnect'){
     Store.data.meta.cloudCode='';Store.data.meta.cloudName='';Store.save();renderCloud();clStatus('Cloud getrennt (lokaler Stand bleibt).',true);
   }
