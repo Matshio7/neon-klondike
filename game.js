@@ -186,6 +186,9 @@ function paintIcons(root){(root||document).querySelectorAll('[data-ic]').forEach
    Format: { v:'Titel', date:'optional', notes:['Punkt 1','Punkt 2', ...] }
    ============================================================ */
 const PATCH_NOTES=[
+ {v:'v0.7.6', date:'17.06.2026', notes:[
+   'UMKEHR-Deck: Tableau baut jetzt korrekt A→K auf (Bank weiterhin K→A).',
+ ]},
  {v:'v0.7.5', date:'17.06.2026', notes:[
    'TEST-MULT aus Options entfernt (nur noch intern für Tests verfügbar).',
    'FAQ: Erklärung zum Namen „Klondaire" hinzugefügt.',

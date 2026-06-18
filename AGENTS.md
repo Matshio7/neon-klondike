@@ -33,11 +33,11 @@
 
 ## 2. Aktueller Stand  ← hier zuerst schauen
 
-- **Version:** v0.7.5 (Release vorbereitet)
+- **Version:** v0.7.6 (Release vorbereitet)
 - **Deploy:** `git commit` + `git push` auf `main` → GitHub Pages baut automatisch (~1–2 Min). *Kein manuelles Hochladen mehr.*
 - **Build:** `node --check game.js` läuft sauber. Arbeitsverzeichnis i. d. R. clean.
 - **Echte Spieler aktiv** (Cloud-Rangliste wird genutzt).
-- **Zuletzt:** TEST-MULT aus Options entfernt; FAQ-Eintrag zum Namen „Klondaire" hinzugefügt; eigene Soundeffekte hinzugefügt.
+- **Zuletzt:** UMKEHR-Deck: Tableau-Reihenfolge korrigiert (A→K), Bank bleibt K→A.
 - **Cleanup (17.06.2026):** XSS-Helfer `esc()` eingebaut und in `renderRang()` + `renderCloud()` genutzt, `sw.js` VER auf `klondaire-v0.7.1` gezogen, `music_orig/` aus dem Repo entfernt und ins `.gitignore` aufgenommen.
 
 ---
@@ -179,6 +179,7 @@ Suche nach diesen Namen statt nach Zeilennummern (die wandern):
 ## 8. Changelog (neueste zuerst, kurz)
 
 - **BL-12** (20.06.2026) — Soundeffekte als MP3-Dateien integriert (click, card-moving, achievement, denied, gameover); `SFX.preload()` + `play()` mit Fallback auf Synthesizer; Trigger an allen Spiel-Stellen (Stock, Tab-Move, Shop, Undo, ungültige Aktion); Post-it zeigt jetzt 2 Versionen.
+- **v0.7.6** (17.06.2026) — UMKEHR-Deck: Tableau baut jetzt korrekt A→K auf, Bank weiterhin K→A.
 - **v0.7.5** (17.06.2026) — TEST-MULT aus Options entfernt; FAQ-Eintrag zur Herkunft des Namens „Klondaire" hinzugefügt.
 - **v0.7.4** (17.06.2026) — Option zum freien Anpassen der Bank-Reihenfolge in OPTIONS.
 - **v0.7.3** (17.06.2026) — Tages-Challenge mit täglichem festen Seed + Rangliste GESAMT/HEUTE; mehr Juice mit EFFEKTE-Option, Screen-Shake, Vibration und skalierenden Score-Pops.
