@@ -502,10 +502,10 @@ function newRound(){
   cloudSync();   // sync progress at the start of each round
 }
 function color(c){return RED(c.s)?'r':'b';}
-function validSeq(cards){for(let i=1;i<cards.length;i++){const a=cards[i-1],b=cards[i];if(!b.up||b.r!==a.r-1||color(a)===color(b))return false;}return true;}
+function validSeq(cards){const rev=G.deck&&G.deck.reverse;for(let i=1;i<cards.length;i++){const a=cards[i-1],b=cards[i];if(a.joker||b.joker)continue;if(!b.up)return false;if(rev){if(b.r!==a.r+1||color(a)===color(b))return false;}else{if(b.r!==a.r-1||color(a)===color(b))return false;}}return true;}
 function moving(){if(!G.sel)return[];if(G.sel.p==='waste')return[G.waste[G.waste.length-1]];if(G.sel.p==='found')return[G.found[G.sel.suit][G.found[G.sel.suit].length-1]];return G.tab[G.sel.col].slice(G.sel.idx);}
 function canFound(c,suit){const s=c.joker?suit:c.s;if(s==null)return false;const f=G.found[s];const need=(G.deck&&G.deck.reverse)?13-f.length:f.length+1;return c.joker||c.r===need;}   // count-based; wild fills any slot
-function canTab(cards,col){const r0=cards[0],t=G.tab[col];if(t.length===0)return r0.joker||r0.r===13;const top=t[t.length-1];if(!top.up)return false;if(r0.joker||top.joker)return true;return top.r===r0.r+1&&color(top)!==color(r0);}
+function canTab(cards,col){const r0=cards[0],t=G.tab[col];const rev=G.deck&&G.deck.reverse;if(t.length===0)return r0.joker||(rev?r0.r===1:r0.r===13);const top=t[t.length-1];if(!top.up)return false;if(r0.joker||top.joker)return true;return rev?(top.r===r0.r-1&&color(top)!==color(r0)):(top.r===r0.r+1&&color(top)!==color(r0));}
 function chipsFor(c){if(c.special){const sp=SPECIAL(c.special);return sp?sp.chips:10;}
   if(G.boss){if(G.boss.id==='crown'&&c.r>=11)return 0;if(G.boss.id==='blackout'&&!RED(c.s))return 0;}
   let v=10;
