@@ -180,7 +180,8 @@ Suche nach diesen Namen statt nach Zeilennummern (die wandern):
 
 - **BL-12** (20.06.2026) — Soundeffekte als MP3-Dateien integriert (click, card-moving, achievement, denied, gameover); `SFX.preload()` + `play()` mit Fallback auf Synthesizer; Trigger an allen Spiel-Stellen (Stock, Tab-Move, Shop, Undo, ungültige Aktion); Post-it zeigt jetzt 2 Versionen.
 - **v0.7.6** (17.06.2026) — UMKEHR-Deck: Tableau baut jetzt korrekt A→K auf, Bank weiterhin K→A.
-- **v0.7.5** (17.06.2026) — TEST-MULT aus Options entfernt; FAQ-Eintrag zur Herkunft des Namens „Klondaire" hinzugefügt.
+- **v0.7.6** (17.06.2026) — UMKEHR-Deck-Fix; Soundeffekte (BL-12) mit Dateien + Fallback; Zinsen bei SCHWER+ gefixt; Post-it zeigt 2 Versionen.
+- **v0.7.5** (17.06.2026) — TEST-MULT aus Options entfernt; FAQ-Eintrag zur Herkunft des Namens „Klondaire" hinzugefügt; Soundeffekte integriert.
 - **v0.7.4** (17.06.2026) — Option zum freien Anpassen der Bank-Reihenfolge in OPTIONS.
 - **v0.7.3** (17.06.2026) — Tages-Challenge mit täglichem festen Seed + Rangliste GESAMT/HEUTE; mehr Juice mit EFFEKTE-Option, Screen-Shake, Vibration und skalierenden Score-Pops.
 - **v0.7.2** (17.06.2026) — Seedbarer Zufall (BL-1) + Vier-Farben-Deck (BL-9) veröffentlicht.

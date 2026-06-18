@@ -188,6 +188,9 @@ function paintIcons(root){(root||document).querySelectorAll('[data-ic]').forEach
 const PATCH_NOTES=[
  {v:'v0.7.6', date:'17.06.2026', notes:[
    'UMKEHR-Deck: Tableau baut jetzt korrekt A→K auf (Bank weiterhin K→A).',
+   'Soundeffekte: Neue Sounds für Banking, Card-Moves, Klicks, Erfolge, Game-Over und ungültige Aktionen – in OPTIONS regelbar.',
+   'Zinsen bei SCHWER+ jetzt korrekt deaktiviert (samt Anzeige).',
+   'Post-it zeigt jetzt die letzten 2 Versionen auf einen Blick.',
  ]},
  {v:'v0.7.5', date:'17.06.2026', notes:[
    'TEST-MULT aus Options entfernt (nur noch intern für Tests verfügbar).',
