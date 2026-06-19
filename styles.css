@@ -120,9 +120,9 @@ body.crt-off #stage::before{display:none}
 .faq-q{font-size:8px;color:var(--gold);line-height:1.6;padding:10px 12px;display:flex;justify-content:space-between;align-items:center;gap:8px}
 .faq-q::after{content:'';display:inline-block;width:7px;height:7px;border-right:2px solid #5f8f78;border-bottom:2px solid #5f8f78;transform:rotate(-45deg);transition:transform .25s,margin .25s;flex-shrink:0}
 .faq-item.open .faq-q::after{transform:rotate(45deg);margin-top:-4px}
-.faq-a{font-size:8px;color:#bfe6d4;line-height:1.85;display:grid;grid-template-rows:0fr;transition:grid-template-rows .3s ease;padding:0 12px}
-.faq-item.open .faq-a{grid-template-rows:1fr}
-.faq-a span{overflow:hidden;padding:0 0 10px;border-top:1px solid #244;padding-top:8px;margin-top:0}
+.faq-a{font-size:8px;color:#bfe6d4;line-height:1.85;max-height:0;overflow:hidden;transition:max-height .3s ease,padding .3s ease;padding:0 12px}
+.faq-item.open .faq-a{max-height:999px;padding:8px 12px 10px}
+.faq-a span{display:block;padding:0 0 10px;border-top:1px solid #244;padding-top:8px;margin-top:0}
 /* drifting suit glyphs in the menu background */
 .drift{position:absolute;color:rgba(54,224,160,.08);font-size:40px;pointer-events:none;z-index:0;animation:drift 14s linear infinite}
 @keyframes drift{0%{transform:translateY(110%) rotate(0)}100%{transform:translateY(-130%) rotate(40deg)}}
