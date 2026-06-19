@@ -165,6 +165,10 @@ body.crt-off #stage::before{display:none}
 #multtags{display:flex;gap:3px;justify-content:center;flex-wrap:wrap;margin-top:3px;min-height:16px}
 .mtag{font-size:7px;padding:1px 4px;border-radius:3px;background:rgba(255,210,63,.1);border:1px solid rgba(255,210,63,.2);color:var(--gold);transition:background .15s,transform .15s}
 .mtag.mtag-hit{background:rgba(255,210,63,.4);transform:scale(1.15)}
+#multtags.enginebar{margin:5px auto 0;max-width:380px}
+.mtag-spec{background:rgba(54,224,160,.12);border-color:rgba(54,224,160,.35);color:var(--mint)}
+.mtag-item{background:#0d2419;border:1px solid #2c5a43;color:var(--mint);cursor:pointer;font-family:inherit}
+.mtag-item:active{transform:scale(.94)}
 #bossstrip{font-size:8px;color:var(--pink);border:1px solid #5a2238;background:#240913;border-radius:6px;padding:5px 7px;margin-bottom:7px;line-height:1.7;text-align:center}
 #bossstrip.hidden{display:none}
 #stage{position:relative;background:var(--felt);border-radius:10px;padding:8px;min-height:62vh;border:1px solid #173a28;overflow:hidden}
@@ -257,6 +261,16 @@ body.crt-off #overlay::before{display:none}
 .perk .pd{font-size:8px;color:#8fbfa6;line-height:1.7;margin-top:3px}
 .perk .buy{font-size:10px;color:var(--gold);border:1.5px solid #6b5410;background:#241d07;border-radius:6px;padding:9px 10px;cursor:pointer;white-space:nowrap}
 .perk .buy:disabled{opacity:.35}
+/* v0.8.0: Boss-Vorschau + Raritäten + Verbrauchsgegenstände + Vouchers */
+.bossprev{font-size:8px;color:var(--pink);background:#1a0a10;border:1px solid #5a2238;border-radius:7px;padding:7px 9px;margin-top:2px;line-height:1.6;text-align:center}
+.perk.pr-s{border-color:#2f6bb0}
+.perk.pr-s .pn{color:#8fd0ff}
+.perk.pr-l{border-color:var(--gold);box-shadow:0 0 8px color-mix(in srgb,var(--gold) 30%,transparent)}
+.perk.pr-l .pn{color:var(--gold)}
+.perk.cons{border-color:#2c5a43;background:#0d2419}
+.perk.cons .pn{color:var(--mint)}
+.perk.vouch{border-color:#5a4a12;background:#191407}
+.perk.vouch .pn{color:#e8c75a}
 .owned{display:flex;flex-wrap:wrap;gap:4px;justify-content:center;margin-top:2px}
 .tag-pill{font-size:8px;background:#241d07;color:var(--gold);border:1px solid #5a4a12;border-radius:5px;padding:4px 6px}
 .tag-pill.m{background:#240913;color:var(--pink);border-color:#5a2238}

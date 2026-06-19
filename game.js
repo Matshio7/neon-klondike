@@ -20,7 +20,7 @@ const Store={
     d.stats=Object.assign({totalRuns:0,bestAnte:0,bestChips:0,bestRunChips:0,boardClears:0,bossesBeaten:[],wins:0},d.stats||{});
     if(!Array.isArray(d.stats.bossesBeaten))d.stats.bossesBeaten=[];
     d.ach=Array.isArray(d.ach)?d.ach:[];
-    d.opts=Object.assign({crt:0.3,scale:1,fit:false,sfxVol:0.75,musicVol:0.25,fourColor:false,effects:true,testMult:false,foundationOrder:[0,1,2,3]},d.opts||{});
+    d.opts=Object.assign({crt:0.3,scale:1,fit:false,sfxVol:0.75,musicVol:0.25,audioOn:true,fourColor:false,effects:true,testMult:false,foundationOrder:[0,1,2,3]},d.opts||{});
     if(typeof d.opts.sound==='boolean'){ d.opts.sfxVol=d.opts.sound?0.75:0; delete d.opts.sound; }      // migrate old on/off
     if(typeof d.opts.music==='boolean'){ d.opts.musicVol=d.opts.music?0.25:0; delete d.opts.music; }
     if(typeof d.opts.crt==='boolean')d.opts.crt=d.opts.crt?0.3:0;  // migrate old boolean to opacity
@@ -60,13 +60,14 @@ const SFX={
     });
   },
   play(name,synth){
+    if(!Store.data.opts.audioOn)return;   // Master-Audio aus → kein Ton (lässt fremde Musik in Ruhe)
     var sv=Store.data.opts.sfxVol; if(!sv)return;
     var a=this.els[name];
     if(a&&a.readyState>=2){a.volume=sv;a.currentTime=0;a.play().catch(function(){});return;}
     if(synth)this.tone(synth.f,synth.d,synth.t||'square',synth.v||0.2);
   },
   tone(freq,dur,type,vol){
-    if(!this.ctx)return;
+    if(!Store.data.opts.audioOn||!this.ctx)return;
     type=type||'square'; vol=(vol||0.20)*Store.data.opts.sfxVol;
     const t=this.ctx.currentTime;
     const o=this.ctx.createOscillator(), g=this.ctx.createGain();
@@ -105,15 +106,15 @@ const Music={
     });
   },
   _target(){ return this.mode==='menu'?this.MENU:this.RUN[this.idx]; },
-  _play(){ if(this.el&&this.ready&&Store.data.opts.musicVol>0){ var p=this.el.play(); if(p&&p.catch)p.catch(function(){}); } },
-  setVol(){ this.init(); if(!this.el)return; this.el.volume=Store.data.opts.musicVol; if(Store.data.opts.musicVol>0&&this.ready){var p=this.el.play();if(p&&p.catch)p.catch(function(){});}else if(Store.data.opts.musicVol===0)this.el.pause(); },
+  _play(){ if(this.el&&this.ready&&Store.data.opts.audioOn&&Store.data.opts.musicVol>0){ var p=this.el.play(); if(p&&p.catch)p.catch(function(){}); } },
+  setVol(){ this.init(); if(!this.el)return; this.el.volume=Store.data.opts.musicVol; if(Store.data.opts.audioOn&&Store.data.opts.musicVol>0&&this.ready){var p=this.el.play();if(p&&p.catch)p.catch(function(){});}else this.el.pause(); },
   sync(){                                                   // match src to mode, then play/pause per settings
     this.init(); if(!this.el)return;
     this.el.volume=Store.data.opts.musicVol;
     var t=this._target();
     this.el.loop=(this.mode==='menu');
     if(this.cur!==t){ this.cur=t; this.el.src=t; }
-    if(this.ready&&Store.data.opts.musicVol>0) this._play(); else this.el.pause();
+    if(this.ready&&Store.data.opts.audioOn&&Store.data.opts.musicVol>0) this._play(); else this.el.pause();
   },
   setMode(m){ this.init(); if(m!==this.mode){ this.mode=m; if(m==='run')this.idx=Math.floor(Math.random()*this.RUN.length); } this.sync(); },
   kick(){ this.ready=true; this.sync(); }                   // first user gesture unlocks playback
@@ -186,6 +187,16 @@ function paintIcons(root){(root||document).querySelectorAll('[data-ic]').forEach
    Format: { v:'Titel', date:'optional', notes:['Punkt 1','Punkt 2', ...] }
    ============================================================ */
 const PATCH_NOTES=[
+ {v:'v0.8.0', date:'19.06.2026', notes:[
+   'GROSSES UPDATE — mehr Roguelike-Tiefe!',
+   'Joker & Spezialkarten überarbeitet: fairer & klarer, ohne Schneeball, reagieren auf Bosse.',
+   'Boss-Vorschau: du siehst die Regel jetzt vorab — plus ein fordernder ENDBOSS bei Ante 8 und neue Boss-Typen.',
+   'Perk-Raritäten (Selten/Legendär) + neue Synergie-Perks: Herz-Motor, Krönung, Überladung.',
+   'Verbrauchsgegenstände: taktische Einmal-Karten (Funke, Midas, Störer, Neumischen) im Shop.',
+   'Upgrades (Vouchers): dauerhafte Shop-Verbesserungen — Rabatt, Tresor, Auslage, Recycler, Würfelglück.',
+   'Neuer Schalter SPIEL-AUDIO in den Optionen — schaltet Musik & Effekte ab, damit deine eigene Musik (Apple Music, Spotify) ungestört läuft.',
+   'Coin-Belohnung skaliert jetzt mit der Ante (kein Geld-Überfluss mehr in späten Runden).',
+ ]},
  {v:'v0.7.9', date:'18.06.2026', notes:[
    'iPhone Homescreen-App aktualisiert sich jetzt zuverlässiger (Service-Worker-Update-Logik + App-Shell ohne Cache).',
  ]},
@@ -284,30 +295,50 @@ function suitSvg(s){return svg(SUITNAME[s]);}   // suit as inline SVG (inherits 
 const RED=s=>s===1||s===2;
 const RANKS=['','A','2','3','4','5','6','7','8','9','10','J','Q','K'];
 const POOL=[
- {id:'plus5',name:'+5 CHIPS',desc:'BANK-KARTEN +5 CHIPS',price:4,m:false},
- {id:'red',name:'ROTGLUT',desc:'ROTE KARTEN +4 CHIPS',price:3,m:false},
- {id:'ten',name:'ZEHNER-MOTOR',desc:'ZEHNER +12 CHIPS',price:4,m:false},
- {id:'fever',name:'FIEBER',desc:'+0,5 BASIS-MULT (DAUERHAFT)',price:6,m:true},
- {id:'streak',name:'COMBO',desc:'+0,1 MULT JE BANK (PRO RUNDE)',price:5,m:true},
- {id:'ace',name:'ASS-MULT',desc:'GEBANKTE ASSE +0,5 MULT (PRO RUNDE)',price:5,m:true},
- {id:'rec',name:'EXTRA-DURCHGANG',desc:'+1 RECYCLE / RUNDE',price:4,m:false},
- {id:'black',name:'SCHWARZGLUT',desc:'SCHWARZE KARTEN +4 CHIPS',price:3,m:false},
- {id:'face',name:'HOFSTAAT',desc:'BILDKARTEN (J/Q/K) +8 CHIPS',price:4,m:false},
- {id:'low',name:'KELLERKIND',desc:'KARTEN A–5 +5 CHIPS',price:4,m:false},
- {id:'acechip',name:'ASS IM ÄRMEL',desc:'ASSE +20 CHIPS',price:5,m:false},
- {id:'richbank',name:'SPARSCHWEIN',desc:'+2 COINS GRUNDBELOHNUNG / RUNDE',price:5,m:false},
- {id:'deepinterest',name:'ZINSESZINS',desc:'ZINS-LIMIT 5 → 8 COINS',price:6,m:false},
- {id:'bigfever',name:'HOCHSPANNUNG',desc:'+1,0 BASIS-MULT (DAUERHAFT)',price:9,m:true},
- {id:'comboplus',name:'KETTENREAKTION',desc:'+0,2 MULT JE BANK (PRO RUNDE)',price:7,m:true},
+ {id:'plus5',name:'+5 CHIPS',desc:'BANK-KARTEN +5 CHIPS',price:4,m:false,r:'c'},
+ {id:'red',name:'ROTGLUT',desc:'ROTE KARTEN +4 CHIPS',price:3,m:false,r:'c'},
+ {id:'ten',name:'ZEHNER-MOTOR',desc:'ZEHNER +12 CHIPS',price:4,m:false,r:'c'},
+ {id:'fever',name:'FIEBER',desc:'+0,5 BASIS-MULT (DAUERHAFT)',price:6,m:true,r:'s'},
+ {id:'streak',name:'COMBO',desc:'+0,1 MULT JE BANK (PRO RUNDE)',price:5,m:true,r:'s'},
+ {id:'ace',name:'ASS-MULT',desc:'GEBANKTE ASSE +0,5 MULT (PRO RUNDE)',price:5,m:true,r:'s'},
+ {id:'rec',name:'EXTRA-DURCHGANG',desc:'+1 RECYCLE / RUNDE',price:4,m:false,r:'c'},
+ {id:'black',name:'SCHWARZGLUT',desc:'SCHWARZE KARTEN +4 CHIPS',price:3,m:false,r:'c'},
+ {id:'face',name:'HOFSTAAT',desc:'BILDKARTEN (J/Q/K) +8 CHIPS',price:4,m:false,r:'c'},
+ {id:'low',name:'KELLERKIND',desc:'KARTEN A–5 +5 CHIPS',price:4,m:false,r:'c'},
+ {id:'acechip',name:'ASS IM ÄRMEL',desc:'ASSE +20 CHIPS',price:5,m:false,r:'s'},
+ {id:'richbank',name:'SPARSCHWEIN',desc:'+2 COINS GRUNDBELOHNUNG / RUNDE',price:5,m:false,r:'c'},
+ {id:'deepinterest',name:'ZINSESZINS',desc:'ZINS-LIMIT 5 → 8 COINS',price:6,m:false,r:'s'},
+ {id:'bigfever',name:'HOCHSPANNUNG',desc:'+1,0 BASIS-MULT (DAUERHAFT)',price:9,m:true,r:'l'},
+ {id:'comboplus',name:'KETTENREAKTION',desc:'+0,2 MULT JE BANK (PRO RUNDE)',price:7,m:true,r:'s'},
+ {id:'heartengine',name:'HERZ-MOTOR',desc:'+0,3 MULT JE GEBANKTE HERZ-KARTE (PRO RUNDE)',price:7,m:true,r:'s'},
+ {id:'facemult',name:'KRÖNUNG',desc:'BILDKARTEN +0,3 MULT (PRO RUNDE)',price:7,m:true,r:'s'},
+ {id:'overload',name:'ÜBERLADUNG',desc:'+2,0 BASIS-MULT (DAUERHAFT)',price:14,m:true,r:'l'},
 ];
 /* SPECIAL CARDS — bought (with luck) in the shop, added to the run's deck (deck grows).
    All are WILD: anlegbar auf jede Karte, bankbar in jede Lücke. They give bonus chips/mult. */
 const SPECIALS=[
- {id:'joker',   name:'JOKER',      mark:'J', chips:15, mult:0,   price:6, desc:'Wild — überall anlegbar, bankt jede Lücke. +15 Chips.'},
- {id:'gold',    name:'GOLDKARTE',  mark:'$', chips:60, mult:0,   price:8, desc:'Wild & gebankt: +60 Bonus-Chips.'},
- {id:'multcard',name:'MULT-KARTE', mark:'×', chips:10, mult:0.5, price:9, desc:'Wild & gebankt: +0,5 MULT (für die Runde).'},
+ {id:'joker',   name:'JOKER',      mark:'J', chips:15, mult:0,   price:6, desc:'Wild im Tableau (Lücken-Helfer); eingelöst +15 Chips (×Mult).'},
+ {id:'gold',    name:'GOLDKARTE',  mark:'$', chips:45, mult:0,   price:10,desc:'Wild im Tableau; eingelöst +45 Chips (×Mult).'},
+ {id:'multcard',name:'MULT-KARTE', mark:'×', chips:10, mult:0.5, price:9, desc:'Wild im Tableau; eingelöst +0,5 MULT (für die Runde).'},
 ];
 const SPECIAL=id=>SPECIALS.find(x=>x.id===id);
+/* CONSUMABLES — Einmal-Karten, im Shop kaufbar, sofort im Run einsetzbar (max. 2 im Inventar) */
+const CONSUMABLES=[
+ {id:'spark',    name:'FUNKE',     mark:'⚡',price:4, desc:'+1,0 MULT für diese Runde.'},
+ {id:'midas',    name:'MIDAS',     mark:'$', price:4, desc:'Sofort +6 Coins.'},
+ {id:'bossbreak',name:'STÖRER',    mark:'⊘',price:6, desc:'Hebt die Boss-Regel für diese Runde auf.'},
+ {id:'reshuffle',name:'NEUMISCHEN',mark:'↻',price:4, desc:'Mischt Stock + Waste neu (kostet kein Recycle).'},
+];
+const CONS=id=>CONSUMABLES.find(x=>x.id===id);
+/* VOUCHERS — dauerhafte, run-weite Upgrades (jedes nur 1×) */
+const VOUCHERS=[
+ {id:'discount',   name:'GROSSHANDEL', price:6, desc:'Alle Perks −1 Coin.'},
+ {id:'interestcap',name:'TRESOR',      price:7, desc:'Zins-Limit +3 Coins.'},
+ {id:'perkslot',   name:'AUSLAGE',     price:8, desc:'Shop zeigt 4 Perks statt 3.'},
+ {id:'recycler',   name:'RECYCLER',    price:7, desc:'+1 Recycle pro Runde (dauerhaft).'},
+ {id:'luckyroll',  name:'WÜRFELGLÜCK', price:6, desc:'Reroll ist gratis.'},
+];
+const VOUCHER=id=>VOUCHERS.find(x=>x.id===id);
 const BOSSES=[
  {id:'tax',     name:'STEUER',        desc:'ZIEL +40%'},
  {id:'crown',   name:'PAPIERKRONE',   desc:'J Q K = 0 CHIPS'},
@@ -316,7 +347,11 @@ const BOSSES=[
  {id:'blackout',name:'SCHWARZSPERRE', desc:'SCHWARZE KARTEN = 0 CHIPS'},
  {id:'flaute',  name:'FLAUTE',        desc:'KEIN MULT-AUFBAU'},
  {id:'bigtax',  name:'GROSSE STEUER', desc:'ZIEL +80%'},
+ {id:'specbane',name:'STÖRSENDER',    desc:'SPEZIALKARTEN = 0 CHIPS'},
+ {id:'lowtax',  name:'KOPFGELD',      desc:'KARTEN A–5 = 0 CHIPS'},
 ];
+const ENDBOSS={id:'finale',name:'FINALE',desc:'ZIEL +60% · NUR 1 RECYCLE · BILDKARTEN HALB'};   // erzwungener Endboss @ Ante 8
+const BOSS=id=>(id===ENDBOSS.id?ENDBOSS:BOSSES.find(b=>b.id===id));
 /* ============================================================
    DECKS  -  starting-condition modifiers chosen before a run.
    Standard is free; the rest are unlocked with VOLT in the DECKS screen.
@@ -374,8 +409,8 @@ function rseed(x){RNG=mkRng(hash(String(x)));}
 function todayStr(){const d=new Date();return d.getFullYear()+String(d.getMonth()+1).padStart(2,'0')+String(d.getDate()).padStart(2,'0');}
 function shuffle(a){for(let i=a.length-1;i>0;i--){const j=Math.floor(RNG()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a;}
 function target(n){return Math.round(60*Math.pow(1.55,n-1)/5)*5;}
-function recBase(){return 2+(G.perks.includes('rec')?1:0)+(G.deck?G.deck.recDelta:0);}
-function baseMult(){var b=(G.deck?G.deck.baseMult:1)+(G.perks.includes('fever')?0.5:0)+(G.perks.includes('bigfever')?1:0);var dd=G.dd||DIFFICULTIES[G.diff]||{};return b-(dd.basePen||0);}
+function recBase(){return 2+(G.perks.includes('rec')?1:0)+(G.deck?G.deck.recDelta:0)+((G.vouchers&&G.vouchers.includes('recycler'))?1:0);}
+function baseMult(){var b=(G.deck?G.deck.baseMult:1)+(G.perks.includes('fever')?0.5:0)+(G.perks.includes('bigfever')?1:0)+(G.perks.includes('overload')?2:0);var dd=G.dd||DIFFICULTIES[G.diff]||{};return b-(dd.basePen||0);}
 function effMult(){return baseMult()+G.roundMult;}
 
 function resetRun(){RUN={banked:0,totalChips:0,maxMult:0,bestRound:0,newBestAnte:false,newBestChips:false,newAch:[],voltEarned:0,won:false};}
@@ -387,7 +422,7 @@ function newRun(daily){
   const deck=(tut||daily)?DECK('standard'):DECK(Store.data.meta.selectedDeck);  // Tutorial + Daily immer Standard-Deck (faire Tages-Challenge)
   const diffId=tut?0:(daily?0:(Store.data.meta.selectedDifficulty||0));// daily always difficulty 0
   const diffDef=DIFFICULTIES[diffId]||DIFFICULTIES[0];
-  G={ante:1,coins:Math.max(1,deck.coins-diffDef.coinPen),perks:deck.startPerks.slice(),history:[],deck:deck,undo:[],undoUses:0,tutorial:tut,tutStep:0,endless:false,specials:[],specialOffer:null,diff:diffId,helpMode:false};
+  G={ante:1,coins:Math.max(1,deck.coins-diffDef.coinPen),perks:deck.startPerks.slice(),history:[],deck:deck,undo:[],undoUses:0,tutorial:tut,tutStep:0,endless:false,specials:[],specialOffer:null,items:[],vouchers:[],diff:diffId,helpMode:false};
   if(diffId)G.dd=diffDef;
   if(daily){
     const day=todayStr();
@@ -509,11 +544,16 @@ function newRound(){
   G.target=target(G.ante);if(G.deck&&G.deck.targetMul!==1)G.target=Math.round(G.target*G.deck.targetMul/5)*5;G.rec=recBase();
   var dd=DIFFICULTIES[G.diff];if(dd&&dd.targetMul!==1)G.target=Math.round(G.target*dd.targetMul/5)*5;
   if(dd&&dd.recPen)G.rec=Math.max(0,G.rec-dd.recPen);
-  var bossAnte=(G.ante%3===0)||(G.deck&&G.deck.bossEveryAnte)||(dd&&dd.bossEA);
-  if(bossAnte){G.boss=BOSSES[Math.floor(RNG()*BOSSES.length)];
+  var bossAnte=(G.ante%3===0)||(G.ante===WIN_ANTE)||(G.deck&&G.deck.bossEveryAnte)||(dd&&dd.bossEA);
+  if(bossAnte){
+    G.boss=(G.ante===WIN_ANTE)?ENDBOSS:((G.nextBoss&&BOSS(G.nextBoss))||BOSSES[Math.floor(RNG()*BOSSES.length)]);
+    G.nextBoss=null;
     if(G.boss.id==='tax')G.target=Math.round(G.target*1.4/5)*5;
     if(G.boss.id==='bigtax')G.target=Math.round(G.target*1.8/5)*5;
-    if(G.boss.id==='drought')G.rec=Math.max(1,G.rec-2);}
+    if(G.boss.id==='finale')G.target=Math.round(G.target*1.6/5)*5;
+    if(G.boss.id==='drought')G.rec=Math.max(1,G.rec-2);
+    if(G.boss.id==='finale')G.rec=1;
+  }
   if(G.tutorial&&G.ante===1)tutForceAce();   // ensure the bank-an-Ace step is doable
   // reaching an ante = a record candidate
   if(G.ante>Store.data.stats.bestAnte){Store.data.stats.bestAnte=G.ante;RUN.newBestAnte=true;}
@@ -528,8 +568,8 @@ function validSeq(cards){const rev=G.deck&&G.deck.reverse;for(let i=1;i<cards.le
 function moving(){if(!G.sel)return[];if(G.sel.p==='waste')return[G.waste[G.waste.length-1]];if(G.sel.p==='found')return[G.found[G.sel.suit][G.found[G.sel.suit].length-1]];return G.tab[G.sel.col].slice(G.sel.idx);}
 function canFound(c,suit){const s=c.joker?suit:c.s;if(s==null)return false;const f=G.found[s];const need=(G.deck&&G.deck.reverse)?13-f.length:f.length+1;return c.joker||c.r===need;}   // count-based; wild fills any slot
 function canTab(cards,col){const r0=cards[0],t=G.tab[col];const rev=G.deck&&G.deck.reverse;if(t.length===0)return r0.joker||(rev?r0.r===1:r0.r===13);const top=t[t.length-1];if(!top.up)return false;if(r0.joker||top.joker)return true;return rev?(top.r===r0.r-1&&color(top)!==color(r0)):(top.r===r0.r+1&&color(top)!==color(r0));}
-function chipsFor(c){if(c.special){const sp=SPECIAL(c.special);return sp?sp.chips:10;}
-  if(G.boss){if(G.boss.id==='crown'&&c.r>=11)return 0;if(G.boss.id==='blackout'&&!RED(c.s))return 0;}
+function chipsFor(c){if(c.special){const sp=SPECIAL(c.special);let sv=sp?sp.chips:10;if(G.boss&&G.boss.id==='half')sv=Math.ceil(sv/2);if(G.boss&&G.boss.id==='specbane')sv=0;return sv;}   // Specials reagieren auf HALBE KRAFT & STÖRSENDER
+  if(G.boss){if(G.boss.id==='crown'&&c.r>=11)return 0;if(G.boss.id==='blackout'&&!RED(c.s))return 0;if(G.boss.id==='lowtax'&&c.r<=5)return 0;}
   let v=10;
   if(G.perks.includes('plus5'))v+=5;
   if(G.perks.includes('red')&&RED(c.s))v+=4;
@@ -540,6 +580,7 @@ function chipsFor(c){if(c.special){const sp=SPECIAL(c.special);return sp?sp.chip
   if(G.perks.includes('acechip')&&c.r===1)v+=20;
   if(G.deck&&G.deck.cardMods)v+=RED(c.s)?G.deck.cardMods.red:G.deck.cardMods.black;
   if(G.boss&&G.boss.id==='half')v=Math.ceil(v/2);
+  if(G.boss&&G.boss.id==='finale'&&c.r>=11)v=Math.ceil(v/2);
   return Math.max(0,v);}
 function bankGain(c){
   let multAdd=0;
@@ -549,8 +590,10 @@ function bankGain(c){
     if(G.perks.includes('streak')){G.roundMult+=0.1;multAdd+=0.1;sources.push({label:'Streak',add:0.1});}
     if(G.perks.includes('ace')&&c.r===1){G.roundMult+=0.5;multAdd+=0.5;sources.push({label:'Ass',add:0.5});}
     if(G.perks.includes('comboplus')){G.roundMult+=0.2;multAdd+=0.2;sources.push({label:'Combo+',add:0.2});}
+    if(G.perks.includes('heartengine')&&c.s===1){G.roundMult+=0.3;multAdd+=0.3;sources.push({label:'Herz',add:0.3});}
+    if(G.perks.includes('facemult')&&c.r>=11){G.roundMult+=0.3;multAdd+=0.3;sources.push({label:'Bild',add:0.3});}
   }
-  if(c.special){const sp=SPECIAL(c.special);if(sp&&sp.mult){G.roundMult+=sp.mult;multAdd+=sp.mult;sources.push({label:sp.name||'Spezial',add:sp.mult});}}
+  if(c.special){const sp=SPECIAL(c.special);if(sp){if(ramp&&sp.mult){G.roundMult+=sp.mult;multAdd+=sp.mult;}sources.push({label:sp.name||'Spezial',add:(ramp&&sp.mult)?sp.mult:0});}}   // jede Spezialkarte lässt ihren Tag aufleuchten; Mult nur wenn vorhanden & nicht FLAUTE
   const m=effMult(); if(m>RUN.maxMult)RUN.maxMult=m;
   const gain=Math.round(chipsFor(c)*m);
   G.chips+=gain; RUN.banked++; RUN.totalChips+=gain;
@@ -574,26 +617,30 @@ function handleStock(){
   SFX.bank();
   G.sel=null;render();checkStuck();tutGate('stock');
 }
-function doFound(suit){pushUndo();const cs=moving();const c=cs[0];const s=c.joker?suit:c.s;G.found[s].push(c);if(G.sel.p==='waste')G.waste.pop();else{G.tab[G.sel.col].pop();flip(G.tab[G.sel.col]);}const r=bankGain(c);var m=effMult();if(Store.data.opts.testMult)m=5;if(Store.data.opts.effects!==false&&m>3){shake();}if(Store.data.opts.effects!==false&&navigator.vibrate)navigator.vibrate(8);G.sel=null;tutGate('bank');check();if(r.sources.length)setTimeout(function(){animateMultTags(r.sources,r.gain,m);},30);else pop(r.gain,m);}
+function doFound(suit){pushUndo();const cs=moving();const c=cs[0];if(!c.special){const s=c.joker?suit:c.s;G.found[s].push(c);}/* Spezialkarten füllen KEINEN Rang-Slot — sie werden für Chips eingelöst, sperren also keine echten Karten aus */if(G.sel.p==='waste')G.waste.pop();else{G.tab[G.sel.col].pop();flip(G.tab[G.sel.col]);}const r=bankGain(c);var m=effMult();if(Store.data.opts.testMult)m=5;if(Store.data.opts.effects!==false&&m>3){shake();}if(Store.data.opts.effects!==false&&navigator.vibrate)navigator.vibrate(8);G.sel=null;tutGate('bank');check();if(r.sources.length)setTimeout(function(){animateMultTags(r.sources,r.gain,m);},30);else pop(r.gain,m);}
 function doTab(col){pushUndo();const cs=moving();if(G.sel.p==='waste'){G.waste.pop();}else if(G.sel.p==='found'){const c=G.found[G.sel.suit].pop();unbank(c);}else G.tab[G.sel.col].splice(G.sel.idx);cs.forEach(c=>G.tab[col].push(c));if(G.sel.p==='tab')flip(G.tab[G.sel.col]);if(G.sel.p!=='found'){SFX.buy();}G.sel=null;render();checkStuck();}
 function same(p,col,idx){return G.sel&&G.sel.p===p&&G.sel.col===col&&G.sel.idx===idx;}
 function shake(){const s=$('stage');s.classList.add('shake');setTimeout(()=>s.classList.remove('shake'),180);}
 function multTags(){
   var tags=[];
-  if(!G)return tags;
+  if(!G||!G.perks)return tags;
   if(G.perks.includes('streak'))tags.push({label:'Streak',add:0.1});
   if(G.perks.includes('ace'))tags.push({label:'Ass',add:0.5});
   if(G.perks.includes('comboplus'))tags.push({label:'Combo+',add:0.2});
+  if(G.perks.includes('heartengine'))tags.push({label:'Herz',add:0.3});
+  if(G.perks.includes('facemult'))tags.push({label:'Bild',add:0.3});
+  (G.specials||[]).forEach(function(id){var sp=SPECIAL(id);if(sp)tags.push({label:sp.name,mark:sp.mark,spec:true});});   // deine Joker/Spezialkarten
   return tags;
 }
 function renderMultTags(){
   var el=$('multtags');if(!el)return;
-  el.innerHTML='';
+  var h='';
   multTags().forEach(function(t){
-    var d=document.createElement('div');d.className='mtag';d.dataset.tag=t.label;
-    d.textContent=t.label+' +'+t.add.toFixed(1);
-    el.appendChild(d);
+    if(t.spec) h+='<div class="mtag mtag-spec" data-tag="'+esc(t.label)+'">'+esc(t.mark||'')+' '+esc(t.label)+'</div>';
+    else h+='<div class="mtag" data-tag="'+esc(t.label)+'">'+esc(t.label)+' +'+t.add.toFixed(1)+'</div>';
   });
+  ((G&&G.items)||[]).forEach(function(id){var it=CONS(id);if(it)h+='<button class="mtag mtag-item" data-use-item="'+id+'" title="'+esc(it.desc)+'">'+esc(it.mark)+' '+esc(it.name)+' ▸</button>';});   // Items direkt einsetzbar
+  el.innerHTML=h;
 }
 function animateMultTags(sources,gain,mult){
   var el=$('multtags');if(!el)return;
@@ -739,8 +786,8 @@ function roundClear(cleared){
   Store.save();
   // ---- reward (unchanged economy) ----
   const diffData=G.dd||DIFFICULTIES[G.diff]||{};
-  const interest=diffData.noInt?0:Math.min(G.perks.includes('deepinterest')?8:5,Math.floor(G.coins/5));
-  const perf=Math.floor(earned/40);
+  const interest=diffData.noInt?0:Math.min((G.perks.includes('deepinterest')?8:5)+(hasV('interestcap')?3:0),Math.floor(G.coins/5));
+  const perf=Math.min(8,Math.ceil(G.ante/2));   // Bonus skaliert mit der Ante-Tiefe (die Runde endet beim Ziel, Überschuss gibt es kaum), gedeckelt bei 8
   const bonus=cleared?6:0;
   const bounty=G.boss?8*((G.deck&&G.deck.bossBountyMul)||1):0;
   const reward=Math.max(0,3+(G.deck?G.deck.rewardDelta:0)+(G.perks.includes('richbank')?2:0)+perf+interest+bonus+bounty);
@@ -749,7 +796,7 @@ function roundClear(cleared){
   cloudSync();   // sync progress after each cleared round
   SFX.win();
   const base=3+(G.deck?G.deck.rewardDelta:0)+(G.perks.includes('richbank')?2:0);
-  const rows=[['Grundbelohnung',base],['Punkte (1 je 40 Chips)',perf]];
+  const rows=[['Grundbelohnung',base],['Ante-Bonus',perf]];
   if(interest>0)rows.push(['Zinsen (1 je 5 Coins)',interest]);
   if(cleared)rows.push(['Board geräumt',6]);
   if(bounty)rows.push(['Boss besiegt',bounty]);
@@ -765,40 +812,75 @@ function roundClear(cleared){
     '<button class="btn gold" data-act="shop" style="flex:0;padding:11px 18px">SHOP ÖFFNEN &#8599;</button>');
   render();
 }
+function prerollBoss(){   // nächsten Boss vorab ziehen (seed-deterministisch) → für die Vorschau
+  const na=G.ante+1;
+  const ba=(na%3===0)||(na===WIN_ANTE)||(G.deck&&G.deck.bossEveryAnte)||(G.dd&&G.dd.bossEA);
+  if(!ba){G.nextBoss=null;return;}
+  if(na===WIN_ANTE){G.nextBoss=ENDBOSS.id;return;}   // Endboss-Vorschau
+  if(!G.nextBoss||G.nextBoss===ENDBOSS.id)G.nextBoss=BOSSES[Math.floor(RNG()*BOSSES.length)].id;
+}
+function hasV(id){return (G.vouchers||[]).includes(id);}
+function perkSlots(){return 3+(hasV('perkslot')?1:0);}
+function rerollCost(){return ((G.deck&&G.deck.freeReroll)||hasV('luckyroll'))?0:1;}
+function perkPrice(p){return Math.max(1,p.price+(G.dd?G.dd.shopPen:0)-(hasV('discount')?1:0));}
+function weightR(r){return r==='l'?5:(r==='s'?25:70);}
+function pickOffers(avail,n){var pool=avail.slice(),out=[];while(out.length<n&&pool.length){var tot=0;for(var i=0;i<pool.length;i++)tot+=weightR(pool[i].r);var x=RNG()*tot,idx=0;for(var j=0;j<pool.length;j++){x-=weightR(pool[j].r);if(x<=0){idx=j;break;}}out.push(pool.splice(idx,1)[0]);}return out;}
 function openShop(){
   G.phase='shop';
   SFX.buy();
+  prerollBoss();
   const avail=POOL.filter(p=>!G.perks.includes(p.id));
-  G.offers=shuffle(avail.slice()).slice(0,3);
-  G.specialOffer=(G.dd&&G.dd.noSpec)?null:(RNG()<0.45)?SPECIALS[Math.floor(RNG()*SPECIALS.length)].id:null;  // luck-based special
+  G.offers=pickOffers(avail,perkSlots());
+  const savail=SPECIALS.filter(s=>!(G.specials||[]).includes(s.id));   // jede Spezialkarte nur 1× (kein Stacking)
+  G.specialOffer=((G.dd&&G.dd.noSpec)||!savail.length)?null:(RNG()<0.45)?savail[Math.floor(RNG()*savail.length)].id:null;
+  G.itemOffer=(RNG()<0.5)?CONSUMABLES[Math.floor(RNG()*CONSUMABLES.length)].id:null;        // Verbrauchsgegenstand-Angebot
+  const vavail=VOUCHERS.filter(v=>!hasV(v.id));
+  G.voucherOffer=(vavail.length&&RNG()<0.45)?vavail[Math.floor(RNG()*vavail.length)].id:null;  // Voucher-Angebot
   renderShop();
   saveGame();
 }
 function renderShop(){
   const spen=G.dd?G.dd.shopPen:0;
   const owned=G.perks.map(id=>{const p=POOL.find(x=>x.id===id);return '<span class="tag-pill '+(p.m?'m':'')+'">'+p.name+'</span>';}).join('');
-  const rows=G.offers.map((p,i)=>{const pr=p.price+spen;const aff=G.coins>=pr;
-    return '<div class="perk '+(p.m?'mlt':'')+'"><div><div class="pn">'+p.name+'</div><div class="pd">'+p.desc+'</div></div><button class="buy" data-buy="'+i+'" '+(aff?'':'disabled')+'>'+pr+' COINS</button></div>';}).join('')||'<div class="sub">SOLD OUT — NICE COLLECTION</div>';
+  const rows=G.offers.map((p,i)=>{const pr=perkPrice(p);const aff=G.coins>=pr;
+    return '<div class="perk '+(p.m?'mlt':'')+(p.r?' pr-'+p.r:'')+'"><div><div class="pn">'+p.name+'</div><div class="pd">'+p.desc+'</div></div><button class="buy" data-buy="'+i+'" '+(aff?'':'disabled')+'>'+pr+' COINS</button></div>';}).join('')||'<div class="sub">SOLD OUT — NICE COLLECTION</div>';
   let specRow='';
   if(G.specialOffer&&!(G.dd&&G.dd.noSpec)){const sp=SPECIAL(G.specialOffer),pr=sp.price+spen,aff=G.coins>=pr;specRow='<div class="perk spec"><div><div class="pn">'+sp.mark+' '+sp.name+' <span style="color:#7a5c00">(SPEZIAL)</span></div><div class="pd">'+sp.desc+'</div></div><button class="buy" data-spec-buy="'+sp.id+'" '+(aff?'':'disabled')+'>'+pr+' COINS</button></div>';}
-  const nb=((G.deck&&G.deck.bossEveryAnte)||(G.ante+1)%3===0)?' ·BOSS':'';
+  let itemRow='';
+  if(G.itemOffer){const it=CONS(G.itemOffer),pr=it.price+spen,aff=G.coins>=pr&&(G.items||[]).length<2;itemRow='<div class="perk cons"><div><div class="pn">'+it.mark+' '+it.name+' <span style="color:#3a6b54">(ITEM)</span></div><div class="pd">'+it.desc+'</div></div><button class="buy" data-item-buy="'+it.id+'" '+(aff?'':'disabled')+'>'+pr+' COINS</button></div>';}
+  let vouchRow='';
+  if(G.voucherOffer&&!hasV(G.voucherOffer)){const v=VOUCHER(G.voucherOffer),pr=v.price+spen,aff=G.coins>=pr;vouchRow='<div class="perk vouch"><div><div class="pn">'+v.name+' <span style="color:#7a5c00">(UPGRADE)</span></div><div class="pd">'+v.desc+'</div></div><button class="buy" data-voucher-buy="'+v.id+'" '+(aff?'':'disabled')+'>'+pr+' COINS</button></div>';}
+  const _na=G.ante+1;
+  const _pb=(_na===WIN_ANTE)?ENDBOSS:(G.nextBoss?BOSS(G.nextBoss):null);
+  const nb=_pb?' ·BOSS':'';
+  const bossPrev=_pb?'<div class="bossprev">⚠ NÄCHSTE ANTE — BOSS · '+_pb.name+': '+_pb.desc+'</div>':'';
   let rerollBtn='';
   if(!(G.deck&&G.deck.noReroll)){
-    const free=!!(G.deck&&G.deck.freeReroll), cost=free?0:1;
+    const cost=rerollCost();
     const dis=(G.coins>=cost&&G.offers.length)?'':'disabled';
-    rerollBtn='<button class="btn" data-act="reroll" '+dis+' style="flex:1">REROLL '+(free?'GRATIS':'1 COIN')+'</button>';
+    rerollBtn='<button class="btn" data-act="reroll" '+dis+' style="flex:1">REROLL '+(cost?'1 COIN':'GRATIS')+'</button>';
   }
   showOv('<h3 style="color:var(--mint)">SHOP — '+G.coins+' COINS</h3>'+
-    '<div class="shop">'+rows+specRow+'</div>'+
+    '<div class="shop">'+rows+specRow+itemRow+vouchRow+'</div>'+
     (owned?'<div class="owned">'+owned+'</div>':'')+
+    bossPrev+
     '<div style="display:flex;gap:6px;width:100%;margin-top:2px">'+
       rerollBtn+
       '<button class="btn gold" data-act="next" style="flex:1.4">DEAL ANTE '+(G.ante+1)+nb+' &#8599;</button>'+
     '</div>');
 }
-function buy(i){const p=G.offers[i];if(!p||G.coins<p.price)return;G.coins-=p.price;G.perks.push(p.id);G.offers.splice(i,1);SFX.buy();evalAch();renderShop();render();}
-function buySpecial(id){const sp=SPECIAL(id);if(!sp||G.specialOffer!==id||G.coins<sp.price)return;G.coins-=sp.price;(G.specials=G.specials||[]).push(id);G.specialOffer=null;SFX.buy();renderShop();render();}
-function reroll(){if(G.deck&&G.deck.noReroll)return;const cost=(G.deck&&G.deck.freeReroll)?0:1;if(G.coins<cost||!G.offers.length)return;G.coins-=cost;const avail=POOL.filter(p=>!G.perks.includes(p.id));G.offers=shuffle(avail.slice()).slice(0,3);SFX.click();renderShop();render();}
+function buy(i){const p=G.offers[i];if(!p)return;const pr=perkPrice(p);if(G.coins<pr)return;G.coins-=pr;G.perks.push(p.id);G.offers.splice(i,1);SFX.buy();evalAch();renderShop();render();}
+function buySpecial(id){const sp=SPECIAL(id);if(!sp||G.specialOffer!==id||G.coins<sp.price)return;if((G.specials||[]).includes(id))return;G.coins-=sp.price;(G.specials=G.specials||[]).push(id);G.specialOffer=null;SFX.buy();renderShop();render();}
+function buyItem(id){const it=CONS(id);if(!it||G.itemOffer!==id||G.coins<it.price)return;if((G.items||[]).length>=2)return;G.coins-=it.price;(G.items=G.items||[]).push(id);G.itemOffer=null;SFX.buy();renderShop();render();}
+function buyVoucher(id){const v=VOUCHER(id);if(!v||G.voucherOffer!==id||G.coins<v.price)return;if(hasV(id))return;G.coins-=v.price;(G.vouchers=G.vouchers||[]).push(id);G.voucherOffer=null;SFX.buy();renderShop();render();}
+function useItem(id){const i=(G.items||[]).indexOf(id);if(i<0||G.phase!=='play')return;
+  if(id==='spark')G.roundMult+=1.0;
+  else if(id==='midas')G.coins+=6;
+  else if(id==='bossbreak')G.boss=null;
+  else if(id==='reshuffle'){var all=G.stock.concat(G.waste);all.forEach(function(c){c.up=false;});G.waste=[];G.stock=shuffle(all);}
+  G.items.splice(i,1);SFX.buy();hideOv();render();
+}
+function reroll(){if(G.deck&&G.deck.noReroll)return;const cost=rerollCost();if(G.coins<cost||!G.offers.length)return;G.coins-=cost;const avail=POOL.filter(p=>!G.perks.includes(p.id));G.offers=pickOffers(avail,perkSlots());SFX.click();renderShop();render();}
 
 /* ---- ITEMS: in-game view of owned perks + active deck + boss ---- */
 function showItems(){
@@ -808,8 +890,10 @@ function showItems(){
   const deck=G.deck?'<div class="ideck"><b>DECK · '+G.deck.name+'</b><br>'+G.deck.desc+'</div>':'';
   const boss=G.boss?'<div class="iboss">BOSS · '+G.boss.name+' — '+G.boss.desc+'</div>':'';
   const specs=(G.specials||[]).length?'<div class="ispec"><b>SPEZIALKARTEN ('+G.specials.length+')</b><br>'+G.specials.map(id=>{const sp=SPECIAL(id);return sp?sp.mark+' '+sp.name:'?';}).join(' · ')+'</div>':'';
+  const items=(G.items||[]).length?G.items.map(id=>{const it=CONS(id);return it?'<div class="perk cons"><div><div class="pn">'+it.mark+' '+it.name+'</div><div class="pd">'+it.desc+'</div></div><button class="buy" data-use-item="'+id+'">EINSETZEN</button></div>':'';}).join(''):'';
+  const vouchers=(G.vouchers||[]).length?'<div class="ispec"><b>UPGRADES</b><br>'+G.vouchers.map(id=>{const v=VOUCHER(id);return v?v.name:'?';}).join(' · ')+'</div>':'';
   showOv('<h3 style="color:var(--mint)">DEINE ITEMS</h3>'+
-    '<div class="items-list">'+deck+boss+specs+perks+'</div>'+
+    '<div class="items-list">'+deck+boss+items+specs+vouchers+perks+'</div>'+
     '<button class="btn gold" data-act="items-close" style="flex:0;padding:11px 18px">'+svg('back')+' ZURÜCK</button>');
 }
 
@@ -1004,7 +1088,8 @@ const FAQ=[
   {c:'V',q:'Wie schalte ich Decks frei?',a:'Im DECKS-Menü kaufst du Decks mit VOLT. Jedes Deck hat Vor- und Nachteile. Das BOSS-STURM-Deck wird durch den Erfolg THRONRÄUBER freigeschaltet.'},
   {c:'V',q:'Was bedeuten die Schwierigkeitsgrade?',a:'Nach einem Sieg (Ante 8) schaltest du den nächsten Schwierigkeitsgrad frei. Höhere Grade erhöhen das Ziel, reduzieren Coins/Recycles, schalten Zinsen oder Undo aus – und bringen Bosse öfter.'},
   {c:'F',q:'Wie funktioniert der Cloud-Save?',a:'Aktiviere die Cloud im CLOUD-Menü mit einem Benutzernamen. Du bekommst einen 8-stelligen Code. Dein Fortschritt wird automatisch nach jeder Runde gespeichert. Mit dem Code lädst du ihn auf jedem Gerät.'},
-  {c:'F',q:'Was sind Spezialkarten?',a:'Spezialkarten (Joker, Goldkarte, Mult-Karte) tauchen zufällig im Shop auf. Sie sind WILD – überall anlegbar – und geben Bonus-Chips oder MULT. Sie wachsen deinem Deck dauerhaft bei.'},
+  {c:'F',q:'Was sind Spezialkarten?',a:'Spezialkarten (Joker, Goldkarte, Mult-Karte) tauchen zufällig im Shop auf. Sie sind WILD – überall anlegbar – und geben beim Einlösen Bonus-Chips oder MULT.'},
+  {c:'F',q:'Warum stoppt meine eigene Musik, wenn ich spiele?',a:'Auf dem Handy kann eine Web-App ihren Ton leider nicht mit deiner laufenden Musik (z.B. Apple Music oder Spotify) mischen – sobald das Spiel Musik ODER Soundeffekte abspielt, übernimmt es die Audio-Wiedergabe. Schalte dafür in den OPTIONEN den Schalter SPIEL-AUDIO auf AUS – dann macht das Spiel keinen Ton und deine eigene Musik läuft ungestört weiter.'},
 ];
 function renderFAQ(){
   var cats={G:{n:'GRUNDLAGEN',ic:'star'},P:{n:'GAMEPLAY',ic:'trophy'},V:{n:'FORTSCHRITT',ic:'volt'},F:{n:'FEATURES',ic:'cloud'}};
@@ -1182,6 +1267,7 @@ function renderOpts(){
   const fb=$('opt-fit'); fb.textContent=o.fit?'AN':'AUS'; fb.classList.toggle('on',!!o.fit);
   const fc=$('opt-fourcolor'); if(fc){fc.textContent=o.fourColor?'AN':'AUS';fc.classList.toggle('on',!!o.fourColor);}
   const ef=$('opt-effects'); if(ef){ef.textContent=o.effects!==false?'AN':'AUS';ef.classList.toggle('on',o.effects!==false);}
+  const mo=$('opt-audio'); if(mo){mo.textContent=o.audioOn!==false?'AN':'AUS';mo.classList.toggle('on',o.audioOn!==false);}
   const sp=Math.round(o.sfxVol*100), mp=Math.round(o.musicVol*100);
   $('opt-sfx').value=sp; $('sfx-pct').textContent=sp+'%';
   $('opt-musicvol').value=mp; $('music-pct').textContent=mp+'%';
@@ -1312,10 +1398,14 @@ function doExit(){
    ============================================================ */
 // in-board card taps
 $('board').addEventListener('click',onClick);
+$('multtags').addEventListener('click',function(e){var b=e.target.closest('[data-use-item]');if(b)useItem(b.dataset.useItem);});   // Items aus der Leiste einsetzen
 // overlay (round-clear + shop + items)
 $('overlay').addEventListener('click',function(e){
   const b=e.target.closest('[data-buy]');if(b){buy(+b.dataset.buy);return;}
   const sb=e.target.closest('[data-spec-buy]');if(sb){buySpecial(sb.dataset.specBuy);return;}
+  const ib=e.target.closest('[data-item-buy]');if(ib){buyItem(ib.dataset.itemBuy);return;}
+  const vb=e.target.closest('[data-voucher-buy]');if(vb){buyVoucher(vb.dataset.voucherBuy);return;}
+  const ui=e.target.closest('[data-use-item]');if(ui){SFX.click();useItem(ui.dataset.useItem);return;}
   const a=e.target.closest('[data-act]');if(!a)return;const act=a.dataset.act;
   if(act==='shop'){SFX.click();openShop();}
   else if(act==='next'){SFX.click();G.ante++;newRound();}
@@ -1409,7 +1499,7 @@ $('scene-opts').addEventListener('click',function(e){
   const sc=e.target.closest('[data-scale]');
   if(sc){Store.data.opts.scale=parseFloat(sc.dataset.scale);Store.data.opts.fit=false;Store.save();applyScale();renderOpts();SFX.click();return;}
   const t=e.target.closest('[data-opt]');
-  if(t){const k=t.dataset.opt;Store.data.opts[k]=!Store.data.opts[k];Store.save();applyOpts();applyScale();renderOpts();SFX.click();return;}
+  if(t){const k=t.dataset.opt;Store.data.opts[k]=!Store.data.opts[k];Store.save();applyOpts();applyScale();if(k==='audioOn'){if(Store.data.opts.audioOn){SFX.ensure();SFX.resume();SFX.preload();}Music.setVol();}renderOpts();SFX.click();return;}
   const th=e.target.closest('[data-theme]');
   if(th){Store.data.meta.selectedTheme=th.dataset.theme;Store.save();applyOpts();renderOpts();SFX.click();return;}
   const fo=e.target.closest('[data-fo]');
@@ -1477,7 +1567,7 @@ window.addEventListener('keydown',function(e){
   if(e.code==='Space'||e.key===' '){e.preventDefault();handleStock();}
 });
 // resume audio on first user gesture (mobile autoplay policy)
-window.addEventListener('pointerdown',function init(){SFX.ensure();SFX.resume();SFX.preload();Music.kick();window.removeEventListener('pointerdown',init);},{once:true});
+window.addEventListener('pointerdown',function init(){if(Store.data.opts.audioOn){SFX.ensure();SFX.resume();SFX.preload();}Music.kick();window.removeEventListener('pointerdown',init);},{once:true});
 document.addEventListener('visibilitychange',function(){if(document.hidden){if(Music.el)Music.el.pause();}else{Music.sync();}});
 
 /* ============================================================

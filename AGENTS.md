@@ -58,9 +58,9 @@ Status-Marker: `- [ ]` offen · `- [~] (name)` in Arbeit · `- [x]` erledigt (mi
 **Index:**
 - [x] **BL-1** · Seedbarer Zufall (Fundament) — Prio: hoch *(Kimi, 17.06.2026)*
 - [x] **BL-2** · Tages-Challenge + Tagesrangliste — Prio: hoch *(Kimi, 17.06.2026; braucht BL-1)*
-- [ ] **BL-3** · Einmal-Karten / Verbrauchsgegenstände — Prio: hoch
-- [ ] **BL-4** · Perk-Seltenheitsstufen + Synergien — Prio: hoch
-- [ ] **BL-5** · Boss-Vorschau + Endboss + mehr Bosse — Prio: mittel
+- [x] **BL-3** · Einmal-Karten / Verbrauchsgegenstände — Prio: hoch *(Claude, feature/bl-14; v0.8.0)*
+- [x] **BL-4** · Perk-Seltenheitsstufen + Synergien — Prio: hoch *(Claude, feature/bl-14; v0.8.0)*
+- [x] **BL-5** · Boss-Vorschau + Endboss + mehr Bosse — Prio: mittel *(Claude, feature/bl-14; v0.8.0)*
 - [x] **BL-6** · Mehr „Juice" (Feedback/Animation/Haptik) — Prio: mittel *(opencode, 17.06.2026)*
 - [ ] **BL-7** · Anti-Cheat / Plausibilität fürs Leaderboard — Prio: mittel *(sobald Rangliste ernster)*
 - [ ] **BL-8** · Run-Historie & Statistik-Screen — Prio: niedrig
@@ -68,6 +68,10 @@ Status-Marker: `- [ ]` offen · `- [~] (name)` in Arbeit · `- [x]` erledigt (mi
 - [ ] **BL-10** · Deal-3-Modus + echter Stock/Waste-Fächer — Prio: niedrig
 - [ ] **BL-11** · In-App-Ankündigungen / Update-Benachrichtigungen — Prio: mittel
 - [x] **BL-12** · Soundeffekte (Dateien + Integration) — Prio: mittel *(opencode, 20.06.2026; feature/bl-12)*
+- [x] **BL-14** · Joker/Spezialkarten-Rebalance (Einlösen statt Rang-Slot, kein Stacking, Boss-Integration) — *(Claude, feature/bl-14; Teil von v0.8.0)*
+- [x] **BL-15** · Vouchers / permanente Shop-Upgrades — Prio: mittel *(Claude, feature/bl-14; v0.8.0)*
+
+> **v0.8.0-Scope (großes Update):** BL-3 + BL-4 + BL-15 (Shop-Trio, gleiche Dateien → EIN Branch nacheinander) und BL-5 (Boss, separater Bereich → eigener Branch parallel). BL-14 (Joker) zuerst nach main mergen, dann von dort branchen.
 
 ---
 
@@ -125,6 +129,11 @@ Status-Marker: `- [ ]` offen · `- [~] (name)` in Arbeit · `- [x]` erledigt (mi
 - **Ziel:** Mats kann Spieler über wichtige Updates (z.B. „Großes Update v0.8") informieren, ohne sofort implementieren zu müssen.
 - **Umsetzung (Vorschlag):** Supabase-Tabelle `announcements(id, message, active, min_version, max_version, created_at, dismiss_days)` + RPC `kl_announcement(p_version text)`. Client ruft beim Start/Hauptmenü auf und zeigt Banner/Modal, wenn eine aktive Nachricht noch nicht dismissed wurde. `localStorage` merkt sich zuletzt gesehene/dismissed ID. Optional später Erweiterung zu echten Web-Push-Benachrichtigungen (erfordert Service-Worker-Push, VAPID-Keys, iOS-Berechtigungen).
 - **Fertig wenn:** Aktive Ankündigung erscheint beim App-Start; Spieler kann sie dismissen; ohne Backend-Deploy änderbar.
+
+**BL-15 · Vouchers / permanente Shop-Upgrades** *(v0.8.0)*
+- **Ziel:** Dauerhafte, run-weite Upgrades als strategische Coin-Senke (Balatro-Vouchers).
+- **Umsetzung:** Array `VOUCHERS=[{id,name,desc,price,...}]`, z.B. `rerollcut` (Reroll-Kosten −1 / +1 Slot), `interestcap` (Zins-Limit +3), `perkslot` (Shop zeigt 4 statt 3 Perks), `discount` (alle Perks −1 Coin), `recycle` (+1 Recycle/Runde dauerhaft). Bestand `G.vouchers=[]` (in `snapRun`/`restoreRun` persistieren). In `renderShop()` eine eigene „UPGRADES"-Reihe mit `buyVoucher(id)` (analog `buy`/`buySpecial`), jedes Voucher nur 1× kaufbar. Effekte auslesen an: `openShop`/`reroll` (Slots/Kosten/Perk-Anzahl), Zins-Cap in `roundClear`, `recBase()` (Recycle). Pro Shop 1 Voucher anbieten (RNG aus noch nicht besessenen). Mit BL-4 abstimmen (beide ändern `openShop`/`renderShop`) → im selben Branch nacheinander bauen.
+- **Fertig wenn:** Voucher kaufbar, Effekt wirkt dauerhaft im Run, übersteht Resume, nur 1× kaufbar; `node --check` ok.
 
 ---
 

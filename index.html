@@ -67,9 +67,10 @@
     </div>
     <div id="hud">
       <div title="ANTE — aktuelle Runde. Steigt nach jedem Sieg; jede 3. Ante ist ein Boss."><div class="lbl">ANTE</div><div class="val" id="ante">1</div></div>
-      <div style="text-align:center" title="CHIPS — dein Score / Ziel. Jede gebankte Karte: Basis-Chips × MULT."><div class="lbl">CHIPS</div><div class="val"><span id="chips">0</span><span style="color:#456">/</span><span id="tgt">60</span></div><div id="multline" title="MULT — Multiplikator. Score = Chips × MULT.">MULT <span id="mult">&#215;1.0</span></div><div id="multtags"></div></div>
+      <div style="text-align:center" title="CHIPS — dein Score / Ziel. Jede gebankte Karte: Basis-Chips × MULT."><div class="lbl">CHIPS</div><div class="val"><span id="chips">0</span><span style="color:#456">/</span><span id="tgt">60</span></div><div id="multline" title="MULT — Multiplikator. Score = Chips × MULT.">MULT <span id="mult">&#215;1.0</span></div></div>
       <div style="text-align:right" title="COINS — Währung für den Shop zwischen den Runden."><div class="lbl">COINS</div><div class="val" id="coins">4</div></div>
     </div>
+    <div id="multtags" class="enginebar"></div>
     <div id="bossstrip" class="hidden"></div>
     <div id="stage">
       <div id="board"></div>
@@ -126,6 +127,10 @@
       </div>
       <input type="range" class="vol" id="opt-musicvol" min="0" max="100" step="1" value="25">
     </div>
+    <div class="orow">
+      <div><div class="ol">SPIEL-AUDIO</div><div class="od">Musik &amp; Soundeffekte – aus, wenn deine Apple Music / Spotify läuft</div></div>
+      <button class="tgl" id="opt-audio" data-opt="audioOn">AN</button>
+    </div>
     <div class="orow" style="flex-direction:column;align-items:stretch;gap:9px">
       <div style="display:flex;justify-content:space-between;align-items:baseline;gap:10px">
         <div><div class="ol">CRT-SCANLINES</div><div class="od">Retro-Bildschirm-Effekt</div></div>
@@ -165,7 +170,7 @@
     </div>
     <button class="opt-reset" id="opt-tut" style="border-color:#2c5a43;background:#0d2419;color:var(--mint)">TUTORIAL ZURÜCKSETZEN</button>
     <button class="opt-reset" id="opt-reset">FORTSCHRITT ZURÜCKSETZEN</button>
-    <div class="opt-about">KLONDAIRE &middot; v0.7.9<br>RETRO ROGUELIKE SOLITAIRE</div>
+    <div class="opt-about">KLONDAIRE &middot; v0.8.0<br>RETRO ROGUELIKE SOLITAIRE</div>
   </section>
 
   <!-- ===================== GAME OVER ===================== -->
