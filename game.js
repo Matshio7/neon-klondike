@@ -188,6 +188,9 @@ function paintIcons(root){(root||document).querySelectorAll('[data-ic]').forEach
    Format: { v:'Titel', date:'optional', notes:['Punkt 1','Punkt 2', ...] }
    ============================================================ */
 const PATCH_NOTES=[
+ {v:'v0.8.3', date:'21.06.2026', notes:[
+   'Neues Info-Post-it im Hauptmenü: erklärt die Ranglisten-Resets (Woche/Monat/Ewig) und den einmaligen Reset zum Launch v1.0 — plus eine kleine Roadmap, was bis dahin noch kommt.',
+ ]},
  {v:'v0.8.2', date:'21.06.2026', notes:[
    'Neue Wochen-Rangliste: eigener Tab „WOCHE", der jeden Montag neu startet — zusätzlich zu Ewig, Monat und Heute.',
    'Rangliste: Datum & Schwierigkeit stehen jetzt sauber unter dem Namen — auch lange Namen werden nicht mehr abgeschnitten.',
