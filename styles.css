@@ -342,17 +342,27 @@ input.vol::-moz-range-thumb{width:15px;height:15px;border-radius:3px;background:
 .lb-tab:hover{box-shadow:0 0 10px color-mix(in srgb,var(--mint) 25%,transparent)}
 .lb-tab.active{border-color:var(--gold);color:var(--gold);background:#241d07;box-shadow:0 0 8px rgba(255,210,63,.25)}
 .lb-tab.active:hover{box-shadow:0 0 10px color-mix(in srgb,var(--gold) 35%,transparent)}
-.lb-body{display:flex;flex-direction:column;gap:5px;max-height:54vh;overflow:auto;padding-right:2px;max-width:360px;margin:0 auto}
-.lb-row{display:flex;justify-content:space-between;align-items:center;gap:8px;background:#0e2418;border:1px solid #244;border-radius:8px;padding:9px 10px;font-size:9px;line-height:1.5}
-.lb-rank{color:var(--gold);min-width:22px;text-align:center;font-size:11px;font-weight:bold}
-.lb-mid{flex:1;min-width:0;display:flex;flex-direction:column;gap:1px;text-align:left}
-.lb-name{color:var(--mint);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.lb-meta{font-size:7px;color:#7fae98;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.lb-row[data-expand]{cursor:pointer}
-.lb-det{font-size:8px;color:#8fbfa6;background:#0a1a13;border:1px solid #244;border-top:none;border-radius:0 0 8px 8px;padding:5px 10px;margin:-7px auto 3px;max-width:360px;line-height:1.7}
-.lb-score{color:#8fbfa6;white-space:nowrap;font-size:8px}
-.lb-me{border-color:var(--gold);background:#15200a;box-shadow:0 0 8px rgba(255,210,63,.15)}
-.lb-me .lb-name{color:var(--gold)}
+.lb-body{display:flex;flex-direction:column;gap:6px;max-height:56vh;overflow:auto;padding:0 2px 2px;max-width:380px;margin:0 auto}
+.lb-row{display:flex;align-items:center;gap:9px;background:#0e2418;border:1px solid #1c3a2b;border-radius:9px;padding:9px 11px;cursor:pointer;transition:border-color .15s}
+.lb-row:active{transform:scale(.99)}
+.lb-rank{min-width:24px;text-align:center;font-size:13px;font-weight:bold;color:#5f8f78}
+.lb-1{border-color:#6b5410;background:#1a1607}
+.lb-2{border-color:#3a4650}
+.lb-3{border-color:#5a3a1e}
+.lb-1 .lb-rank{color:var(--gold)}
+.lb-2 .lb-rank{color:#cfd6dd}
+.lb-3 .lb-rank{color:#cd7f32}
+.lb-mid{flex:1;min-width:0;display:flex;flex-direction:column;gap:3px;text-align:left}
+.lb-name{color:var(--mint);font-size:10px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.lb-meta{font-size:7px;color:#7fae98;letter-spacing:.3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.lb-sc{display:flex;flex-direction:column;align-items:flex-end;gap:3px;white-space:nowrap}
+.lb-ante{font-size:10px;color:var(--gold)}
+.lb-chips{font-size:8px;color:#8fbfa6}
+.lb-exp{color:#3a6b54;font-size:8px;margin-left:1px}
+.lb-me{border-color:var(--mint);background:#102a1d;box-shadow:0 0 9px color-mix(in srgb,var(--mint) 22%,transparent)}
+.lb-me .lb-name{color:#bfffe6}
+.lb-det{font-size:8px;color:#8fbfa6;background:#0a1a13;border:1px solid #1c3a2b;border-top:none;border-radius:0 0 9px 9px;padding:7px 12px;margin:-5px 0 0;line-height:2;max-width:380px}
+.lb-detk{color:var(--gold);font-size:7px;letter-spacing:.5px}
 
 /* UI-size segmented control */
 .scaleset{display:flex;gap:5px}

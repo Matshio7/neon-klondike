@@ -188,6 +188,9 @@ function paintIcons(root){(root||document).querySelectorAll('[data-ic]').forEach
    Format: { v:'Titel', date:'optional', notes:['Punkt 1','Punkt 2', ...] }
    ============================================================ */
 const PATCH_NOTES=[
+ {v:'v0.8.1', date:'21.06.2026', notes:[
+   'Ranglisten-Optik überarbeitet: übersichtliche Karten (Name · Datum · Schwierigkeit), Medaillen-Farben für Top 3, sauberes Deck-Detail per Klick.',
+ ]},
  {v:'v0.8.0', date:'19.06.2026', notes:[
    'GROSSES UPDATE — mehr Roguelike-Tiefe!',
    'Joker & Spezialkarten überarbeitet: fairer & klarer, ohne Schneeball, reagieren auf Bosse.',
@@ -1153,19 +1156,21 @@ function renderRang(){
     if(!rows||!rows.length){body.innerHTML='<div class="ach-prog" style="color:#8fbfa6">'+emptyMsg+'</div>';return;}
     body.innerHTML=rows.map(function(r,i){
       var rank=r.rank||(i+1);
-      var st=rank===1?'color:var(--gold)':(rank===2?'color:#c0c0c0':(rank===3?'color:#cd7f32':''));
+      var medal=rank===1?' lb-1':(rank===2?' lb-2':(rank===3?' lb-3':''));
       var cls=(r.username===Store.data.meta.cloudName)?' lb-me':'';
       var chips=(r.best_chips||0).toLocaleString('de-DE');
-      var dateStr=r.created_at?String(r.created_at).slice(0,10):'';
+      var iso=r.created_at?String(r.created_at).slice(0,10):'';
+      var dateDE=iso?iso.split('-').reverse().join('.'):'';
       var diff=isDaily?'NORMAL':((DIFFICULTIES[r.difficulty]||DIFFICULTIES[0]).name);
       var deckName=isDaily?'STANDARD':((DECK(r.deck)||{}).name||(r.deck||'STANDARD'));
-      var meta=isDaily?'Tages-Challenge':(dateStr+(diff?' · '+diff:''));
-      return '<div class="lb-row'+cls+'" data-expand="'+i+'">'+
-        '<span class="lb-rank" style="'+st+'">'+rank+'</span>'+
-        '<div class="lb-mid"><span class="lb-name">'+esc(r.username)+'</span><span class="lb-meta">'+esc(meta)+'</span></div>'+
-        '<span class="lb-score">A'+r.best_ante+' · '+chips+'</span>'+
+      var meta=isDaily?'TAGES-CHALLENGE':(dateDE+(diff?' · '+diff:''));
+      return '<div class="lb-row'+medal+cls+'" data-expand="'+i+'">'+
+        '<div class="lb-rank">'+rank+'</div>'+
+        '<div class="lb-mid"><div class="lb-name">'+esc(r.username)+'</div><div class="lb-meta">'+esc(meta)+'</div></div>'+
+        '<div class="lb-sc"><div class="lb-ante">A'+r.best_ante+'</div><div class="lb-chips">'+chips+'</div></div>'+
+        '<div class="lb-exp">▾</div>'+
         '</div>'+
-        '<div class="lb-det" data-det="'+i+'" hidden>Deck: <b>'+esc(deckName)+'</b>'+(isDaily?'':' · '+esc(diff)+' · '+esc(dateStr||'?'))+'</div>';
+        '<div class="lb-det" data-det="'+i+'" hidden><span class="lb-detk">DECK</span> '+esc(deckName)+(isDaily?'':' &nbsp;·&nbsp; <span class="lb-detk">MODUS</span> '+esc(diff)+' &nbsp;·&nbsp; <span class="lb-detk">DATUM</span> '+esc(dateDE||'?'))+'</div>';
     }).join('');
   }).catch(function(){
     body.innerHTML='<div class="ach-prog" style="color:var(--pink)">Rangliste nicht erreichbar – bist du online?</div>';
