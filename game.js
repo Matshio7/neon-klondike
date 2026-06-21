@@ -20,7 +20,7 @@ const Store={
     d.stats=Object.assign({totalRuns:0,bestAnte:0,bestChips:0,bestRunChips:0,boardClears:0,bossesBeaten:[],wins:0},d.stats||{});
     if(!Array.isArray(d.stats.bossesBeaten))d.stats.bossesBeaten=[];
     d.ach=Array.isArray(d.ach)?d.ach:[];
-    d.opts=Object.assign({crt:0.3,scale:1,fit:false,sfxVol:0.75,musicVol:0.25,audioOn:true,fourColor:false,effects:true,testMult:false,foundationOrder:[0,1,2,3]},d.opts||{});
+    d.opts=Object.assign({crt:0.3,scale:1,fit:false,sfxVol:0.75,musicVol:0.25,audioOn:false,fourColor:false,effects:true,testMult:false,foundationOrder:[0,1,2,3]},d.opts||{});
     if(typeof d.opts.sound==='boolean'){ d.opts.sfxVol=d.opts.sound?0.75:0; delete d.opts.sound; }      // migrate old on/off
     if(typeof d.opts.music==='boolean'){ d.opts.musicVol=d.opts.music?0.25:0; delete d.opts.music; }
     if(typeof d.opts.crt==='boolean')d.opts.crt=d.opts.crt?0.3:0;  // migrate old boolean to opacity
@@ -109,12 +109,13 @@ const Music={
   _play(){ if(this.el&&this.ready&&Store.data.opts.audioOn&&Store.data.opts.musicVol>0){ var p=this.el.play(); if(p&&p.catch)p.catch(function(){}); } },
   setVol(){ this.init(); if(!this.el)return; this.el.volume=Store.data.opts.musicVol; if(Store.data.opts.audioOn&&Store.data.opts.musicVol>0&&this.ready){var p=this.el.play();if(p&&p.catch)p.catch(function(){});}else this.el.pause(); },
   sync(){                                                   // match src to mode, then play/pause per settings
+    if(!Store.data.opts.audioOn){ if(this.el)this.el.pause(); return; }   // Audio AUS → keine Audio-API anfassen (fremde Musik bleibt unberührt)
     this.init(); if(!this.el)return;
     this.el.volume=Store.data.opts.musicVol;
     var t=this._target();
     this.el.loop=(this.mode==='menu');
     if(this.cur!==t){ this.cur=t; this.el.src=t; }
-    if(this.ready&&Store.data.opts.audioOn&&Store.data.opts.musicVol>0) this._play(); else this.el.pause();
+    if(this.ready&&Store.data.opts.musicVol>0) this._play(); else this.el.pause();
   },
   setMode(m){ this.init(); if(m!==this.mode){ this.mode=m; if(m==='run')this.idx=Math.floor(Math.random()*this.RUN.length); } this.sync(); },
   kick(){ this.ready=true; this.sync(); }                   // first user gesture unlocks playback
@@ -194,8 +195,9 @@ const PATCH_NOTES=[
    'Perk-Raritäten (Selten/Legendär) + neue Synergie-Perks: Herz-Motor, Krönung, Überladung.',
    'Verbrauchsgegenstände: taktische Einmal-Karten (Funke, Midas, Störer, Neumischen) im Shop.',
    'Upgrades (Vouchers): dauerhafte Shop-Verbesserungen — Rabatt, Tresor, Auslage, Recycler, Würfelglück.',
-   'Neuer Schalter SPIEL-AUDIO in den Optionen — schaltet Musik & Effekte ab, damit deine eigene Musik (Apple Music, Spotify) ungestört läuft.',
+   'Spiel-Audio (Musik & Effekte) ist jetzt standardmäßig AUS, damit deine eigene Musik (Apple Music, Spotify) nicht unterbrochen wird — in den Optionen mit SPIEL-AUDIO einschaltbar.',
    'Coin-Belohnung skaliert jetzt mit der Ante (kein Geld-Überfluss mehr in späten Runden).',
+   'Ranglisten überarbeitet: Ewig · diesen Monat · Heute, mit Datum & Schwierigkeit — tippe eine Zeile für das Deck. (Daily-Bug behoben.)',
  ]},
  {v:'v0.7.9', date:'18.06.2026', notes:[
    'iPhone Homescreen-App aktualisiert sich jetzt zuverlässiger (Service-Worker-Update-Logik + App-Shell ohne Cache).',
@@ -500,7 +502,21 @@ function clRpc(fn,body){
       return r.json().catch(function(e){return null;});
     });
 }
-function cloudPayload(){ return {v:1,store:{stats:Store.data.stats,ach:Store.data.ach,meta:Store.data.meta},run:snapRun()}; }
+function applyPlausibility(s) {
+  // Cap max ante to a reasonable limit (even for endless mode, 100 is plenty)
+  if (s.bestAnte > 100) s.bestAnte = 100;
+  // Check if chips are suspiciously high compared to what's possible
+  // In most cases, bestChips shouldn't be in the trillions unless they've played for ages
+  if (s.bestChips > 999999999) s.bestChips = 999999999;
+  return s;
+}
+
+function cloudPayload(){
+  const m=Store.data.meta;
+  const stats = Store.data.stats;
+  applyPlausibility(stats);
+  return {v:1,store:{stats:stats,ach:Store.data.ach,meta:m},run:snapRun()};
+}
 function cloudSaveNow(){ const m=Store.data.meta; if(!m.cloudCode)return Promise.reject('nocode'); return clRpc('kl_save',{p_code:m.cloudCode,p_username:m.cloudName||'',p_data:cloudPayload()}); }
 function cloudSync(){ if(!Store.data.meta.cloudCode)return; cloudSaveNow().then(function(){cloudSync.lastOk=Date.now();},function(){}); }   // Auto-Sync: Fehler still, aber loggt letzten Erfolg
 function cloudCreate(name){ Store.data.meta.cloudName=name||''; return clRpc('kl_create',{p_username:name||'',p_data:cloudPayload()}).then(function(code){Store.data.meta.cloudCode=code;Store.save();return code;}); }
@@ -970,6 +986,7 @@ function finalizeRun(){   // Run-Abschluss — läuft GENAU EINMAL pro Run (Sieg
   Store.save();
   awardVolt();      // VOLT für die erreichte Tiefe — jetzt AUCH bei sauberem Sieg
   dailySubmit();    // Tages-Score, falls Daily-Run
+  if(Store.data.meta.cloudName)clRpc('kl_submit',{p_username:Store.data.meta.cloudName,p_ante:G.ante,p_chips:RUN.totalChips||0,p_difficulty:G.diff||0,p_deck:(G.deck&&G.deck.id)||'standard'}).catch(function(){});   // Ewig-/Monats-Leaderboard
   cloudSync();      // finalen Fortschritt sichern
 }
 
@@ -1089,7 +1106,7 @@ const FAQ=[
   {c:'V',q:'Was bedeuten die Schwierigkeitsgrade?',a:'Nach einem Sieg (Ante 8) schaltest du den nächsten Schwierigkeitsgrad frei. Höhere Grade erhöhen das Ziel, reduzieren Coins/Recycles, schalten Zinsen oder Undo aus – und bringen Bosse öfter.'},
   {c:'F',q:'Wie funktioniert der Cloud-Save?',a:'Aktiviere die Cloud im CLOUD-Menü mit einem Benutzernamen. Du bekommst einen 8-stelligen Code. Dein Fortschritt wird automatisch nach jeder Runde gespeichert. Mit dem Code lädst du ihn auf jedem Gerät.'},
   {c:'F',q:'Was sind Spezialkarten?',a:'Spezialkarten (Joker, Goldkarte, Mult-Karte) tauchen zufällig im Shop auf. Sie sind WILD – überall anlegbar – und geben beim Einlösen Bonus-Chips oder MULT.'},
-  {c:'F',q:'Warum stoppt meine eigene Musik, wenn ich spiele?',a:'Auf dem Handy kann eine Web-App ihren Ton leider nicht mit deiner laufenden Musik (z.B. Apple Music oder Spotify) mischen – sobald das Spiel Musik ODER Soundeffekte abspielt, übernimmt es die Audio-Wiedergabe. Schalte dafür in den OPTIONEN den Schalter SPIEL-AUDIO auf AUS – dann macht das Spiel keinen Ton und deine eigene Musik läuft ungestört weiter.'},
+  {c:'F',q:'Warum stoppt meine eigene Musik, wenn ich spiele?',a:'Auf dem Handy kann eine Web-App ihren Ton leider nicht mit deiner laufenden Musik (z.B. Apple Music oder Spotify) mischen – sobald das Spiel Musik ODER Soundeffekte abspielt, übernimmt es die Audio-Wiedergabe. Deshalb ist SPIEL-AUDIO standardmäßig AUS – so läuft deine eigene Musik ungestört weiter. Wenn du die Spielmusik & Soundeffekte hören möchtest, schalte SPIEL-AUDIO in den OPTIONEN auf AN.'},
 ];
 function renderFAQ(){
   var cats={G:{n:'GRUNDLAGEN',ic:'star'},P:{n:'GAMEPLAY',ic:'trophy'},V:{n:'FORTSCHRITT',ic:'volt'},F:{n:'FEATURES',ic:'cloud'}};
@@ -1126,22 +1143,32 @@ function renderRang(){
   var body=$('rang-body'),sub=$('rang-sub'),tog=$('rang-toggle');
   const today=todayStr();
   const todayFormatted=today.slice(0,4)+'-'+today.slice(4,6)+'-'+today.slice(6,8);
-  if(sub)sub.textContent=RANG_MODE==='daily'?'TAGES-CHALLENGE · '+today:'BESTE ANTE · DANN CHIPS';
+  var isDaily=RANG_MODE==='daily';
+  if(sub)sub.textContent=isDaily?('TAGES-CHALLENGE · '+today):(RANG_MODE==='month'?'DIESER MONAT · BESTE ANTE':'EWIG · BESTE ANTE');
   if(tog){tog.querySelectorAll('.lb-tab').forEach(b=>b.classList.toggle('active',b.dataset.lb===RANG_MODE));}
   body.innerHTML='<div class="ach-prog loading-pulse" style="color:#8fbfa6">Lade …</div>';
-  var promise=RANG_MODE==='daily'?clRpc('kl_daily_board',{p_day:todayFormatted,p_limit:50}):clRpc('kl_leaderboard',{p_limit:50});
-  var emptyMsg=RANG_MODE==='daily'?'Noch keine Einträge für heute – sei der Erste!':'Noch keine Einträge – spiel eine Runde mit aktivierter Cloud!';
-  var errMsg=RANG_MODE==='daily'?'Tages-Rangliste nicht erreichbar – bist du online?':'Rangliste nicht erreichbar – bist du online?';
+  var promise=isDaily?clRpc('kl_daily_board',{p_day:todayFormatted,p_limit:50}):clRpc('kl_board',{p_scope:(RANG_MODE==='month'?'month':'all'),p_limit:50});
+  var emptyMsg=isDaily?'Noch keine Einträge für heute – sei der Erste!':(RANG_MODE==='month'?'Diesen Monat noch keine Einträge.':'Noch keine Einträge – spiel eine Runde mit aktivierter Cloud!');
   promise.then(function(rows){
     if(!rows||!rows.length){body.innerHTML='<div class="ach-prog" style="color:#8fbfa6">'+emptyMsg+'</div>';return;}
     body.innerHTML=rows.map(function(r,i){
       var rank=r.rank||(i+1);
       var st=rank===1?'color:var(--gold)':(rank===2?'color:#c0c0c0':(rank===3?'color:#cd7f32':''));
       var cls=(r.username===Store.data.meta.cloudName)?' lb-me':'';
-      return '<div class="lb-row'+cls+'"><span class="lb-rank" style="'+st+'">'+rank+'</span><span class="lb-name">'+esc(r.username)+'</span><span class="lb-score">ANTE '+r.best_ante+' · '+(r.best_chips||0).toLocaleString('de-DE')+' CHIPS</span></div>';
+      var chips=(r.best_chips||0).toLocaleString('de-DE');
+      var dateStr=r.created_at?String(r.created_at).slice(0,10):'';
+      var diff=isDaily?'NORMAL':((DIFFICULTIES[r.difficulty]||DIFFICULTIES[0]).name);
+      var deckName=isDaily?'STANDARD':((DECK(r.deck)||{}).name||(r.deck||'STANDARD'));
+      var meta=isDaily?'Tages-Challenge':(dateStr+(diff?' · '+diff:''));
+      return '<div class="lb-row'+cls+'" data-expand="'+i+'">'+
+        '<span class="lb-rank" style="'+st+'">'+rank+'</span>'+
+        '<div class="lb-mid"><span class="lb-name">'+esc(r.username)+'</span><span class="lb-meta">'+esc(meta)+'</span></div>'+
+        '<span class="lb-score">A'+r.best_ante+' · '+chips+'</span>'+
+        '</div>'+
+        '<div class="lb-det" data-det="'+i+'" hidden>Deck: <b>'+esc(deckName)+'</b>'+(isDaily?'':' · '+esc(diff)+' · '+esc(dateStr||'?'))+'</div>';
     }).join('');
   }).catch(function(){
-    body.innerHTML='<div class="ach-prog" style="color:var(--pink)">'+errMsg+'</div>';
+    body.innerHTML='<div class="ach-prog" style="color:var(--pink)">Rangliste nicht erreichbar – bist du online?</div>';
   });
 }
 
@@ -1445,7 +1472,9 @@ document.querySelectorAll('[data-back]').forEach(b=>b.addEventListener('click',f
 // leaderboard toggle: all vs daily
 $('scene-rang').addEventListener('click',function(e){
   const t=e.target.closest('[data-lb]');
-  if(t){SFX.click();RANG_MODE=t.dataset.lb;renderRang();}
+  if(t){SFX.click();RANG_MODE=t.dataset.lb;renderRang();return;}
+  const row=e.target.closest('[data-expand]');
+  if(row){var d=$('rang-body').querySelector('[data-det="'+row.dataset.expand+'"]');if(d){d.hidden=!d.hidden;SFX.click();}}
 });
 // update post-it -> full updates screen; tearing a fringe tab is an easter egg
 $('postit').addEventListener('click',function(){SFX.click();showScene('news');});

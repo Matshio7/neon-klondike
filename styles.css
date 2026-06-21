@@ -345,7 +345,11 @@ input.vol::-moz-range-thumb{width:15px;height:15px;border-radius:3px;background:
 .lb-body{display:flex;flex-direction:column;gap:5px;max-height:54vh;overflow:auto;padding-right:2px;max-width:360px;margin:0 auto}
 .lb-row{display:flex;justify-content:space-between;align-items:center;gap:8px;background:#0e2418;border:1px solid #244;border-radius:8px;padding:9px 10px;font-size:9px;line-height:1.5}
 .lb-rank{color:var(--gold);min-width:22px;text-align:center;font-size:11px;font-weight:bold}
-.lb-name{flex:1;color:var(--mint);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.lb-mid{flex:1;min-width:0;display:flex;flex-direction:column;gap:1px;text-align:left}
+.lb-name{color:var(--mint);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.lb-meta{font-size:7px;color:#7fae98;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.lb-row[data-expand]{cursor:pointer}
+.lb-det{font-size:8px;color:#8fbfa6;background:#0a1a13;border:1px solid #244;border-top:none;border-radius:0 0 8px 8px;padding:5px 10px;margin:-7px auto 3px;max-width:360px;line-height:1.7}
 .lb-score{color:#8fbfa6;white-space:nowrap;font-size:8px}
 .lb-me{border-color:var(--gold);background:#15200a;box-shadow:0 0 8px rgba(255,210,63,.15)}
 .lb-me .lb-name{color:var(--gold)}
