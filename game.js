@@ -188,6 +188,11 @@ function paintIcons(root){(root||document).querySelectorAll('[data-ic]').forEach
    Format: { v:'Titel', date:'optional', notes:['Punkt 1','Punkt 2', ...] }
    ============================================================ */
 const PATCH_NOTES=[
+ {v:'v0.8.2', date:'21.06.2026', notes:[
+   'Neue Wochen-Rangliste: eigener Tab „WOCHE", der jeden Montag neu startet — zusätzlich zu Ewig, Monat und Heute.',
+   'Rangliste: Datum & Schwierigkeit stehen jetzt sauber unter dem Namen — auch lange Namen werden nicht mehr abgeschnitten.',
+   'Aufräumen: alte Ranglisten-Einträge ohne echten Lauf-Bezug entfernt. Es zählen ab jetzt nur noch echte, abgeschlossene Läufe (mit korrektem Datum, Schwierigkeit und Deck).',
+ ]},
  {v:'v0.8.1', date:'21.06.2026', notes:[
    'Ranglisten-Optik überarbeitet: übersichtliche Karten (Name · Datum · Schwierigkeit), Medaillen-Farben für Top 3, sauberes Deck-Detail per Klick.',
  ]},
@@ -398,7 +403,7 @@ let G={};
 let RUN={};   // per-run tracking (resets each new run)
 let runActive=false; // true while a run is in progress (resumable from the menu)
 let RNG=Math.random; // replacable seeded RNG
-let RANG_MODE='all'; // 'all' | 'daily' leaderboard view
+let RANG_MODE='all'; // 'all' | 'month' | 'week' | 'daily' leaderboard view
 let foundSwapIdx=-1; // selected index in foundation-order UI
 
 function $(id){return document.getElementById(id);}
@@ -1147,11 +1152,11 @@ function renderRang(){
   const today=todayStr();
   const todayFormatted=today.slice(0,4)+'-'+today.slice(4,6)+'-'+today.slice(6,8);
   var isDaily=RANG_MODE==='daily';
-  if(sub)sub.textContent=isDaily?('TAGES-CHALLENGE · '+today):(RANG_MODE==='month'?'DIESER MONAT · BESTE ANTE':'EWIG · BESTE ANTE');
+  if(sub)sub.textContent=isDaily?('TAGES-CHALLENGE · '+today):(RANG_MODE==='month'?'DIESER MONAT · BESTE ANTE':(RANG_MODE==='week'?'DIESE WOCHE · BESTE ANTE':'EWIG · BESTE ANTE'));
   if(tog){tog.querySelectorAll('.lb-tab').forEach(b=>b.classList.toggle('active',b.dataset.lb===RANG_MODE));}
   body.innerHTML='<div class="ach-prog loading-pulse" style="color:#8fbfa6">Lade …</div>';
-  var promise=isDaily?clRpc('kl_daily_board',{p_day:todayFormatted,p_limit:50}):clRpc('kl_board',{p_scope:(RANG_MODE==='month'?'month':'all'),p_limit:50});
-  var emptyMsg=isDaily?'Noch keine Einträge für heute – sei der Erste!':(RANG_MODE==='month'?'Diesen Monat noch keine Einträge.':'Noch keine Einträge – spiel eine Runde mit aktivierter Cloud!');
+  var promise=isDaily?clRpc('kl_daily_board',{p_day:todayFormatted,p_limit:50}):clRpc('kl_board',{p_scope:RANG_MODE,p_limit:50});
+  var emptyMsg=isDaily?'Noch keine Einträge für heute – sei der Erste!':(RANG_MODE==='month'?'Diesen Monat noch keine Einträge.':(RANG_MODE==='week'?'Diese Woche noch keine Einträge.':'Noch keine Einträge – spiel eine Runde mit aktivierter Cloud!'));
   promise.then(function(rows){
     if(!rows||!rows.length){body.innerHTML='<div class="ach-prog" style="color:#8fbfa6">'+emptyMsg+'</div>';return;}
     body.innerHTML=rows.map(function(r,i){

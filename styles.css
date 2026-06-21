@@ -354,7 +354,7 @@ input.vol::-moz-range-thumb{width:15px;height:15px;border-radius:3px;background:
 .lb-3 .lb-rank{color:#cd7f32}
 .lb-mid{flex:1;min-width:0;display:flex;flex-direction:column;gap:3px;text-align:left}
 .lb-name{color:var(--mint);font-size:10px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.lb-meta{font-size:7px;color:#7fae98;letter-spacing:.3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.lb-meta{font-size:7px;color:#7fae98;letter-spacing:.4px;line-height:1.6;word-break:break-word}
 .lb-sc{display:flex;flex-direction:column;align-items:flex-end;gap:3px;white-space:nowrap}
 .lb-ante{font-size:10px;color:var(--gold)}
 .lb-chips{font-size:8px;color:#8fbfa6}
