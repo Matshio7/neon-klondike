@@ -42,6 +42,14 @@ body{display:flex;justify-content:center;align-items:flex-start;padding:8px;padd
   50%{transform:translate3d(1.5%,-1.5%,0) scale(1.12);opacity:1;filter:hue-rotate(-14deg)}
   100%{transform:translate3d(0,0,0) scale(1);opacity:.65;filter:hue-rotate(0deg)}}
 @media(prefers-reduced-motion:reduce){#bgfx,#bgimg,#scanlines{animation:none}}
+/* WebGL shader background canvas — hidden by default, shown when a shader is active */
+#bggl{position:fixed;inset:0;z-index:0;width:100%;height:100%;display:none;pointer-events:none}
+body.bg-shader #bggl{display:block}
+body.bg-shader #bgimg,body.bg-shader #bgfx,body.bg-shader #bgtint{display:none}
+/* Energy save mode — freeze all background animations, kill atmospheric overlay */
+body.energy-save #bgfx{display:none}
+body.energy-save #bgimg{animation-play-state:paused}
+body.energy-save #scanlines{animation:none}
 
 /* global CRT scanline overlay (toggle in Options) — sibling of #app so app's scale transform can't trap it */
 #scanlines{position:fixed;inset:0;pointer-events:none;z-index:9999;
