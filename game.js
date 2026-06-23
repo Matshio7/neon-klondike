@@ -188,6 +188,12 @@ function paintIcons(root){(root||document).querySelectorAll('[data-ic]').forEach
    Format: { v:'Titel', date:'optional', notes:['Punkt 1','Punkt 2', ...] }
    ============================================================ */
 const PATCH_NOTES=[
+ {v:'v0.8.4', date:'23.06.2026', notes:[
+   'Ziele in frühen Antes leichter: Ante 1 startet bei 50 statt 60 Chips, Wachstum flacher.',
+   'Joker jetzt mit ★ statt J — kein Verwechsler mehr mit dem Buben.',
+   'Options: STAPEL SPIEGELN — Ablagestapel links für Rechtshänder.',
+   'Options: Feedback-Link direkt im Spiel.',
+ ]},
  {v:'v0.8.3', date:'21.06.2026', notes:[
    'Neues Info-Post-it im Hauptmenü: erklärt die Ranglisten-Resets (Woche/Monat/Ewig) und den einmaligen Reset zum Launch v1.0 — plus eine kleine Roadmap, was bis dahin noch kommt.',
  ]},
@@ -421,7 +427,7 @@ function mkRng(s){
 function rseed(x){RNG=mkRng(hash(String(x)));}
 function todayStr(){const d=new Date();return d.getFullYear()+String(d.getMonth()+1).padStart(2,'0')+String(d.getDate()).padStart(2,'0');}
 function shuffle(a){for(let i=a.length-1;i>0;i--){const j=Math.floor(RNG()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a;}
-function target(n){return Math.round(60*Math.pow(1.45,n-1)/5)*5;}
+function target(n){return Math.round(50*Math.pow(1.45,n-1)/5)*5;}
 function recBase(){return 2+(G.perks.includes('rec')?1:0)+(G.deck?G.deck.recDelta:0)+((G.vouchers&&G.vouchers.includes('recycler'))?1:0);}
 function baseMult(){var b=(G.deck?G.deck.baseMult:1)+(G.perks.includes('fever')?0.5:0)+(G.perks.includes('bigfever')?1:0)+(G.perks.includes('overload')?2:0);var dd=G.dd||DIFFICULTIES[G.diff]||{};return b-(dd.basePen||0);}
 function effMult(){return baseMult()+G.roundMult;}
