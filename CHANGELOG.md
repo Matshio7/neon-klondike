@@ -2,6 +2,9 @@
 
 > Bei jedem Release ergänzen. Die Kurz-Zusammenfassung der letzten Arbeit steht in `AGENTS.md` (Abschnitt 3).
 
+- **BL-22** (23.06.2026) — Leaderboard-Submit robuster: `submitScore(beacon)` Helper mit `keepalive:true`-Support; feuert jetzt auch beim Home-Button, Ante-Aufstieg, App-Background (visibilitychange) und pagehide — nie wieder verlorene Board-Einträge durch abgebrochene Läufe. Leere `.catch` durch `console.warn` ersetzt.
+- **v0.8.5** (23.06.2026) — 5 interaktive WebGL-Hintergründe (AURORA, GRID, CELLS, LIQUID, SUITS) in Options; ENERGIESPAREN-Modus friert alle Animationen ein und stoppt Shader.
+- **v0.8.4** (23.06.2026) — Spieler-Feedback: Joker-Mark J→★, STAPEL SPIEGELN-Option, Feedback-Link (Tally), Difficulty-Tuning (50×1.45 statt 60×1.55).
 - **v0.7.9** (18.06.2026) — iPhone-Homescreen-App aktualisiert sich jetzt zuverlässiger (Service-Worker-Update-Logik + App-Shell ohne Cache).
 - **v0.7.8** (18.06.2026) — Cloud-Speichern repariert: leere RPC-Antworten von `kl_save` werden als Erfolg gewertet.
 - **BL-12** (20.06.2026) — Soundeffekte als MP3-Dateien integriert (click, card-moving, achievement, denied, gameover); `SFX.preload()` + `play()` mit Fallback auf Synthesizer; Trigger an allen Spiel-Stellen (Stock, Tab-Move, Shop, Undo, ungültige Aktion); Post-it zeigt jetzt 2 Versionen.

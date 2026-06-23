@@ -436,7 +436,7 @@ function recBase(){return 2+(G.perks.includes('rec')?1:0)+(G.deck?G.deck.recDelt
 function baseMult(){var b=(G.deck?G.deck.baseMult:1)+(G.perks.includes('fever')?0.5:0)+(G.perks.includes('bigfever')?1:0)+(G.perks.includes('overload')?2:0);var dd=G.dd||DIFFICULTIES[G.diff]||{};return b-(dd.basePen||0);}
 function effMult(){return baseMult()+G.roundMult;}
 
-function resetRun(){RUN={banked:0,totalChips:0,maxMult:0,bestRound:0,newBestAnte:false,newBestChips:false,newAch:[],voltEarned:0,won:false};}
+function resetRun(){RUN={banked:0,totalChips:0,maxMult:0,bestRound:0,newBestAnte:false,newBestChips:false,newAch:[],voltEarned:0,won:false,lastSubmittedAnte:0};}
 
 function newRun(daily){
   resetRun();
@@ -477,7 +477,7 @@ function dailySubmit(){
   //   Tabelle daily_scores(day date, username text, best_ante int, best_chips int, updated_at timestamptz, primary key(day,username))
   //   RPC kl_daily_submit(p_day date, p_username text, p_ante int, p_chips int) -> nur verbessern, security definer, anon grant
   //   RPC kl_daily_board(p_day date, p_limit int) -> rank, username, best_ante, best_chips (keine Codes)
-  clRpc('kl_daily_submit',{p_day:dayFormatted,p_username:username,p_ante:G.ante,p_chips:RUN.bestRound||0}).catch(function(){});
+  clRpc('kl_daily_submit',{p_day:dayFormatted,p_username:username,p_ante:G.ante,p_chips:RUN.bestRound||0}).catch(function(e){console.warn('[kl_daily_submit]',e);});
   G.dailySubmitted=true;
 }
 /* ============================================================
@@ -522,6 +522,14 @@ function clRpc(fn,body){
       if(r.status===204||(len!==null&&+len===0))return null;
       return r.json().catch(function(e){return null;});
     });
+}
+function submitScore(beacon){
+  if(!runActive||!G||G.ante<1||!Store.data.meta.cloudName)return;
+  if(G.ante<=(RUN.lastSubmittedAnte||0))return;
+  RUN.lastSubmittedAnte=G.ante;
+  var body=JSON.stringify({p_username:Store.data.meta.cloudName,p_ante:G.ante,p_chips:RUN.totalChips||0,p_difficulty:G.diff||0,p_deck:(G.deck&&G.deck.id)||'standard'});
+  fetch(CLOUD.url+'/rest/v1/rpc/kl_submit',{method:'POST',headers:{'Content-Type':'application/json','apikey':CLOUD.key,'Authorization':'Bearer '+CLOUD.key},body:body,keepalive:!!beacon})
+    .catch(function(e){console.warn('[kl_submit]',e);});
 }
 function applyPlausibility(s) {
   // Cap max ante to a reasonable limit (even for endless mode, 100 is plenty)
@@ -1007,7 +1015,7 @@ function finalizeRun(){   // Run-Abschluss — läuft GENAU EINMAL pro Run (Sieg
   Store.save();
   awardVolt();      // VOLT für die erreichte Tiefe — jetzt AUCH bei sauberem Sieg
   dailySubmit();    // Tages-Score, falls Daily-Run
-  if(Store.data.meta.cloudName)clRpc('kl_submit',{p_username:Store.data.meta.cloudName,p_ante:G.ante,p_chips:RUN.totalChips||0,p_difficulty:G.diff||0,p_deck:(G.deck&&G.deck.id)||'standard'}).catch(function(){});   // Ewig-/Monats-Leaderboard
+  submitScore();   // Ewig-/Monats-Leaderboard (idempotent, lastSubmittedAnte guard)
   cloudSync();      // finalen Fortschritt sichern
 }
 
@@ -1533,14 +1541,14 @@ $('overlay').addEventListener('click',function(e){
   const ui=e.target.closest('[data-use-item]');if(ui){SFX.click();useItem(ui.dataset.useItem);return;}
   const a=e.target.closest('[data-act]');if(!a)return;const act=a.dataset.act;
   if(act==='shop'){SFX.click();openShop();}
-  else if(act==='next'){SFX.click();G.ante++;newRound();}
+  else if(act==='next'){SFX.click();G.ante++;newRound();submitScore();}
   else if(act==='reroll')reroll();
   else if(act==='items-close')hideOv();
   else if(act==='endless'){G.endless=true;SFX.click();openShop();}     // keep playing past the win
   else if(act==='winmenu'){finalizeRun();runActive=false;clearSave();SFX.click();showScene('menu');}
 });
 // top bar: home pauses to menu (run stays); items + give up
-$('homebtn').addEventListener('click',function(){SFX.click();showScene('menu'); if(G)G.helpMode=false;});
+$('homebtn').addEventListener('click',function(){SFX.click();if(runActive)submitScore();showScene('menu');if(G)G.helpMode=false;});
 $('itemsbtn').addEventListener('click',function(){SFX.click();showItems();});
 $('undobtn').addEventListener('click',function(){doUndo();});
 $('helpbtn').addEventListener('click',function(){SFX.click();showHelp();});
@@ -1697,7 +1705,8 @@ window.addEventListener('keydown',function(e){
 });
 // resume audio on first user gesture (mobile autoplay policy)
 window.addEventListener('pointerdown',function init(){if(Store.data.opts.audioOn){SFX.ensure();SFX.resume();SFX.preload();}Music.kick();window.removeEventListener('pointerdown',init);},{once:true});
-document.addEventListener('visibilitychange',function(){if(document.hidden){if(Music.el)Music.el.pause();}else{Music.sync();}});
+document.addEventListener('visibilitychange',function(){if(document.hidden){submitScore(true);dailySubmit();if(Music.el)Music.el.pause();}else{Music.sync();}});
+window.addEventListener('pagehide',function(){submitScore(true);dailySubmit();});
 
 /* ============================================================
    BOOT
