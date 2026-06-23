@@ -190,7 +190,7 @@ function paintIcons(root){(root||document).querySelectorAll('[data-ic]').forEach
 const PATCH_NOTES=[
  {v:'v0.8.4', date:'23.06.2026', notes:[
    'Ziele in frühen Antes leichter: Ante 1 startet bei 50 statt 60 Chips, Wachstum flacher.',
-   'Joker jetzt mit ★ statt J — kein Verwechsler mehr mit dem Buben.',
+   'Joker jetzt mit ★ statt J — kein Verwechsler mehr mit dem Buben. (★ ist Übergangslösung — jeder Joker bekommt bald ein eigenes Cover.)',
    'Options: STAPEL SPIEGELN — Ablagestapel links für Rechtshänder.',
    'Options: Feedback-Link direkt im Spiel.',
  ]},
