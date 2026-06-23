@@ -191,6 +191,7 @@ const PATCH_NOTES=[
  {v:'v0.8.5', date:'23.06.2026', notes:[
    '5 interaktive WebGL-Hintergründe in den Options: AURORA, GRID, CELLS, LIQUID, SUITS — mausreaktiv, mit Klick-Wellen.',
    'Neuer ENERGIESPAREN-Modus: friert alle Animationen ein und schont Akku & CPU — ideal für Unterwegs.',
+   'Rangliste: Schwierigkeits-Filter — nach NORMAL, SCHWER, EXPERTE usw. filtern, oder alles gemeinsam ansehen.',
  ]},
  {v:'v0.8.4', date:'23.06.2026', notes:[
    'Ziele in frühen Antes leichter: Ante 1 startet bei 50 statt 60 Chips, Wachstum flacher.',
