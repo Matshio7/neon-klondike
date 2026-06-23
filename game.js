@@ -417,6 +417,7 @@ let RUN={};   // per-run tracking (resets each new run)
 let runActive=false; // true while a run is in progress (resumable from the menu)
 let RNG=Math.random; // replacable seeded RNG
 let RANG_MODE='all'; // 'all' | 'month' | 'week' | 'daily' leaderboard view
+let RANG_DIFF=null; // null = alle Schwierigkeiten; 0..7 = nur diese Schwierigkeit
 let foundSwapIdx=-1; // selected index in foundation-order UI
 
 function $(id){return document.getElementById(id);}
@@ -1170,18 +1171,27 @@ function renderCloud(){
   $('cloud-body').innerHTML=h;
 }
 function renderRang(){
-  var body=$('rang-body'),sub=$('rang-sub'),tog=$('rang-toggle');
+  var body=$('rang-body'),sub=$('rang-sub'),tog=$('rang-toggle'),diffTog=$('rang-diff-toggle');
   const today=todayStr();
   const todayFormatted=today.slice(0,4)+'-'+today.slice(4,6)+'-'+today.slice(6,8);
   var isDaily=RANG_MODE==='daily';
   if(sub)sub.textContent=isDaily?('TAGES-CHALLENGE · '+today):(RANG_MODE==='month'?'DIESER MONAT · BESTE ANTE':(RANG_MODE==='week'?'DIESE WOCHE · BESTE ANTE':'EWIG · BESTE ANTE'));
   if(tog){tog.querySelectorAll('.lb-tab').forEach(b=>b.classList.toggle('active',b.dataset.lb===RANG_MODE));}
+  if(diffTog){
+    diffTog.hidden=isDaily;
+    diffTog.querySelectorAll('.lb-tab').forEach(function(b){
+      var isAll=b.dataset.lbDiff==='all';
+      b.classList.toggle('active',isAll?(RANG_DIFF===null):(+b.dataset.lbDiff===RANG_DIFF));
+    });
+  }
   body.innerHTML='<div class="ach-prog loading-pulse" style="color:#8fbfa6">Lade …</div>';
   var promise=isDaily?clRpc('kl_daily_board',{p_day:todayFormatted,p_limit:50}):clRpc('kl_board',{p_scope:RANG_MODE,p_limit:50});
   var emptyMsg=isDaily?'Noch keine Einträge für heute – sei der Erste!':(RANG_MODE==='month'?'Diesen Monat noch keine Einträge.':(RANG_MODE==='week'?'Diese Woche noch keine Einträge.':'Noch keine Einträge – spiel eine Runde mit aktivierter Cloud!'));
   promise.then(function(rows){
-    if(!rows||!rows.length){body.innerHTML='<div class="ach-prog" style="color:#8fbfa6">'+emptyMsg+'</div>';return;}
-    body.innerHTML=rows.map(function(r,i){
+    var filtered=(!isDaily&&RANG_DIFF!==null)?(rows||[]).filter(function(r){return (r.difficulty||0)===RANG_DIFF;}):rows;
+    if(!filtered||!filtered.length){body.innerHTML='<div class="ach-prog" style="color:#8fbfa6">'+emptyMsg+'</div>';return;}
+    body.innerHTML=filtered.map(function(r,i){
+      r=Object.assign({},r,{rank:i+1});
       var rank=r.rank||(i+1);
       var medal=rank===1?' lb-1':(rank===2?' lb-2':(rank===3?' lb-3':''));
       var cls=(r.username===Store.data.meta.cloudName)?' lb-me':'';
@@ -1579,6 +1589,8 @@ document.querySelectorAll('[data-back]').forEach(b=>b.addEventListener('click',f
 $('scene-rang').addEventListener('click',function(e){
   const t=e.target.closest('[data-lb]');
   if(t){SFX.click();RANG_MODE=t.dataset.lb;renderRang();return;}
+  const df=e.target.closest('[data-lb-diff]');
+  if(df){SFX.click();RANG_DIFF=(df.dataset.lbDiff==='all')?null:+df.dataset.lbDiff;renderRang();return;}
   const row=e.target.closest('[data-expand]');
   if(row){var d=$('rang-body').querySelector('[data-det="'+row.dataset.expand+'"]');if(d){d.hidden=!d.hidden;SFX.click();}}
 });

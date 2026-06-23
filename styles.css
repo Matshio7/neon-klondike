@@ -370,7 +370,9 @@ input.vol::-moz-range-thumb{width:15px;height:15px;border-radius:3px;background:
 .lb-tab:hover{box-shadow:0 0 10px color-mix(in srgb,var(--mint) 25%,transparent)}
 .lb-tab.active{border-color:var(--gold);color:var(--gold);background:#241d07;box-shadow:0 0 8px rgba(255,210,63,.25)}
 .lb-tab.active:hover{box-shadow:0 0 10px color-mix(in srgb,var(--gold) 35%,transparent)}
-.lb-body{display:flex;flex-direction:column;gap:6px;max-height:56vh;overflow:auto;padding:0 2px 2px;max-width:380px;margin:0 auto}
+.lb-diff-toggle{display:flex;gap:4px;margin:0 auto 10px;max-width:360px;overflow-x:auto;padding-bottom:3px;scrollbar-width:thin;scrollbar-color:var(--gold) transparent}
+.lb-diff-toggle .lb-tab{font-size:7px;padding:7px 6px;flex:0 0 auto}
+.lb-body{display:flex;flex-direction:column;gap:6px;max-height:52vh;overflow:auto;padding:0 2px 2px;max-width:380px;margin:0 auto}
 .lb-row{display:flex;align-items:center;gap:9px;background:#0e2418;border:1px solid #1c3a2b;border-radius:9px;padding:9px 11px;cursor:pointer;transition:border-color .15s}
 .lb-row:active{transform:scale(.99)}
 .lb-rank{min-width:24px;text-align:center;font-size:13px;font-weight:bold;color:#5f8f78}
