@@ -20,7 +20,7 @@ const Store={
     d.stats=Object.assign({totalRuns:0,bestAnte:0,bestChips:0,bestRunChips:0,boardClears:0,bossesBeaten:[],wins:0},d.stats||{});
     if(!Array.isArray(d.stats.bossesBeaten))d.stats.bossesBeaten=[];
     d.ach=Array.isArray(d.ach)?d.ach:[];
-    d.opts=Object.assign({crt:0.3,scale:1,fit:false,sfxVol:0.75,musicVol:0.25,audioOn:false,fourColor:false,effects:true,testMult:false,foundationOrder:[0,1,2,3]},d.opts||{});
+    d.opts=Object.assign({crt:0.3,scale:1,fit:false,sfxVol:0.75,musicVol:0.25,audioOn:false,fourColor:false,effects:true,testMult:false,foundationOrder:[0,1,2,3],swapStock:false},d.opts||{});
     if(typeof d.opts.sound==='boolean'){ d.opts.sfxVol=d.opts.sound?0.75:0; delete d.opts.sound; }      // migrate old on/off
     if(typeof d.opts.music==='boolean'){ d.opts.musicVol=d.opts.music?0.25:0; delete d.opts.music; }
     if(typeof d.opts.crt==='boolean')d.opts.crt=d.opts.crt?0.3:0;  // migrate old boolean to opacity
@@ -330,7 +330,7 @@ const POOL=[
 /* SPECIAL CARDS — bought (with luck) in the shop, added to the run's deck (deck grows).
    All are WILD: anlegbar auf jede Karte, bankbar in jede Lücke. They give bonus chips/mult. */
 const SPECIALS=[
- {id:'joker',   name:'JOKER',      mark:'J', chips:15, mult:0,   price:6, desc:'Wild im Tableau (Lücken-Helfer); eingelöst +15 Chips (×Mult).'},
+ {id:'joker',   name:'JOKER',      mark:'★', chips:15, mult:0,   price:6, desc:'Wild im Tableau (Lücken-Helfer); eingelöst +15 Chips (×Mult).'},
  {id:'gold',    name:'GOLDKARTE',  mark:'$', chips:45, mult:0,   price:10,desc:'Wild im Tableau; eingelöst +45 Chips (×Mult).'},
  {id:'multcard',name:'MULT-KARTE', mark:'×', chips:10, mult:0.5, price:9, desc:'Wild im Tableau; eingelöst +0,5 MULT (für die Runde).'},
 ];
@@ -421,7 +421,7 @@ function mkRng(s){
 function rseed(x){RNG=mkRng(hash(String(x)));}
 function todayStr(){const d=new Date();return d.getFullYear()+String(d.getMonth()+1).padStart(2,'0')+String(d.getDate()).padStart(2,'0');}
 function shuffle(a){for(let i=a.length-1;i>0;i--){const j=Math.floor(RNG()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a;}
-function target(n){return Math.round(60*Math.pow(1.55,n-1)/5)*5;}
+function target(n){return Math.round(60*Math.pow(1.45,n-1)/5)*5;}
 function recBase(){return 2+(G.perks.includes('rec')?1:0)+(G.deck?G.deck.recDelta:0)+((G.vouchers&&G.vouchers.includes('recycler'))?1:0);}
 function baseMult(){var b=(G.deck?G.deck.baseMult:1)+(G.perks.includes('fever')?0.5:0)+(G.perks.includes('bigfever')?1:0)+(G.perks.includes('overload')?2:0);var dd=G.dd||DIFFICULTIES[G.diff]||{};return b-(dd.basePen||0);}
 function effMult(){return baseMult()+G.roundMult;}
@@ -1074,7 +1074,8 @@ function render(){
   let tb='';for(let c=0;c<7;c++){const col=G.tab[c];let inner='';if(col.length===0){inner='<div class="slot" data-pile="tab" data-col="'+c+'" data-idx="-1"></div>';}else{col.forEach((card,i)=>{const fanCls=i===0?'':(card.up?'fan':'fan dn');const selThis=G.sel&&G.sel.p==='tab'&&G.sel.col===c&&i>=G.sel.idx?'sel':'';inner+=cardEl(card,'data-pile="tab" data-col="'+c+'" data-idx="'+i+'"',fanCls+' '+selThis);});}
     tb+='<div class="col">'+inner+'</div>';}
   let autoBtn=canAutoCollect()?'<div class="auto-clear" data-act="autoclear">'+svg('star')+' AUTO-RÄUMEN</div>':'';
-  $('board').innerHTML='<div id="top"><div class="founds">'+f+'</div><div class="spacer"></div>'+st+w+'</div><div id="tab">'+tb+'</div>'+autoBtn;
+  const _sw=Store.data.opts.swapStock?w+st:st+w;
+  $('board').innerHTML='<div id="top"><div class="founds">'+f+'</div><div class="spacer"></div>'+_sw+'</div><div id="tab">'+tb+'</div>'+autoBtn;
   if(G.helpMode)addHelpLabels();
   saveGame(); evalAch();   // persist + check achievements after every state change
   renderMultTags();
@@ -1307,6 +1308,7 @@ function renderOpts(){
   const fb=$('opt-fit'); fb.textContent=o.fit?'AN':'AUS'; fb.classList.toggle('on',!!o.fit);
   const fc=$('opt-fourcolor'); if(fc){fc.textContent=o.fourColor?'AN':'AUS';fc.classList.toggle('on',!!o.fourColor);}
   const ef=$('opt-effects'); if(ef){ef.textContent=o.effects!==false?'AN':'AUS';ef.classList.toggle('on',o.effects!==false);}
+  const ss=$('opt-swapstock'); if(ss){ss.textContent=o.swapStock?'AN':'AUS';ss.classList.toggle('on',!!o.swapStock);}
   const mo=$('opt-audio'); if(mo){mo.textContent=o.audioOn!==false?'AN':'AUS';mo.classList.toggle('on',o.audioOn!==false);}
   const sp=Math.round(o.sfxVol*100), mp=Math.round(o.musicVol*100);
   $('opt-sfx').value=sp; $('sfx-pct').textContent=sp+'%';
