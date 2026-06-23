@@ -188,6 +188,10 @@ function paintIcons(root){(root||document).querySelectorAll('[data-ic]').forEach
    Format: { v:'Titel', date:'optional', notes:['Punkt 1','Punkt 2', ...] }
    ============================================================ */
 const PATCH_NOTES=[
+ {v:'v0.8.5', date:'23.06.2026', notes:[
+   '5 interaktive WebGL-Hintergründe in den Options: AURORA, GRID, CELLS, LIQUID, SUITS — mausreaktiv, mit Klick-Wellen.',
+   'Neuer ENERGIESPAREN-Modus: friert alle Animationen ein und schont Akku & CPU — ideal für Unterwegs.',
+ ]},
  {v:'v0.8.4', date:'23.06.2026', notes:[
    'Ziele in frühen Antes leichter: Ante 1 startet bei 50 statt 60 Chips, Wachstum flacher.',
    'Joker jetzt mit ★ statt J — kein Verwechsler mehr mit dem Buben. (★ ist Übergangslösung — jeder Joker bekommt bald ein eigenes Cover.)',
