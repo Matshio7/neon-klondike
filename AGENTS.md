@@ -71,10 +71,10 @@ git add -A && git commit -m "BL-7: kurze Beschreibung"
 
 ## 3. Aktueller Stand  ← hier zuerst schauen
 
-- **Version:** v0.8.3
-- **Build:** `node --check game.js` läuft sauber; Arbeitsverzeichnis clean.
+- **Version:** v0.8.5
+- **Build:** node nicht installiert — Syntax via Browser-Reload verifiziert (keine JS-Fehler in Konsole); Arbeitsverzeichnis clean.
 - **Echte Spieler aktiv** (Cloud-Rangliste wird genutzt).
-- **Zuletzt:** v0.8.3 — Info-Post-it im Menü (Ranglisten-Resets + Roadmap bis v1.0). v0.8.2 — Wochen-Rangliste + Rangliste-Umbruch + Backfill-Cleanup. v0.8.1 — Ranglisten-UI überarbeitet (Karten, Medaillen, Deck-Detail) + Cache-Refresh. v0.8.0 — Großes Update: Einmal-Karten (BL-3), Perk-Raritäten + Synergien (BL-4), Boss-Vorschau + Endboss (BL-5), Joker-Rebalance (BL-14), Vouchers (BL-15).
+- **Zuletzt:** v0.8.5 — 5 WebGL-Shader-Hintergründe + Energiesparmodus. v0.8.4 — Spieler-Feedback: Joker★, Stapel-Spiegeln, Feedback-Link, Difficulty-Tuning. v0.8.3 — Info-Post-it im Menü. v0.8.2 — Wochen-Rangliste. v0.8.0 — Großes Update (BL-3/4/5/14/15). BL-22 (Leaderboard-Submit für abgebrochene Läufe) implementiert — `submitScore()` Helper + keepalive-Beacon, homebtn, visibilitychange, pagehide, Ante-Aufstieg.
 - **applyPlausibility()** in `cloudPayload()` ist bereits aktiv (bestAnte≤100, bestChips≤999999999) — BL-7 client-seitig partiell erledigt, serverseitig noch offen.
 - Volle Historie: `CHANGELOG.md`.
 
@@ -92,6 +92,7 @@ Marker: `- [ ]` offen · `- [~] (name)` in Arbeit · `- [x]` erledigt (mit Datum
 - [x] **BL-5** · Boss-Vorschau + Endboss + mehr Bosse *(Claude, v0.8.0)*
 - [x] **BL-6** · Mehr „Juice" *(opencode, 17.06.2026)*
 - [ ] **BL-7** · Anti-Cheat / Plausibilität fürs Leaderboard — Prio: mittel
+- [x] **BL-22** · Leaderboard-Submit deckt abgebrochene/backgrounded Läufe ab *(Claude, 23.06.2026)*
 - [ ] **BL-8** · Run-Historie & Statistik-Screen — Prio: niedrig
 - [x] **BL-9** · Barrierefreiheit (Vier-Farben-Deck) *(19.06.2026; Große Karten verworfen)*
 - [ ] **BL-10** · Deal-3-Modus + echter Stock/Waste-Fächer — Prio: niedrig

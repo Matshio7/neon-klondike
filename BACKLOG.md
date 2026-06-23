@@ -70,6 +70,11 @@
 **BL-14 · Joker/Spezialkarten-Rebalance** *(v0.8.0)*
 - **Ziel:** Spezialkarten einlösen statt Rang-Slot belegen; kein Stacking; Boss-Integration.
 
+**BL-22 · Leaderboard-Submit für abgebrochene/backgrounded Läufe** *(erledigt — 23.06.2026)*
+- **Problem:** `kl_submit` wurde nur in `finalizeRun()` aufgerufen (Game-Over + Sieg→Menü). Verlässt ein Spieler per Home-Button, App-Background oder Reload, fehlt der Board-Eintrag trotz aktivem Cloud-Save. Real beobachtet: „SunnyBunny", 10 Runs, Beste-Ante 6, 0 Board-Zeilen.
+- **Umsetzung:** `submitScore(beacon)` Helper nahe `finalizeRun()`: no-op wenn kein aktiver Run / ante<1 / kein cloudName; `RUN.lastSubmittedAnte` verhindert Doppelsendugen; `keepalive:true` bei `beacon=true` für pagehide/visibilitychange. Aufrufpunkte: `finalizeRun()` (ersetzt inline-clRpc), `act==='next'` (Ante-Aufstieg), `homebtn`-Handler, `document.visibilitychange` (hidden), `window.pagehide`. Server-seitige Dedup bleibt unberührt.
+- **Fertig:** Run per Home-Button verlassen → Board-Eintrag; mobile Hintergrundwechsel → Board-Eintrag. Keine Supabase-Änderung nötig.
+
 **BL-15 · Vouchers / permanente Shop-Upgrades** *(v0.8.0)*
 - **Ziel:** Dauerhafte, run-weite Upgrades als strategische Coin-Senke (Balatro-Vouchers).
 - **Umsetzung:** Array `VOUCHERS=[{id,name,desc,price,...}]`, z.B. `rerollcut` (Reroll-Kosten −1 / +1 Slot), `interestcap` (Zins-Limit +3), `perkslot` (Shop zeigt 4 statt 3 Perks), `discount` (alle Perks −1 Coin), `recycle` (+1 Recycle/Runde dauerhaft). Bestand `G.vouchers=[]` (in `snapRun`/`restoreRun` persistieren). In `renderShop()` eine eigene „UPGRADES"-Reihe mit `buyVoucher(id)` (analog `buy`/`buySpecial`), jedes Voucher nur 1× kaufbar. Effekte auslesen an: `openShop`/`reroll` (Slots/Kosten/Perk-Anzahl), Zins-Cap in `roundClear`, `recBase()` (Recycle). Pro Shop 1 Voucher anbieten (RNG aus noch nicht besessenen). Mit BL-4 abstimmen (beide ändern `openShop`/`renderShop`) → im selben Branch nacheinander bauen.
