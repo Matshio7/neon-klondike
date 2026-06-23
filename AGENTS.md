@@ -71,10 +71,11 @@ git add -A && git commit -m "BL-7: kurze Beschreibung"
 
 ## 3. Aktueller Stand  ← hier zuerst schauen
 
-- **Version:** v0.7.9 (Hotfix)
-- **Build:** `node --check game.js` läuft sauber; Arbeitsverzeichnis i. d. R. clean.
+- **Version:** v0.8.3
+- **Build:** `node --check game.js` läuft sauber; Arbeitsverzeichnis clean.
 - **Echte Spieler aktiv** (Cloud-Rangliste wird genutzt).
-- **Zuletzt:** iPhone-Homescreen-App: Service-Worker-Updates verbessert (App-Shell ohne Cache, regelmäßige Update-Checks).
+- **Zuletzt:** v0.8.3 — Info-Post-it im Menü (Ranglisten-Resets + Roadmap bis v1.0). v0.8.2 — Wochen-Rangliste + Rangliste-Umbruch + Backfill-Cleanup. v0.8.1 — Ranglisten-UI überarbeitet (Karten, Medaillen, Deck-Detail) + Cache-Refresh. v0.8.0 — Großes Update: Einmal-Karten (BL-3), Perk-Raritäten + Synergien (BL-4), Boss-Vorschau + Endboss (BL-5), Joker-Rebalance (BL-14), Vouchers (BL-15).
+- **applyPlausibility()** in `cloudPayload()` ist bereits aktiv (bestAnte≤100, bestChips≤999999999) — BL-7 client-seitig partiell erledigt, serverseitig noch offen.
 - Volle Historie: `CHANGELOG.md`.
 
 ---
