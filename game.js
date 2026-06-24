@@ -587,7 +587,7 @@ function doResume(){
   }
 }
 
-function bossFxStop(){if(G&&G.bossFx){G.bossFx.stop();G.bossFx=null;}var bc=$('boss-bg');if(bc){var c2=bc.getContext('2d');c2.clearRect(0,0,bc.width,bc.height);}}
+function bossFxStop(){if(G&&G.bossFx){G.bossFx.stop();G.bossFx=null;}if(G&&G._bossIdleTimer){clearInterval(G._bossIdleTimer);G._bossIdleTimer=null;}var bc=$('boss-bg');if(bc){var c2=bc.getContext('2d');c2.clearRect(0,0,bc.width,bc.height);}}
 function newRound(){
   const deck=[];for(let s=0;s<4;s++)for(let r=1;r<=13;r++)deck.push({r,s,up:false});
   (G.specials||[]).forEach(id=>deck.push({r:0,s:-1,up:false,joker:true,special:id}));   // special cards grow the deck
@@ -616,6 +616,13 @@ function newRound(){
     bc.width=bc.offsetWidth||440; bc.height=bc.offsetHeight||600;
     G.bossFx=BossGrosseSteuer.attach(bc,{anchor:'bottom',opacity:0.16,showText:false,state:'appear'});
     G._bossHitTs=0;
+    G._bossVoicePlayed=false;
+    G._lastBossInputTs=Date.now();
+    if(G._bossIdleTimer)clearInterval(G._bossIdleTimer);
+    G._bossIdleTimer=setInterval(function(){
+      if(G._bossVoicePlayed||!G.boss||G.boss.id!=='bigtax'){clearInterval(G._bossIdleTimer);G._bossIdleTimer=null;return;}
+      if(Date.now()-(G._lastBossInputTs||0)>=7000){G._bossVoicePlayed=true;clearInterval(G._bossIdleTimer);G._bossIdleTimer=null;SFX.voiceHit();}
+    },2000);
     SFX.voiceAppear();
   }
   if(G.tutorial&&G.ante===1)tutForceAce();   // ensure the bank-an-Ace step is doable
@@ -663,7 +670,7 @@ function bankGain(c){
   G.chips+=gain; RUN.banked++; RUN.totalChips+=gain;
   c.gain=gain; c.multAdd=multAdd;   // recorded so taking the card back can reverse it exactly
   SFX.bank();
-  if(G.bossFx){var _n=Date.now();if(_n-(G._bossHitTs||0)>=400){G._bossHitTs=_n;G.bossFx.play('hit');SFX.voiceHit();}}
+  if(G.bossFx){var _n=Date.now();if(_n-(G._bossHitTs||0)>=400){G._bossHitTs=_n;G.bossFx.play('hit');}}
   evalAch();
   return {gain:gain,sources:sources};
 }
@@ -782,6 +789,7 @@ function endTutorial(){G.tutorial=false;G.tutGlow=null;$('tutbox').hidden=true;S
 function tutHide(){$('tutbox').hidden=true;G.tutGlow=null;}
 function onClick(e){
   if(G.phase!=='play')return;
+  if(G._lastBossInputTs!==undefined)G._lastBossInputTs=Date.now();
   const ac=e.target.closest('[data-act]');if(ac&&ac.dataset.act==='autoclear'){autoCollect();return;}
   const el=e.target.closest('[data-pile]');if(!el)return;
   const p=el.dataset.pile,col=el.dataset.col!==undefined?+el.dataset.col:null,idx=el.dataset.idx!==undefined?+el.dataset.idx:null,suit=el.dataset.suit!==undefined?+el.dataset.suit:null;
