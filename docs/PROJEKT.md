@@ -113,11 +113,14 @@ Der aktuelle HTML-Prototyp dient dazu, die **Spielmechaniken und das Game-Feel**
 - `index.html` — HTML-Grundgerüst (Szenen, Menü)
 - `styles.css` — gesamtes Styling (Retro-/CRT-Look)
 - `game.js` — die komplette Spiellogik (Klondike, Scoring, Shop, Cloud-Save …)
+- `data.js` — statische Spieldaten (Perks, Specials, Bosse, Decks, Themes, Icons, PATCH_NOTES, Flavor-Texte)
+- `bg.js` — die 5 interaktiven WebGL-Shader-Hintergründe (`window.BG`)
+- `bosses/` — animierte Boss-Sprites (je eine Datei, exposed als Global)
 - `sw.js` — Service Worker (Auto-Update + Offline)
-- `img/`, `music/` — Hintergrundbild & Soundtracks
+- `img/`, `music/`, `sfx/` — Hintergrundbild, Soundtracks, Soundeffekte
 - `neon-klondike.html` — nur noch eine Weiterleitung auf `index.html`
 - `README.md` — Projekt-Startseite im GitHub-Repo
-- `PROJEKT.md` — dieses Dokument
+- `docs/PROJEKT.md` — dieses Dokument (archiviert)
 
 ## Arbeitsweise
 

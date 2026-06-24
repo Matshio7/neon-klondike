@@ -2,7 +2,8 @@
 
 > Bei jedem Release ergänzen. Die Kurz-Zusammenfassung der letzten Arbeit steht in `AGENTS.md` (Abschnitt 3).
 
-- **v0.8.6** (24.06.2026) — Auto-Bildschirmbreite (nur Breite, Höhe scrollt); MIDAS-Item-Preis von shopPen entkoppelt; Boss GROSSE STEUER als animierter Canvas-Hintergrund-Layer mit 3 Sprachsamples (erscheinen/treffer/niederlage).
+- **Refactor** (24.06.2026) — Repo-Struktur entkoppelt: statische Daten (Perks/Specials/Bosse/Decks/Difficulties/Themes/Icons/Patch-Notes/Flavor) aus `game.js` → neue `data.js`; WebGL-Shader → neue `bg.js`. `game.js` 1789→1413 Zeilen. Veraltete Design-Docs nach `docs/` archiviert. Reine Umstrukturierung, kein Verhaltenseingriff; im Browser verifiziert.
+- **v0.8.6** (24.06.2026) — Auto-Bildschirmbreite (nur Breite, Höhe scrollt); MIDAS-Item-Preis von shopPen entkoppelt; Boss GROSSE STEUER als animierter Canvas-Hintergrund-Layer mit Sprachsamples (Erscheinen/Niederlage) + Idle-Voice (einmal pro Runde, frühestens 30 s nach Start und nach 7 s ohne Eingabe).
 - **BL-22** (23.06.2026) — Leaderboard-Submit robuster: `submitScore(beacon)` Helper mit `keepalive:true`-Support; feuert jetzt auch beim Home-Button, Ante-Aufstieg, App-Background (visibilitychange) und pagehide — nie wieder verlorene Board-Einträge durch abgebrochene Läufe. Leere `.catch` durch `console.warn` ersetzt.
 - **v0.8.5** (23.06.2026) — 5 interaktive WebGL-Hintergründe (AURORA, GRID, CELLS, LIQUID, SUITS) in Options; ENERGIESPAREN-Modus friert alle Animationen ein und stoppt Shader.
 - **v0.8.4** (23.06.2026) — Spieler-Feedback: Joker-Mark J→★, STAPEL SPIEGELN-Option, Feedback-Link (Tally), Difficulty-Tuning (50×1.45 statt 60×1.55).
