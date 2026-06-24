@@ -20,7 +20,8 @@ const Store={
     d.stats=Object.assign({totalRuns:0,bestAnte:0,bestChips:0,bestRunChips:0,boardClears:0,bossesBeaten:[],wins:0},d.stats||{});
     if(!Array.isArray(d.stats.bossesBeaten))d.stats.bossesBeaten=[];
     d.ach=Array.isArray(d.ach)?d.ach:[];
-    d.opts=Object.assign({crt:0.3,scale:1,fit:false,sfxVol:0.75,musicVol:0.25,audioOn:false,fourColor:false,effects:true,testMult:false,foundationOrder:[0,1,2,3],swapStock:false,bgShader:'none',energySave:false},d.opts||{});
+    d.opts=Object.assign({crt:0.3,scale:1,sfxVol:0.75,musicVol:0.25,audioOn:false,fourColor:false,effects:true,testMult:false,foundationOrder:[0,1,2,3],swapStock:false,bgShader:'none',energySave:false},d.opts||{});
+    delete d.opts.fit; // veraltet — applyScale() passt sich jetzt immer automatisch an
     if(typeof d.opts.sound==='boolean'){ d.opts.sfxVol=d.opts.sound?0.75:0; delete d.opts.sound; }      // migrate old on/off
     if(typeof d.opts.music==='boolean'){ d.opts.musicVol=d.opts.music?0.25:0; delete d.opts.music; }
     if(typeof d.opts.crt==='boolean')d.opts.crt=d.opts.crt?0.3:0;  // migrate old boolean to opacity
@@ -1331,7 +1332,7 @@ function renderOpts(){
   const o=Store.data.opts;
   const cr=Math.round((o.crt||0)*100);
   $('opt-crt').value=cr; $('crt-pct').textContent=cr+'%';
-  const fb=$('opt-fit'); fb.textContent=o.fit?'AN':'AUS'; fb.classList.toggle('on',!!o.fit);
+
   const fc=$('opt-fourcolor'); if(fc){fc.textContent=o.fourColor?'AN':'AUS';fc.classList.toggle('on',!!o.fourColor);}
   const ef=$('opt-effects'); if(ef){ef.textContent=o.effects!==false?'AN':'AUS';ef.classList.toggle('on',o.effects!==false);}
   const ss=$('opt-swapstock'); if(ss){ss.textContent=o.swapStock?'AN':'AUS';ss.classList.toggle('on',!!o.swapStock);}
@@ -1342,8 +1343,7 @@ function renderOpts(){
   const sp=Math.round(o.sfxVol*100), mp=Math.round(o.musicVol*100);
   $('opt-sfx').value=sp; $('sfx-pct').textContent=sp+'%';
   $('opt-musicvol').value=mp; $('music-pct').textContent=mp+'%';
-  document.querySelectorAll('#scaleset .sbtn').forEach(b=>b.classList.toggle('on',!o.fit&&parseFloat(b.dataset.scale)===(o.scale||1)));
-  $('scaleset').classList.toggle('disabled',!!o.fit);
+  document.querySelectorAll('#scaleset .sbtn').forEach(b=>b.classList.toggle('on',parseFloat(b.dataset.scale)===(o.scale||1)));
   // theme rendering
   var selTheme=Store.data.meta.selectedTheme||'og';
   $('theme-set').innerHTML=Object.keys(THEMES).map(function(k){
@@ -1453,17 +1453,17 @@ function applyTheme(){
   }
   if(tint){tint.style.background=t.bg?'rgba('+hexRgb(t.bg[0]).r+','+hexRgb(t.bg[0]).g+','+hexRgb(t.bg[0]).b+',.65)':'none';}
 }
-/* UI scaling. transform:scale keeps layout/clientWidth unscaled, so fitCards()
-   is unaffected and the whole UI scales uniformly (text + cards + buttons). */
+/* UI scaling — immer automatisch an die Fenstergröße angepasst.
+   o.scale dient als relativer Multiplikator (0.8 = 20% kleiner als Auto-Fit).
+   transform:scale lässt clientWidth unverändert, sodass fitCards() korrekt bleibt. */
 function applyScale(){
   const o=Store.data.opts, app=$('app');
-  let s=o.scale||1;
-  if(o.fit){
-    const w=app.offsetWidth||440, h=app.offsetHeight||640;
-    s=Math.min((window.innerWidth-8)/w,(window.innerHeight-8)/h);
-    s=Math.max(0.5,Math.min(s,2.5));
-  }
+  const aw=app.offsetWidth||440, ah=app.offsetHeight||640;
+  let base=Math.min((window.innerWidth-16)/aw,(window.innerHeight-16)/ah);
+  base=Math.max(0.4,Math.min(base,2.5));
+  const s=Math.max(0.3,Math.min(base*(o.scale||1),3));
   app.style.transform='scale('+s+')';
+  app.style.marginBottom=Math.round((s-1)*ah)+'px';
 }
 
 /* ---- GAME OVER visualization ---- */
@@ -1642,7 +1642,7 @@ $('scene-cloud').addEventListener('click',function(e){
 // options toggles + reset + UI scale
 $('scene-opts').addEventListener('click',function(e){
   const sc=e.target.closest('[data-scale]');
-  if(sc){Store.data.opts.scale=parseFloat(sc.dataset.scale);Store.data.opts.fit=false;Store.save();applyScale();renderOpts();SFX.click();return;}
+  if(sc){Store.data.opts.scale=parseFloat(sc.dataset.scale);Store.save();applyScale();renderOpts();SFX.click();return;}
   const t=e.target.closest('[data-opt]');
   if(t){const k=t.dataset.opt;Store.data.opts[k]=!Store.data.opts[k];Store.save();applyOpts();applyScale();if(k==='audioOn'){if(Store.data.opts.audioOn){SFX.ensure();SFX.resume();SFX.preload();}Music.setVol();}renderOpts();SFX.click();return;}
   const th=e.target.closest('[data-theme]');
