@@ -1458,12 +1458,12 @@ function applyTheme(){
    transform:scale lässt clientWidth unverändert, sodass fitCards() korrekt bleibt. */
 function applyScale(){
   const o=Store.data.opts, app=$('app');
-  const aw=app.offsetWidth||440, ah=app.offsetHeight||640;
-  let base=Math.min((window.innerWidth-16)/aw,(window.innerHeight-16)/ah);
+  const aw=Math.min(window.innerWidth-16, 440);
+  let base=(window.innerWidth-16)/aw; // nur Breite — Höhe scrollt
   base=Math.max(0.4,Math.min(base,2.5));
   const s=Math.max(0.3,Math.min(base*(o.scale||1),3));
   app.style.transform='scale('+s+')';
-  app.style.marginBottom=Math.round((s-1)*ah)+'px';
+  app.style.marginBottom=Math.round((s-1)*(app.offsetHeight||640))+'px';
 }
 
 /* ---- GAME OVER visualization ---- */
