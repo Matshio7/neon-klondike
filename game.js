@@ -36,7 +36,7 @@ const Store={
       themesUnlocked:['og'], selectedTheme:'og',
       tutDone:false,             // first-run tutorial shown?
       cloudCode:'', cloudName:'', // cloud-save code + username (set when activated)
-      difficultyUnlocked:0, selectedDifficulty:0, // difficulty tiers 0-7, unlocked by winning
+      difficultyUnlocked:0, selectedDifficulty:0, // Stufen 0-7; Sieg auf Stufe d schaltet d+1 frei (Kette, siehe roundClear)
       dailyDone:''                // YYYYMMDD of last completed daily challenge
     },d.meta||{});
   },
@@ -590,7 +590,12 @@ function roundClear(cleared){
   if(bounty)rows.push(['Boss besiegt',bounty]);
   const rh=rows.map(r=>'<div class="rr"><span class="rl">'+r[0]+'</span><span class="rv">+'+r[1]+'</span></div>').join('');
   if(G.ante>=WIN_ANTE && !G.endless){            // ---- RUN WON ----
-    if(!RUN.won){RUN.won=true;Store.data.stats.wins=(Store.data.stats.wins||0)+1;var du=Store.data.meta.difficultyUnlocked||0;if(du<7){Store.data.meta.difficultyUnlocked=du+1;}Store.save();evalAch();}
+    if(!RUN.won){RUN.won=true;Store.data.stats.wins=(Store.data.stats.wins||0)+1;
+      // Ketten-Freischaltung: Sieg AUF der aktuell höchsten Stufe schaltet die nächste frei (Sieg auf Stufe d → Stufe d+1).
+      // Siege auf niedrigeren Stufen schalten nichts frei — man muss jede Stufe selbst schlagen.
+      var du=Store.data.meta.difficultyUnlocked||0, wonDiff=G.diff||0;
+      if(wonDiff>=du && du<7){Store.data.meta.difficultyUnlocked=du+1;}
+      Store.save();evalAch();}
     showVictory('<div class="rwd">'+rh+'<div class="rtot"><span>BELOHNUNG</span><span>+'+reward+' COINS</span></div></div>');
     render();return;
   }
