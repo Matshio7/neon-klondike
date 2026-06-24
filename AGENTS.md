@@ -71,10 +71,10 @@ git add -A && git commit -m "BL-7: kurze Beschreibung"
 
 ## 3. Aktueller Stand  ← hier zuerst schauen
 
-- **Version:** v0.8.5
-- **Build:** node nicht installiert — Syntax via Browser-Reload verifiziert (keine JS-Fehler in Konsole); Arbeitsverzeichnis clean.
+- **Version:** v0.8.6 (in Vorbereitung, noch nicht gepusht)
+- **Build:** node nicht installiert — Syntax via Browser-Reload verifiziert (keine JS-Fehler in Konsole).
 - **Echte Spieler aktiv** (Cloud-Rangliste wird genutzt).
-- **Zuletzt:** v0.8.5 — 5 WebGL-Shader-Hintergründe + Energiesparmodus. v0.8.4 — Spieler-Feedback: Joker★, Stapel-Spiegeln, Feedback-Link, Difficulty-Tuning. v0.8.3 — Info-Post-it im Menü. v0.8.2 — Wochen-Rangliste. v0.8.0 — Großes Update (BL-3/4/5/14/15). BL-22 (Leaderboard-Submit für abgebrochene Läufe) implementiert — `submitScore()` Helper + keepalive-Beacon, homebtn, visibilitychange, pagehide, Ante-Aufstieg.
+- **Zuletzt:** v0.8.6 — Auto-Bildschirmbreite (width-only fit, Höhe scrollt), MIDAS-Item-Preis von shopPen entkoppelt, Boss GROSSE STEUER als animierter Canvas-Hintergrund-Layer mit 3 Sprachsamples (`bosses/grosse_steuer.js`, `sfx/bigtax-*.mp3`). v0.8.5 — 5 WebGL-Shader-Hintergründe + Energiesparmodus. v0.8.4 — Spieler-Feedback: Joker★, Stapel-Spiegeln, Feedback-Link, Difficulty-Tuning.
 - **applyPlausibility()** in `cloudPayload()` ist bereits aktiv (bestAnte≤100, bestChips≤999999999) — BL-7 client-seitig partiell erledigt, serverseitig noch offen.
 - Volle Historie: `CHANGELOG.md`.
 

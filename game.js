@@ -56,7 +56,8 @@ const SFX={
   ensure(){ if(this.ctx)return; try{this.ctx=new (window.AudioContext||window.webkitAudioContext)();}catch(e){} },
   resume(){ if(this.ctx&&this.ctx.state==='suspended')this.ctx.resume(); },
   preload(){
-    ['click','achievement','denied','card-moving-1','card-moving-2','card-moving-3','gameover'].forEach(function(id){
+    ['click','achievement','denied','card-moving-1','card-moving-2','card-moving-3','gameover',
+     'bigtax-appear','bigtax-hit','bigtax-defeat'].forEach(function(id){
       var a=new Audio('sfx/'+id+'.mp3');a.volume=0;a.load();SFX.els[id]=a;
     });
   },
@@ -78,6 +79,9 @@ const SFX={
     o.connect(g).connect(this.ctx.destination);
     o.start(t); o.stop(t+dur);
   },
+  voiceAppear(){this.play('bigtax-appear');},
+  voiceHit(){this.play('bigtax-hit');},
+  voiceDefeat(){this.play('bigtax-defeat');},
   click(){this.play('click',{f:420,d:0.05});},
   bank(){this.play('card-moving-'+Math.ceil(Math.random()*3),{f:660,d:0.07});},
   buy(){this.play('card-moving-'+Math.ceil(Math.random()*3),{f:520,d:0.08});},
@@ -192,6 +196,7 @@ const PATCH_NOTES=[
  {v:'v0.8.6', date:'24.06.2026', notes:[
    'Automatische Bildschirmbreite — UI passt sich jetzt immer an die Fensterbreite an, kein manueller Toggle mehr nötig.',
    'MIDAS-Fix — Item-Preise werden nicht mehr von der Schwierigkeits-Strafe erhöht; MIDAS kostet jetzt immer 4 Coins.',
+   'Boss GROSSE STEUER — erscheint jetzt als animierter Hintergrund hinter dem Tableau, mit Sprache beim Erscheinen, Treffer und Niederlage.',
  ]},
  {v:'v0.8.5', date:'23.06.2026', notes:[
    'WebGL-Hintergründe — 5 interaktive Shader in den Options: AURORA, GRID, CELLS, LIQUID, SUITS — mausreaktiv, mit Klick-Wellen.',
@@ -582,6 +587,7 @@ function doResume(){
   }
 }
 
+function bossFxStop(){if(G&&G.bossFx){G.bossFx.stop();G.bossFx=null;}var bc=$('boss-bg');if(bc){var c2=bc.getContext('2d');c2.clearRect(0,0,bc.width,bc.height);}}
 function newRound(){
   const deck=[];for(let s=0;s<4;s++)for(let r=1;r<=13;r++)deck.push({r,s,up:false});
   (G.specials||[]).forEach(id=>deck.push({r:0,s:-1,up:false,joker:true,special:id}));   // special cards grow the deck
@@ -602,6 +608,14 @@ function newRound(){
     if(G.boss.id==='finale')G.target=Math.round(G.target*1.6/5)*5;
     if(G.boss.id==='drought')G.rec=Math.max(1,G.rec-2);
     if(G.boss.id==='finale')G.rec=1;
+  }
+  /* bigtax: animierter Hintergrund-Layer */
+  bossFxStop();
+  if(G.boss&&G.boss.id==='bigtax'&&window.BossGrosseSteuer){
+    var bc=$('boss-bg');
+    bc.width=bc.offsetWidth||440; bc.height=bc.offsetHeight||600;
+    G.bossFx=BossGrosseSteuer.attach(bc,{opacity:0.16,state:'appear'});
+    SFX.voiceAppear();
   }
   if(G.tutorial&&G.ante===1)tutForceAce();   // ensure the bank-an-Ace step is doable
   // reaching an ante = a record candidate
@@ -648,6 +662,7 @@ function bankGain(c){
   G.chips+=gain; RUN.banked++; RUN.totalChips+=gain;
   c.gain=gain; c.multAdd=multAdd;   // recorded so taking the card back can reverse it exactly
   SFX.bank();
+  if(G.bossFx){G.bossFx.play('hit');SFX.voiceHit();}
   evalAch();
   return {gain:gain,sources:sources};
 }
@@ -832,6 +847,7 @@ function roundClear(cleared){
   if(cleared)Store.data.stats.boardClears++;
   if(G.boss&&(cleared||earned>=G.target)&&Store.data.stats.bossesBeaten.indexOf(G.boss.id)<0)
     Store.data.stats.bossesBeaten.push(G.boss.id);
+  if(G.boss&&(cleared||earned>=G.target)&&G.bossFx){G.bossFx.play('defeat');SFX.voiceDefeat();}
   Store.save();
   // ---- reward (unchanged economy) ----
   const diffData=G.dd||DIFFICULTIES[G.diff]||{};
@@ -1107,6 +1123,7 @@ function render(){
    SCENE MANAGER  -  menu / game / ach / opts / over / bye
    ============================================================ */
 function showScene(name){
+  if(name!=='game')bossFxStop();   // rAF-Schleife stoppen wenn Spielszene verlassen wird
   document.querySelectorAll('.scene').forEach(s=>s.hidden=true);
   const el=$('scene-'+name); if(el)el.hidden=false;
   if(name==='menu'){renderMenu();renderPostit();}
@@ -1712,7 +1729,11 @@ $('scene-over').addEventListener('click',function(e){
   else if(a.dataset.act==='menu')showScene('menu');
 });
 // resize: refit cards (while playing) + recompute UI scale (fit-to-window)
-window.addEventListener('resize',function(){if(!$('scene-game').hidden){fitCards();render();}applyScale();});
+window.addEventListener('resize',function(){
+  if(!$('scene-game').hidden){fitCards();render();}
+  var bc=$('boss-bg');if(bc){bc.width=bc.offsetWidth||440;bc.height=bc.offsetHeight||600;}
+  applyScale();
+});
 // keyboard: Space draws the next card (only in active play, no overlay open)
 window.addEventListener('keydown',function(e){
   if($('scene-game').hidden||G.phase!=='play')return;

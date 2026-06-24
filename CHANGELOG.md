@@ -2,6 +2,7 @@
 
 > Bei jedem Release ergänzen. Die Kurz-Zusammenfassung der letzten Arbeit steht in `AGENTS.md` (Abschnitt 3).
 
+- **v0.8.6** (24.06.2026) — Auto-Bildschirmbreite (nur Breite, Höhe scrollt); MIDAS-Item-Preis von shopPen entkoppelt; Boss GROSSE STEUER als animierter Canvas-Hintergrund-Layer mit 3 Sprachsamples (erscheinen/treffer/niederlage).
 - **BL-22** (23.06.2026) — Leaderboard-Submit robuster: `submitScore(beacon)` Helper mit `keepalive:true`-Support; feuert jetzt auch beim Home-Button, Ante-Aufstieg, App-Background (visibilitychange) und pagehide — nie wieder verlorene Board-Einträge durch abgebrochene Läufe. Leere `.catch` durch `console.warn` ersetzt.
 - **v0.8.5** (23.06.2026) — 5 interaktive WebGL-Hintergründe (AURORA, GRID, CELLS, LIQUID, SUITS) in Options; ENERGIESPAREN-Modus friert alle Animationen ein und stoppt Shader.
 - **v0.8.4** (23.06.2026) — Spieler-Feedback: Joker-Mark J→★, STAPEL SPIEGELN-Option, Feedback-Link (Tally), Difficulty-Tuning (50×1.45 statt 60×1.55).
