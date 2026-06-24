@@ -199,6 +199,10 @@ body.crt-off #stage::before{display:none}
 .mtag-item:active{transform:scale(.94)}
 #bossstrip{font-size:8px;color:var(--pink);border:1px solid #5a2238;background:#240913;border-radius:6px;padding:5px 7px;margin-bottom:7px;line-height:1.7;text-align:center}
 #bossstrip.hidden{display:none}
+#nomovestrip{font-size:8px;color:var(--gold);border:1px solid #6a5212;background:#241c05;border-radius:6px;padding:6px 8px;margin-bottom:7px;line-height:1.6;text-align:center;display:flex;align-items:center;justify-content:center;gap:9px;flex-wrap:wrap}
+#nomovestrip.hidden{display:none}
+#nomovestrip button{font-family:inherit;font-size:8px;letter-spacing:.5px;color:#1a1205;background:var(--gold);border:none;border-radius:5px;padding:5px 10px;cursor:pointer}
+#nomovestrip button:active{transform:translateY(1px)}
 #stage{position:relative;background:var(--felt);border-radius:10px;padding:8px;min-height:62vh;border:1px solid #173a28;overflow:hidden}
 #stage::before{content:"";position:absolute;inset:0;pointer-events:none;background:repeating-linear-gradient(rgba(0,0,0,0) 0 2px,rgba(0,0,0,.18) 2px 3px);border-radius:10px;z-index:50}
 #board{position:relative;z-index:2}
