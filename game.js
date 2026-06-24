@@ -617,11 +617,13 @@ function newRound(){
     G.bossFx=BossGrosseSteuer.attach(bc,{anchor:'bottom',opacity:0.16,showText:false,state:'appear'});
     G._bossHitTs=0;
     G._bossVoicePlayed=false;
+    G._bossRoundStartTs=Date.now();
     G._lastBossInputTs=Date.now();
     if(G._bossIdleTimer)clearInterval(G._bossIdleTimer);
     G._bossIdleTimer=setInterval(function(){
       if(G._bossVoicePlayed||!G.boss||G.boss.id!=='bigtax'){clearInterval(G._bossIdleTimer);G._bossIdleTimer=null;return;}
-      if(Date.now()-(G._lastBossInputTs||0)>=7000){G._bossVoicePlayed=true;clearInterval(G._bossIdleTimer);G._bossIdleTimer=null;SFX.voiceHit();}
+      var now=Date.now();
+      if(now-G._bossRoundStartTs>=30000&&now-(G._lastBossInputTs||0)>=7000){G._bossVoicePlayed=true;clearInterval(G._bossIdleTimer);G._bossIdleTimer=null;SFX.voiceHit();}
     },2000);
     SFX.voiceAppear();
   }
