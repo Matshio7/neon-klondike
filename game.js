@@ -895,7 +895,7 @@ function renderShop(){
   let specRow='';
   if(G.specialOffer&&!(G.dd&&G.dd.noSpec)){const sp=SPECIAL(G.specialOffer),pr=sp.price+spen,aff=G.coins>=pr;specRow='<div class="perk spec"><div><div class="pn">'+sp.mark+' '+sp.name+' <span style="color:#7a5c00">(SPEZIAL)</span></div><div class="pd">'+sp.desc+'</div></div><button class="buy" data-spec-buy="'+sp.id+'" '+(aff?'':'disabled')+'>'+pr+' COINS</button></div>';}
   let itemRow='';
-  if(G.itemOffer){const it=CONS(G.itemOffer),pr=it.price+spen,aff=G.coins>=pr&&(G.items||[]).length<2;itemRow='<div class="perk cons"><div><div class="pn">'+it.mark+' '+it.name+' <span style="color:#3a6b54">(ITEM)</span></div><div class="pd">'+it.desc+'</div></div><button class="buy" data-item-buy="'+it.id+'" '+(aff?'':'disabled')+'>'+pr+' COINS</button></div>';}
+  if(G.itemOffer){const it=CONS(G.itemOffer),pr=it.price,aff=G.coins>=pr&&(G.items||[]).length<2;itemRow='<div class="perk cons"><div><div class="pn">'+it.mark+' '+it.name+' <span style="color:#3a6b54">(ITEM)</span></div><div class="pd">'+it.desc+'</div></div><button class="buy" data-item-buy="'+it.id+'" '+(aff?'':'disabled')+'>'+pr+' COINS</button></div>';}
   let vouchRow='';
   if(G.voucherOffer&&!hasV(G.voucherOffer)){const v=VOUCHER(G.voucherOffer),pr=v.price+spen,aff=G.coins>=pr;vouchRow='<div class="perk vouch"><div><div class="pn">'+v.name+' <span style="color:#7a5c00">(UPGRADE)</span></div><div class="pd">'+v.desc+'</div></div><button class="buy" data-voucher-buy="'+v.id+'" '+(aff?'':'disabled')+'>'+pr+' COINS</button></div>';}
   const _na=G.ante+1;
