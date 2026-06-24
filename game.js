@@ -20,7 +20,8 @@ const Store={
     d.stats=Object.assign({totalRuns:0,bestAnte:0,bestChips:0,bestRunChips:0,boardClears:0,bossesBeaten:[],wins:0},d.stats||{});
     if(!Array.isArray(d.stats.bossesBeaten))d.stats.bossesBeaten=[];
     d.ach=Array.isArray(d.ach)?d.ach:[];
-    d.opts=Object.assign({crt:0.3,scale:1,fit:false,sfxVol:0.75,musicVol:0.25,audioOn:false,fourColor:false,effects:true,testMult:false,foundationOrder:[0,1,2,3],swapStock:false,bgShader:'none',energySave:false},d.opts||{});
+    d.opts=Object.assign({crt:0.3,scale:1,sfxVol:0.75,musicVol:0.25,audioOn:false,fourColor:false,effects:true,testMult:false,foundationOrder:[0,1,2,3],swapStock:false,bgShader:'none',energySave:false},d.opts||{});
+    delete d.opts.fit; // veraltet — applyScale() passt sich jetzt immer automatisch an
     if(typeof d.opts.sound==='boolean'){ d.opts.sfxVol=d.opts.sound?0.75:0; delete d.opts.sound; }      // migrate old on/off
     if(typeof d.opts.music==='boolean'){ d.opts.musicVol=d.opts.music?0.25:0; delete d.opts.music; }
     if(typeof d.opts.crt==='boolean')d.opts.crt=d.opts.crt?0.3:0;  // migrate old boolean to opacity
@@ -55,7 +56,8 @@ const SFX={
   ensure(){ if(this.ctx)return; try{this.ctx=new (window.AudioContext||window.webkitAudioContext)();}catch(e){} },
   resume(){ if(this.ctx&&this.ctx.state==='suspended')this.ctx.resume(); },
   preload(){
-    ['click','achievement','denied','card-moving-1','card-moving-2','card-moving-3','gameover'].forEach(function(id){
+    ['click','achievement','denied','card-moving-1','card-moving-2','card-moving-3','gameover',
+     'bigtax-appear','bigtax-hit','bigtax-defeat'].forEach(function(id){
       var a=new Audio('sfx/'+id+'.mp3');a.volume=0;a.load();SFX.els[id]=a;
     });
   },
@@ -77,6 +79,9 @@ const SFX={
     o.connect(g).connect(this.ctx.destination);
     o.start(t); o.stop(t+dur);
   },
+  voiceAppear(){this.play('bigtax-appear');},
+  voiceHit(){this.play('bigtax-hit');},
+  voiceDefeat(){this.play('bigtax-defeat');},
   click(){this.play('click',{f:420,d:0.05});},
   bank(){this.play('card-moving-'+Math.ceil(Math.random()*3),{f:660,d:0.07});},
   buy(){this.play('card-moving-'+Math.ceil(Math.random()*3),{f:520,d:0.08});},
@@ -121,298 +126,18 @@ const Music={
   kick(){ this.ready=true; this.sync(); }                   // first user gesture unlocks playback
 };
 
-/* ============================================================
-   ACHIEVEMENTS  -  each tests against {G, RUN, S} (stats).
-   ============================================================ */
-const ACHIEVEMENTS=[
- {id:'first_bank',name:'ANGEZÄHLT',   desc:'Banke deine erste Karte.',            test:c=>c.RUN.banked>=1},
- {id:'clear_board',name:'AUFRÄUMER',  desc:'Räume ein Board komplett ab.',        test:c=>c.S.boardClears>=1},
- {id:'all_revealed',name:'VOLL IM BLICK',desc:'Alle Karten auf dem Brett aufgedeckt.', test:c=>c.G.tab&&c.G.tab.every(col=>col.every(card=>card.up))},
- {id:'boss1',     name:'BOSS-JÄGER',  desc:'Besiege deinen ersten Boss.',         test:c=>c.S.bossesBeaten.length>=1},
- {id:'allboss',   name:'THRONRÄUBER', desc:'Besiege 3 verschiedene Bosse.',        test:c=>c.S.bossesBeaten.length>=3},
- {id:'boss5',     name:'BOSS-PLAGE',  desc:'Besiege 5 verschiedene Bosse.',        test:c=>c.S.bossesBeaten.length>=5},
- {id:'ante3',     name:'WARMGELAUFEN',desc:'Erreiche Ante 3.',                    test:c=>c.S.bestAnte>=3},
- {id:'ante5',     name:'AUFSTEIGER',  desc:'Erreiche Ante 5.',                    test:c=>c.S.bestAnte>=5},
- {id:'ante8',     name:'LEGENDE',     desc:'Erreiche Ante 8.',                    test:c=>c.S.bestAnte>=8},
- {id:'chips500',  name:'HOCHSTAPLER', desc:'Erziele 500+ Chips in einer Runde.',  test:c=>c.S.bestChips>=500},
- {id:'chips1000', name:'ÜBERFLIEGER', desc:'Erziele 1000+ Chips in einer Runde.', test:c=>c.S.bestChips>=1000},
- {id:'perks5',    name:'SAMMLER',     desc:'Besitze 5 Perks gleichzeitig.',       test:c=>c.G.perks&&c.G.perks.length>=5},
- {id:'perks8',    name:'HAMSTERER',   desc:'Besitze 8 Perks gleichzeitig.',       test:c=>c.G.perks&&c.G.perks.length>=8},
- {id:'mult5',     name:'MULTIPLIKATOR',desc:'Erreiche ×5.0 Mult oder mehr.',      test:c=>c.RUN.maxMult>=5},
- {id:'coins20',   name:'SPARFUCHS',   desc:'Halte 20+ Coins gleichzeitig.',       test:c=>c.G.coins>=20},
- {id:'runs10',    name:'DURCHHALTER', desc:'Spiele 10 Runs.',                     test:c=>c.S.totalRuns>=10},
- {id:'souvenir',  name:'ZUM MITNEHMEN', desc:'Nimm dir ein Andenken vom schwarzen Brett.', test:c=>!!c.S.souvenir},
- {id:'win',       name:'DURCHGESPIELT',desc:'Gewinne einen Run (Ante 8 schaffen).',     test:c=>(c.S.wins||0)>=1},
- {id:'endless12', name:'GRENZENLOS',   desc:'Erreiche Ante 12 im Endlosmodus.',         test:c=>c.S.bestAnte>=12},
-];
-/* VOLT bounty paid the FIRST time each achievement unlocks (one-off, tracked in
-   Store.data.meta.paidAch) + any deck it unlocks. */
-const ACH_VOLT={first_bank:2,clear_board:5,all_revealed:5,boss1:8,allboss:15,boss5:20,ante3:5,ante5:10,ante8:20,chips500:8,chips1000:15,perks5:8,perks8:12,mult5:8,coins20:5,runs10:10,souvenir:7,win:25,endless12:20};
-const ACH_DECK={allboss:'bossrush'};
 
 /* ============================================================
-   ICONS  -  inline SVG (currentColor). Painted into any element
-   that has a data-ic="name" attribute (see paintIcons). Replaces
-   emoji and font-missing glyphs with crisp, themeable symbols.
+   ICON / DATA HELPERS
+   Statische Daten (IC, ACHIEVEMENTS, PATCH_NOTES, POOL, SPECIALS,
+   CONSUMABLES, VOUCHERS, BOSSES, DECKS, DIFFICULTIES, THEMES,
+   FORTUNES, MEAN …) liegen in data.js (geladen vor game.js).
+   Hier nur die Helfer, die das DOM/svg() berühren.
    ============================================================ */
-const IC={
- menu:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M4 6h16M4 12h16M4 18h16"/></svg>',
- items:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><rect x="3.5" y="5" width="10" height="14" rx="1.6"/><path d="M10.6 5l7.4 1.8a1.6 1.6 0 0 1 1.2 2L17 19"/></svg>',
- giveup:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5.5 21V4"/><path d="M5.5 4.5h12l-2.4 4.2 2.4 4.2H5.5"/></svg>',
- back:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"/></svg>',
- play:'<svg viewBox="0 0 24 24" fill="currentColor"><path d="M7 4.5l13 7.5-13 7.5z"/></svg>',
- trophy:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 4h10v4.5a5 5 0 0 1-10 0V4z"/><path d="M7 6H4.2v1.2A3.2 3.2 0 0 0 7 10.3M17 6h2.8v1.2A3.2 3.2 0 0 1 17 10.3"/><path d="M10 13.6V17M14 13.6V17M8.5 20h7"/></svg>',
- lock:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><rect x="5" y="10.5" width="14" height="9.5" rx="2"/><path d="M8 10.5V7.5a4 4 0 0 1 8 0v3"/></svg>',
- gear:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M12 1.5 12 5M12 19 12 22.5M1.5 12 5 12M19 12 22.5 12M4.5 4.5 6.5 6.5M17.5 17.5 19.5 19.5M4.5 19.5 6.5 17.5M17.5 6.5 19.5 4.5"/></svg>',
- power:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M12 3v8"/><path d="M6.5 6.5a8 8 0 1 0 11 0"/></svg>',
- cloud:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 18h10a4 4 0 0 0 .5-7.97A5.5 5.5 0 0 0 6.7 8.6 3.7 3.7 0 0 0 7 18z"/><path d="M12 16.5V10M9.5 12.5 12 10l2.5 2.5"/></svg>',
- spade:'<svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 3C8.2 7 4 9.2 4 13.2c0 2.3 1.9 3.9 3.9 3.9 1 0 1.9-.4 2.6-1-.2 2-.9 3-2 3.9h7c-1.1-.9-1.8-1.9-2-3.9.7.6 1.6 1 2.6 1 2 0 3.9-1.6 3.9-3.9C20 9.2 15.8 7 12 3z"/></svg>',
- heart:'<svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 20.3l-1.45-1.32C5.4 14.24 2 11.16 2 7.5 2 4.92 4.02 3 6.5 3c1.74 0 3.41.81 4.5 2.09C12.09 3.81 13.76 3 15.5 3 17.98 3 20 4.92 20 7.5c0 3.66-3.4 6.74-8.55 11.49L12 20.3z"/></svg>',
- diamond:'<svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l7.5 10L12 22 4.5 12z"/></svg>',
- club:'<svg viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="6.6" r="3.4"/><circle cx="6.8" cy="13" r="3.4"/><circle cx="17.2" cy="13" r="3.4"/><path d="M10.4 12.5h3.2l1.3 7.5h-5.8z"/></svg>',
- star:'<svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2.5l2.9 6.1 6.6.7-4.9 4.5 1.4 6.6L12 17.6 5.9 20.9l1.4-6.6L2.4 9.3l6.7-.7z"/></svg>',
- coin:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="8.5"/><circle cx="12" cy="12" r="3.4" fill="currentColor" stroke="none"/></svg>',
- news:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3.5 10.5v3a1 1 0 0 0 1 1h2.5l6 3.5V6L7 9.5H4.5a1 1 0 0 0-1 1z"/><path d="M16.5 9.5a3.5 3.5 0 0 1 0 5"/></svg>',
- volt:'<svg viewBox="0 0 24 24" fill="currentColor"><path d="M13 2 4 13.5h6L9 22l9-12h-6z"/></svg>',
- recycle:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><g transform="translate(0.1,-0.95)"><path d="M7 19H4.8a1.83 1.83 0 0 1-1.57-2.66L7.2 9.5"/><path d="M11 19h8.2a1.83 1.83 0 0 0 1.55-2.66l-1.22-2.12"/><path d="m14 16-3 3 3 3"/><path d="M8.3 13.6 7.2 9.5 3.1 10.6"/><path d="m9.34 5.81 1.1-1.9a1.83 1.83 0 0 1 3.1.01l3.94 6.84"/><path d="m13.38 9.63 4.1 1.1 1.1-4.1"/></g></svg>',
- close:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg>',
- help:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M9.3 9.3a2.7 2.7 0 0 1 5.2 1c0 1.8-2.5 2.1-2.5 3.9"/><path d="M12 17.5h.01"/></svg>',
- undo:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 14 4 9l5-5"/><path d="M4 9h11a5 5 0 0 1 0 10h-4"/></svg>',
-};
 function svg(name){return '<span class="svgi">'+(IC[name]||'')+'</span>';}
 function paintIcons(root){(root||document).querySelectorAll('[data-ic]').forEach(function(el){if(el.dataset.painted)return;el.innerHTML=IC[el.dataset.ic]||'';el.dataset.painted='1';});}
-
-/* ============================================================
-   PATCH NOTES  -  shown in the NEUES menu screen.
-   >>> Mats: trage hier deine eigenen Punkte ein. Neueste Version oben.
-   Format: { v:'Titel', date:'optional', notes:['Punkt 1','Punkt 2', ...] }
-   ============================================================ */
-const PATCH_NOTES=[
- {v:'v0.8.5', date:'23.06.2026', notes:[
-   '5 interaktive WebGL-Hintergründe in den Options: AURORA, GRID, CELLS, LIQUID, SUITS — mausreaktiv, mit Klick-Wellen.',
-   'Neuer ENERGIESPAREN-Modus: friert alle Animationen ein und schont Akku & CPU — ideal für Unterwegs.',
-   'Rangliste: Schwierigkeits-Filter — nach NORMAL, SCHWER, EXPERTE usw. filtern, oder alles gemeinsam ansehen.',
- ]},
- {v:'v0.8.4', date:'23.06.2026', notes:[
-   'Ziele in frühen Antes leichter: Ante 1 startet bei 50 statt 60 Chips, Wachstum flacher.',
-   'Joker jetzt mit ★ statt J — kein Verwechsler mehr mit dem Buben. (★ ist Übergangslösung — jeder Joker bekommt bald ein eigenes Cover.)',
-   'Options: STAPEL SPIEGELN — Ablagestapel links für Rechtshänder.',
-   'Options: Feedback-Link direkt im Spiel.',
- ]},
- {v:'v0.8.3', date:'21.06.2026', notes:[
-   'Neues Info-Post-it im Hauptmenü: erklärt die Ranglisten-Resets (Woche/Monat/Ewig) und den einmaligen Reset zum Launch v1.0 — plus eine kleine Roadmap, was bis dahin noch kommt.',
- ]},
- {v:'v0.8.2', date:'21.06.2026', notes:[
-   'Neue Wochen-Rangliste: eigener Tab „WOCHE", der jeden Montag neu startet — zusätzlich zu Ewig, Monat und Heute.',
-   'Rangliste: Datum & Schwierigkeit stehen jetzt sauber unter dem Namen — auch lange Namen werden nicht mehr abgeschnitten.',
-   'Aufräumen: alte Ranglisten-Einträge ohne echten Lauf-Bezug entfernt. Es zählen ab jetzt nur noch echte, abgeschlossene Läufe (mit korrektem Datum, Schwierigkeit und Deck).',
- ]},
- {v:'v0.8.1', date:'21.06.2026', notes:[
-   'Ranglisten-Optik überarbeitet: übersichtliche Karten (Name · Datum · Schwierigkeit), Medaillen-Farben für Top 3, sauberes Deck-Detail per Klick.',
- ]},
- {v:'v0.8.0', date:'19.06.2026', notes:[
-   'GROSSES UPDATE — mehr Roguelike-Tiefe!',
-   'Joker & Spezialkarten überarbeitet: fairer & klarer, ohne Schneeball, reagieren auf Bosse.',
-   'Boss-Vorschau: du siehst die Regel jetzt vorab — plus ein fordernder ENDBOSS bei Ante 8 und neue Boss-Typen.',
-   'Perk-Raritäten (Selten/Legendär) + neue Synergie-Perks: Herz-Motor, Krönung, Überladung.',
-   'Verbrauchsgegenstände: taktische Einmal-Karten (Funke, Midas, Störer, Neumischen) im Shop.',
-   'Upgrades (Vouchers): dauerhafte Shop-Verbesserungen — Rabatt, Tresor, Auslage, Recycler, Würfelglück.',
-   'Spiel-Audio (Musik & Effekte) ist jetzt standardmäßig AUS, damit deine eigene Musik (Apple Music, Spotify) nicht unterbrochen wird — in den Optionen mit SPIEL-AUDIO einschaltbar.',
-   'Coin-Belohnung skaliert jetzt mit der Ante (kein Geld-Überfluss mehr in späten Runden).',
-   'Ranglisten überarbeitet: Ewig · diesen Monat · Heute, mit Datum & Schwierigkeit — tippe eine Zeile für das Deck. (Daily-Bug behoben.)',
- ]},
- {v:'v0.7.9', date:'18.06.2026', notes:[
-   'iPhone Homescreen-App aktualisiert sich jetzt zuverlässiger (Service-Worker-Update-Logik + App-Shell ohne Cache).',
- ]},
- {v:'v0.7.8', date:'18.06.2026', notes:[
-   'Cloud-Speichern repariert: leere RPC-Antworten werden jetzt korrekt als Erfolg gewertet.',
- ]},
- {v:'v0.7.7', date:'18.06.2026', notes:[
-   'Fehlerbehebungen rund um Sieg-Belohnung, faire Tages-Challenge und sauberere Chip-Zählung.',
-   'Cloud: „Jetzt sichern"-Button + zuverlässigeres Hochladen; Tages-Challenge nur noch einmal pro Tag wertbar.',
- ]},
- {v:'v0.7.6', date:'17.06.2026', notes:[
-   'UMKEHR-Deck: Tableau baut jetzt korrekt A→K auf (Bank weiterhin K→A).',
-   'Soundeffekte: Neue Sounds für Banking, Card-Moves, Klicks, Erfolge, Game-Over und ungültige Aktionen – in OPTIONS regelbar.',
-   'Zinsen bei SCHWER+ jetzt korrekt deaktiviert (samt Anzeige).',
-   'Post-it zeigt jetzt die letzten 2 Versionen auf einen Blick.',
- ]},
- {v:'v0.7.5', date:'17.06.2026', notes:[
-   'TEST-MULT aus Options entfernt (nur noch intern für Tests verfügbar).',
-   'FAQ: Erklärung zum Namen „Klondaire" hinzugefügt.',
-   'Neue Sounds: Eigene Soundeffekte für Klicks, Banking, Card-Moves, Erfolge und Game-Over – in den Optionen regulierbar.',
- ]},
- {v:'v0.7.4', date:'17.06.2026', notes:[
-   'Option: Reihenfolge der Bank-Farben frei anpassen.',
- ]},
- {v:'v0.7.3', date:'17.06.2026', notes:[
-   'Tages-Challenge: Jeden Tag derselbe Seed für alle Spieler.',
-   'Rangliste: Umschalter zwischen GESAMT und HEUTE.',
-   'Mehr Juice: EFFEKTE-Option, Screen-Shake, Vibration und größere Score-Pops bei hohem Mult.',
- ]},
- {v:'v0.7.2', date:'17.06.2026', notes:[
-   'Technische Verbesserungen unter der Haube.',
-   'Neue Bedienungshilfe: Vier-Farben-Deck für bessere Lesbarkeit (Karo blau, Kreuz grün).',
- ]},
- {v:'v0.7.1', date:'16.06.2026', notes:[
-   'Feat: FAQ-Button rechts unten im Hauptmenü mit ausklappbaren Fragen & Antworten.',
-   'Feat: Farb-Themes (Neon, Pink, Amber, Midnight, Blood) in den Optionen – färbt auch den Hintergrund ein. (Danke für den Wunsch, liebe*r Spieler*in! 💜)',
-   'Fix: Musik-Slider feinere Steuerung (step 1 statt 5) und direkte Lautstärke-Setzung.',
- ]},
- {v:'v0.7', date:'15.06.2026', notes:[
-   'UI: Konsistente max-width für alle Unter-Seiten — kein wildes Auseinanderziehen.',
-    'Etwas wurde im Hauptmenü hinzugefügt … vielleicht findest du ja raus, was es ist.',
-    'Neuer Erfolg: VOLL IM BLICK — alle Karten auf dem Brett aufdecken.',
-    'AUTO-RÄUMEN-Button: wenn das ganze Brett sortiert ist, werden alle Karten animiert eingebankt.',
-    'Musik: Deutlich komprimiert (128kbps) und wird nach erstem Laden im Cache gehalten.',
-    'CRT-Scanlines: Stufenlos regelbar statt nur an/aus.',
-  ]},
- {v:'v0.6.1', date:'15.06.2026', notes:[
-   'CRT-Filter: kräftigere Scanlines + Flimmern & Glitch-Effekte.',
-   'Rangliste: Bestenliste mit allen gespeicherten Runs — wer kommt am weitesten?',
-   'UI: Post-it hängt tiefer, verdeckt nicht mehr den Titel.',
-   'UI: Update-Fenster geht jetzt bis zum unteren Rand — mehr Platz für die News.',
- ]},
- {v:'v0.6', date:'15.06.2026', notes:[
-    'Cloud-Speicherstand: Benutzernamen wählen, 8-stelligen Code bekommen — dein Fortschritt wird nach jeder Runde automatisch in der Cloud gesichert.',
-    'Mit dem Code holst du deinen kompletten Stand (Statistiken, Erfolge, VOLT & laufender Run) auf jedes Gerät.',
-    'Die Homescreen-App aktualisiert sich jetzt automatisch — beim Start kommt die neueste Version, offline läuft sie aus dem Cache.',
-    'Lebendiger Hintergrund: sanfte Drift, Pulsation & Farb-Atmosphäre über deinem Bild — dezent, nicht aufdringlich.',
-    'Unter der Haube aufgeräumt: schlankerer Code für schnelleres Laden und stabilere Updates.',
-  ]},
- {v:'v0.5', date:'14.06.2026', notes:[
-    'Sieg ab Ante 8 — danach Endlosmodus für den Highscore.',
-    'Joker & Spezialkarten im Shop: dein Deck wächst.',
-    'Undo-Button (kostet Coins, wird teurer) & Karten aus der Bank zurücknehmen.',
-    'Speicherstand: FORTSETZEN lädt deinen Run nach dem Schließen.',
-    'Gescriptetes Tutorial in der ersten Runde (in den Optionen zurücksetzbar).',
-    'Neues Umkehr-Deck (Bank baut K→A), mehr Perks & mehr Bosse.',
-    'Roter „Letzter Versuch" beim letzten Recycle, iPhone-Tipp im Menü.',
-  ]},
- {v:'v0.4', date:'14.06.2026', notes:[
-    'Das Spiel heißt jetzt KLONDAIRE.',
-    'Hintergrundmusik: ein eigener Menü-Track und vier Tracks im Spiel.',
-    'Lautstärke für Sound und Musik getrennt regelbar.',
-    'UI-Größe einstellbar (0,5×–1,5×) oder automatisch ans Fenster anpassen.',
-    'Doppeltipp auf eine Karte legt sie direkt auf die Bank.',
-    'Leertaste zieht die nächste Karte vom Stapel.',
-    'Neue Spielhilfe (?) erklärt Chips, Mult, Ante & Co.',
-    'Übersichtliche Belohnungs-Aufschlüsselung nach jeder Runde.',
-    'Schärfere Kartensymbole, neuer Hintergrund — und ein Notizzettel am Menü mit kleiner Überraschung.',
-  ]},
- {v:'v0.3', date:'13.06.2026', notes:[
-    'Hauptmenü: FORTSETZEN pausiert und lädt den laufenden Run.',
-    'Steuerung ist nach oben gewandert (Menü · Items · Aufgeben).',
-    'Neuer AUFGEBEN-Knopf führt direkt zum Game-Over.',
-    'ITEMS-Ansicht zeigt deine Perks, dein Deck und den Boss.',
-    'Symbole statt Emojis — sauberere Optik.',
-  ]},
- // { v:'v0.5', date:'', notes:[ 'Dein nächster Punkt …' ] },
-];
-
-/* ============================================================
-   GAME CORE  (Klondike + Balatro-style scoring/shop/bosses)
-   ============================================================ */
-const SUITS=['♠','♥','♦','♣'];
-const SUITNAME=['spade','heart','diamond','club'];
 function suitSvg(s){return svg(SUITNAME[s]);}   // suit as inline SVG (inherits card color)
-const RED=s=>s===1||s===2;
-const RANKS=['','A','2','3','4','5','6','7','8','9','10','J','Q','K'];
-const POOL=[
- {id:'plus5',name:'+5 CHIPS',desc:'BANK-KARTEN +5 CHIPS',price:4,m:false,r:'c'},
- {id:'red',name:'ROTGLUT',desc:'ROTE KARTEN +4 CHIPS',price:3,m:false,r:'c'},
- {id:'ten',name:'ZEHNER-MOTOR',desc:'ZEHNER +12 CHIPS',price:4,m:false,r:'c'},
- {id:'fever',name:'FIEBER',desc:'+0,5 BASIS-MULT (DAUERHAFT)',price:6,m:true,r:'s'},
- {id:'streak',name:'COMBO',desc:'+0,1 MULT JE BANK (PRO RUNDE)',price:5,m:true,r:'s'},
- {id:'ace',name:'ASS-MULT',desc:'GEBANKTE ASSE +0,5 MULT (PRO RUNDE)',price:5,m:true,r:'s'},
- {id:'rec',name:'EXTRA-DURCHGANG',desc:'+1 RECYCLE / RUNDE',price:4,m:false,r:'c'},
- {id:'black',name:'SCHWARZGLUT',desc:'SCHWARZE KARTEN +4 CHIPS',price:3,m:false,r:'c'},
- {id:'face',name:'HOFSTAAT',desc:'BILDKARTEN (J/Q/K) +8 CHIPS',price:4,m:false,r:'c'},
- {id:'low',name:'KELLERKIND',desc:'KARTEN A–5 +5 CHIPS',price:4,m:false,r:'c'},
- {id:'acechip',name:'ASS IM ÄRMEL',desc:'ASSE +20 CHIPS',price:5,m:false,r:'s'},
- {id:'richbank',name:'SPARSCHWEIN',desc:'+2 COINS GRUNDBELOHNUNG / RUNDE',price:5,m:false,r:'c'},
- {id:'deepinterest',name:'ZINSESZINS',desc:'ZINS-LIMIT 5 → 8 COINS',price:6,m:false,r:'s'},
- {id:'bigfever',name:'HOCHSPANNUNG',desc:'+1,0 BASIS-MULT (DAUERHAFT)',price:9,m:true,r:'l'},
- {id:'comboplus',name:'KETTENREAKTION',desc:'+0,2 MULT JE BANK (PRO RUNDE)',price:7,m:true,r:'s'},
- {id:'heartengine',name:'HERZ-MOTOR',desc:'+0,3 MULT JE GEBANKTE HERZ-KARTE (PRO RUNDE)',price:7,m:true,r:'s'},
- {id:'facemult',name:'KRÖNUNG',desc:'BILDKARTEN +0,3 MULT (PRO RUNDE)',price:7,m:true,r:'s'},
- {id:'overload',name:'ÜBERLADUNG',desc:'+2,0 BASIS-MULT (DAUERHAFT)',price:14,m:true,r:'l'},
-];
-/* SPECIAL CARDS — bought (with luck) in the shop, added to the run's deck (deck grows).
-   All are WILD: anlegbar auf jede Karte, bankbar in jede Lücke. They give bonus chips/mult. */
-const SPECIALS=[
- {id:'joker',   name:'JOKER',      mark:'★', chips:15, mult:0,   price:6, desc:'Wild im Tableau (Lücken-Helfer); eingelöst +15 Chips (×Mult).'},
- {id:'gold',    name:'GOLDKARTE',  mark:'$', chips:45, mult:0,   price:10,desc:'Wild im Tableau; eingelöst +45 Chips (×Mult).'},
- {id:'multcard',name:'MULT-KARTE', mark:'×', chips:10, mult:0.5, price:9, desc:'Wild im Tableau; eingelöst +0,5 MULT (für die Runde).'},
-];
-const SPECIAL=id=>SPECIALS.find(x=>x.id===id);
-/* CONSUMABLES — Einmal-Karten, im Shop kaufbar, sofort im Run einsetzbar (max. 2 im Inventar) */
-const CONSUMABLES=[
- {id:'spark',    name:'FUNKE',     mark:'⚡',price:4, desc:'+1,0 MULT für diese Runde.'},
- {id:'midas',    name:'MIDAS',     mark:'$', price:4, desc:'Sofort +6 Coins.'},
- {id:'bossbreak',name:'STÖRER',    mark:'⊘',price:6, desc:'Hebt die Boss-Regel für diese Runde auf.'},
- {id:'reshuffle',name:'NEUMISCHEN',mark:'↻',price:4, desc:'Mischt Stock + Waste neu (kostet kein Recycle).'},
-];
-const CONS=id=>CONSUMABLES.find(x=>x.id===id);
-/* VOUCHERS — dauerhafte, run-weite Upgrades (jedes nur 1×) */
-const VOUCHERS=[
- {id:'discount',   name:'GROSSHANDEL', price:6, desc:'Alle Perks −1 Coin.'},
- {id:'interestcap',name:'TRESOR',      price:7, desc:'Zins-Limit +3 Coins.'},
- {id:'perkslot',   name:'AUSLAGE',     price:8, desc:'Shop zeigt 4 Perks statt 3.'},
- {id:'recycler',   name:'RECYCLER',    price:7, desc:'+1 Recycle pro Runde (dauerhaft).'},
- {id:'luckyroll',  name:'WÜRFELGLÜCK', price:6, desc:'Reroll ist gratis.'},
-];
-const VOUCHER=id=>VOUCHERS.find(x=>x.id===id);
-const BOSSES=[
- {id:'tax',     name:'STEUER',        desc:'ZIEL +40%'},
- {id:'crown',   name:'PAPIERKRONE',   desc:'J Q K = 0 CHIPS'},
- {id:'drought', name:'DÜRRE',         desc:'NUR 1 RECYCLE'},
- {id:'half',    name:'HALBE KRAFT',   desc:'ALLE CHIPS HALBIERT'},
- {id:'blackout',name:'SCHWARZSPERRE', desc:'SCHWARZE KARTEN = 0 CHIPS'},
- {id:'flaute',  name:'FLAUTE',        desc:'KEIN MULT-AUFBAU'},
- {id:'bigtax',  name:'GROSSE STEUER', desc:'ZIEL +80%'},
- {id:'specbane',name:'STÖRSENDER',    desc:'SPEZIALKARTEN = 0 CHIPS'},
- {id:'lowtax',  name:'KOPFGELD',      desc:'KARTEN A–5 = 0 CHIPS'},
-];
-const ENDBOSS={id:'finale',name:'FINALE',desc:'ZIEL +60% · NUR 1 RECYCLE · BILDKARTEN HALB'};   // erzwungener Endboss @ Ante 8
-const BOSS=id=>(id===ENDBOSS.id?ENDBOSS:BOSSES.find(b=>b.id===id));
-/* ============================================================
-   DECKS  -  starting-condition modifiers chosen before a run.
-   Standard is free; the rest are unlocked with VOLT in the DECKS screen.
-   Every deck is a TRADEOFF (a buff paired with a cost).
-   ============================================================ */
-const DECKS=[
- {id:'standard',  name:'STANDARD',    desc:'AUSGEWOGEN — KEINE MODIFIKATOREN',     coins:4, recDelta:0, baseMult:1, startPerks:[], targetMul:1,    rewardDelta:0,  cost:0},
- {id:'highroller',name:'HIGH ROLLER', desc:'+6 START-COINS · ALLE ZIELE +15%',    coins:10,recDelta:0, baseMult:1, startPerks:[], targetMul:1.15, rewardDelta:0,  cost:20},
- {id:'marathon',  name:'MARATHON',    desc:'+1 RECYCLE/RUNDE · BASIS-REWARD -1',   coins:4, recDelta:1, baseMult:1, startPerks:[], targetMul:1,    rewardDelta:-1, cost:20},
- {id:'combo',     name:'KOMBO',       desc:'START MIT COMBO-PERK · NUR 2 COINS',   coins:2, recDelta:0, baseMult:1,   startPerks:['streak'], targetMul:1,    rewardDelta:0,  cost:25},
- {id:'founders',  name:'FUNDAMENT',   desc:'FOUNDATION +5 CHIPS · KEIN REROLL',    coins:4, recDelta:0, baseMult:1,   startPerks:['plus5'],  targetMul:1,    rewardDelta:0,  noReroll:true, cost:28},
- {id:'redheat',   name:'ROTGLUT',     desc:'ROT +6 · SCHWARZ -2 CHIPS',            coins:4, recDelta:0, baseMult:1,   startPerks:[],         targetMul:1,    rewardDelta:0,  cardMods:{red:6,black:-2}, cost:30},
- {id:'reverse',   name:'UMKEHR',      desc:'BANK BAUT K→A STATT A→K',              coins:5, recDelta:0, baseMult:1,   startPerks:[],         targetMul:1,    rewardDelta:0,  reverse:true, cost:28},
- {id:'glasscannon',name:'GLASKANONE', desc:'BASIS-MULT ×1.5 · NUR 1 RECYCLE',      coins:4, recDelta:-1,baseMult:1.5, startPerks:[],         targetMul:1,    rewardDelta:0,  cost:35},
- {id:'minimalist',name:'MINIMALIST',  desc:'5 COINS, GRATIS REROLL · ZIELE +25%',  coins:5, recDelta:-1,baseMult:1,   startPerks:[],         targetMul:1.25, rewardDelta:0,  freeReroll:true, cost:40},
- {id:'bossrush',  name:'BOSS-STURM',  desc:'BOSS JEDE ANTE · ×2 BEUTE & VOLT',     coins:4, recDelta:0, baseMult:1,   startPerks:[],         targetMul:1,    rewardDelta:0,  bossEveryAnte:true, bossBountyMul:2, bossVoltMul:2, cost:0, unlockVia:'allboss'},
-];
-const DECK=id=>DECKS.find(d=>d.id===id)||DECKS[0];
-const WIN_ANTE=8;   // clear this ante = run won; then optional endless mode for highscore
-const DIFFICULTIES=[
- {id:0, name:'NORMAL',   lab:'0 · NORMAL',         targetMul:1,   coinPen:0,  recPen:0, noInt:false, noUndo:false, bossEA:false, shopPen:0, noSpec:false,  basePen:0},
- {id:1, name:'ERHÖHT',   lab:'1 · ERHÖHT',         targetMul:1.15,coinPen:0,  recPen:0, noInt:false, noUndo:false, bossEA:false, shopPen:0, noSpec:false,  basePen:0},
- {id:2, name:'SCHWER',   lab:'2 · SCHWER',         targetMul:1.3, coinPen:1,  recPen:0, noInt:true,  noUndo:false, bossEA:false, shopPen:0, noSpec:false,  basePen:0},
- {id:3, name:'FORTGESCHRITTEN',lab:'3 · FORTGESCHRITTEN',targetMul:1.45,coinPen:2,recPen:0, noInt:true,  noUndo:false, bossEA:false, shopPen:1, noSpec:false,  basePen:0},
- {id:4, name:'EXPERTE',  lab:'4 · EXPERTE',        targetMul:1.6, coinPen:2,  recPen:1, noInt:true,  noUndo:false, bossEA:false, shopPen:1, noSpec:false,  basePen:0},
- {id:5, name:'MEISTER',  lab:'5 · MEISTER',        targetMul:1.8, coinPen:3,  recPen:1, noInt:true,  noUndo:false, bossEA:false, shopPen:2, noSpec:true,   basePen:0},
- {id:6, name:'ALBTRAUM', lab:'6 · ALBTRAUM',       targetMul:2,   coinPen:3,  recPen:2, noInt:true,  noUndo:true,  bossEA:true,  shopPen:3, noSpec:true,   basePen:0.3},
- {id:7, name:'HARDCORE', lab:'7 · HARDCORE',       targetMul:2.5, coinPen:5,  recPen:9, noInt:true,  noUndo:true,  bossEA:true,  shopPen:0, noSpec:true,   basePen:0.5},
-];
-function hexRgb(h){return {r:parseInt(h.slice(1,3),16),g:parseInt(h.slice(3,5),16),b:parseInt(h.slice(5,7),16)};}
-const THEMES={
-  og:{mint:'#36e0a0',gold:'#ffd23f',pink:'#ff5b7f',felt:'#0e2c1d',panel:'#0a0f0b',bg:null},
-  pink:{mint:'#f472b6',gold:'#fbbf24',pink:'#ec4899',felt:'#2d0a1e',panel:'#12050c',bg:['#f472b6','#b91c6c','#f9a8d4']},
-  amber:{mint:'#ffb347',gold:'#ff8c00',pink:'#ff6347',felt:'#1a1200',panel:'#0a0800',bg:['#ffb347','#cc7000','#ffd699']},
-  midnight:{mint:'#60a5fa',gold:'#facc15',pink:'#f472b6',felt:'#0a1628',panel:'#060a12',bg:['#60a5fa','#1e3a5f','#93c5fd']},
-  blood:{mint:'#ff6b6b',gold:'#ffd93d',pink:'#ff4757',felt:'#1a0a0a',panel:'#0a0505',bg:['#ff6b6b','#8b0000','#ffa3a3']},
-};
+
 let G={};
 let RUN={};   // per-run tracking (resets each new run)
 let runActive=false; // true while a run is in progress (resumable from the menu)
@@ -577,6 +302,7 @@ function doResume(){
   }
 }
 
+function bossFxStop(){if(G&&G.bossFx){G.bossFx.stop();G.bossFx=null;}if(G&&G._bossIdleTimer){clearInterval(G._bossIdleTimer);G._bossIdleTimer=null;}var bc=$('boss-bg');if(bc){var c2=bc.getContext('2d');c2.clearRect(0,0,bc.width,bc.height);}}
 function newRound(){
   const deck=[];for(let s=0;s<4;s++)for(let r=1;r<=13;r++)deck.push({r,s,up:false});
   (G.specials||[]).forEach(id=>deck.push({r:0,s:-1,up:false,joker:true,special:id}));   // special cards grow the deck
@@ -592,11 +318,27 @@ function newRound(){
   if(bossAnte){
     G.boss=(G.ante===WIN_ANTE)?ENDBOSS:((G.nextBoss&&BOSS(G.nextBoss))||BOSSES[Math.floor(RNG()*BOSSES.length)]);
     G.nextBoss=null;
-    if(G.boss.id==='tax')G.target=Math.round(G.target*1.4/5)*5;
-    if(G.boss.id==='bigtax')G.target=Math.round(G.target*1.8/5)*5;
-    if(G.boss.id==='finale')G.target=Math.round(G.target*1.6/5)*5;
-    if(G.boss.id==='drought')G.rec=Math.max(1,G.rec-2);
-    if(G.boss.id==='finale')G.rec=1;
+    if(G.boss.id==='bigtax')G.target=Math.round(G.target*1.8/5)*5;   // GROSSE STEUER (Finale): Ziel +80%
+    if(G.boss.id==='drought')G.rec=Math.max(1,G.rec-2);              // DÜRRE: nur 1 Recycle
+    G.bossDeadSuit=(G.boss.id==='censor')?Math.floor(RNG()*4):null;  // ZENSUR: eine zufällige Farbe = 0 Chips
+  }else{G.bossDeadSuit=null;}
+  /* bigtax: animierter Hintergrund-Layer */
+  bossFxStop();
+  if(G.boss&&G.boss.id==='bigtax'&&window.BossGrosseSteuer){
+    var bc=$('boss-bg');
+    bc.width=bc.offsetWidth||440; bc.height=bc.offsetHeight||600;
+    G.bossFx=BossGrosseSteuer.attach(bc,{anchor:'bottom',opacity:0.16,showText:false,state:'appear'});
+    G._bossHitTs=0;
+    G._bossVoicePlayed=false;
+    G._bossRoundStartTs=Date.now();
+    G._lastBossInputTs=Date.now();
+    if(G._bossIdleTimer)clearInterval(G._bossIdleTimer);
+    G._bossIdleTimer=setInterval(function(){
+      if(G._bossVoicePlayed||!G.boss||G.boss.id!=='bigtax'){clearInterval(G._bossIdleTimer);G._bossIdleTimer=null;return;}
+      var now=Date.now();
+      if(now-G._bossRoundStartTs>=30000&&now-(G._lastBossInputTs||0)>=7000){G._bossVoicePlayed=true;clearInterval(G._bossIdleTimer);G._bossIdleTimer=null;SFX.voiceHit();}
+    },2000);
+    SFX.voiceAppear();
   }
   if(G.tutorial&&G.ante===1)tutForceAce();   // ensure the bank-an-Ace step is doable
   // reaching an ante = a record candidate
@@ -612,8 +354,9 @@ function validSeq(cards){const rev=G.deck&&G.deck.reverse;for(let i=1;i<cards.le
 function moving(){if(!G.sel)return[];if(G.sel.p==='waste')return[G.waste[G.waste.length-1]];if(G.sel.p==='found')return[G.found[G.sel.suit][G.found[G.sel.suit].length-1]];return G.tab[G.sel.col].slice(G.sel.idx);}
 function canFound(c,suit){const s=c.joker?suit:c.s;if(s==null)return false;const f=G.found[s];const need=(G.deck&&G.deck.reverse)?13-f.length:f.length+1;return c.joker||c.r===need;}   // count-based; wild fills any slot
 function canTab(cards,col){const r0=cards[0],t=G.tab[col];const rev=G.deck&&G.deck.reverse;if(t.length===0)return r0.joker||(rev?r0.r===1:r0.r===13);const top=t[t.length-1];if(!top.up)return false;if(r0.joker||top.joker)return true;return rev?(top.r===r0.r-1&&color(top)!==color(r0)):(top.r===r0.r+1&&color(top)!==color(r0));}
-function chipsFor(c){if(c.special){const sp=SPECIAL(c.special);let sv=sp?sp.chips:10;if(G.boss&&G.boss.id==='half')sv=Math.ceil(sv/2);if(G.boss&&G.boss.id==='specbane')sv=0;return sv;}   // Specials reagieren auf HALBE KRAFT & STÖRSENDER
-  if(G.boss){if(G.boss.id==='crown'&&c.r>=11)return 0;if(G.boss.id==='blackout'&&!RED(c.s))return 0;if(G.boss.id==='lowtax'&&c.r<=5)return 0;}
+function bossDesc(){if(!G.boss)return '';if(G.boss.id==='censor'&&G.bossDeadSuit!=null)return 'FARBE '+SUITS[G.bossDeadSuit]+' = 0 CHIPS';return G.boss.desc;}   // ZENSUR zeigt die konkrete zensierte Farbe
+function chipsFor(c){if(c.special){const sp=SPECIAL(c.special);return sp?sp.chips:10;}   // Specials sind wild (ohne Farbe) — von keinem der 5 Bosse betroffen
+  if(G.boss){if(G.boss.id==='lowtax'&&c.r<=5)return 0;if(G.boss.id==='censor'&&c.s===G.bossDeadSuit)return 0;}   // KOPFGELD: A–5 = 0 · ZENSUR: zensierte Farbe = 0
   let v=10;
   if(G.perks.includes('plus5'))v+=5;
   if(G.perks.includes('red')&&RED(c.s))v+=4;
@@ -623,8 +366,6 @@ function chipsFor(c){if(c.special){const sp=SPECIAL(c.special);let sv=sp?sp.chip
   if(G.perks.includes('low')&&c.r<=5)v+=5;
   if(G.perks.includes('acechip')&&c.r===1)v+=20;
   if(G.deck&&G.deck.cardMods)v+=RED(c.s)?G.deck.cardMods.red:G.deck.cardMods.black;
-  if(G.boss&&G.boss.id==='half')v=Math.ceil(v/2);
-  if(G.boss&&G.boss.id==='finale'&&c.r>=11)v=Math.ceil(v/2);
   return Math.max(0,v);}
 function bankGain(c){
   let multAdd=0;
@@ -643,6 +384,7 @@ function bankGain(c){
   G.chips+=gain; RUN.banked++; RUN.totalChips+=gain;
   c.gain=gain; c.multAdd=multAdd;   // recorded so taking the card back can reverse it exactly
   SFX.bank();
+  if(G.bossFx){var _n=Date.now();if(_n-(G._bossHitTs||0)>=400){G._bossHitTs=_n;G.bossFx.play('hit');}}
   evalAch();
   return {gain:gain,sources:sources};
 }
@@ -761,6 +503,7 @@ function endTutorial(){G.tutorial=false;G.tutGlow=null;$('tutbox').hidden=true;S
 function tutHide(){$('tutbox').hidden=true;G.tutGlow=null;}
 function onClick(e){
   if(G.phase!=='play')return;
+  if(G._lastBossInputTs!==undefined)G._lastBossInputTs=Date.now();
   const ac=e.target.closest('[data-act]');if(ac&&ac.dataset.act==='autoclear'){autoCollect();return;}
   const el=e.target.closest('[data-pile]');if(!el)return;
   const p=el.dataset.pile,col=el.dataset.col!==undefined?+el.dataset.col:null,idx=el.dataset.idx!==undefined?+el.dataset.idx:null,suit=el.dataset.suit!==undefined?+el.dataset.suit:null;
@@ -827,6 +570,7 @@ function roundClear(cleared){
   if(cleared)Store.data.stats.boardClears++;
   if(G.boss&&(cleared||earned>=G.target)&&Store.data.stats.bossesBeaten.indexOf(G.boss.id)<0)
     Store.data.stats.bossesBeaten.push(G.boss.id);
+  if(G.boss&&(cleared||earned>=G.target)&&G.bossFx){G.bossFx.play('defeat');SFX.voiceDefeat();}
   Store.save();
   // ---- reward (unchanged economy) ----
   const diffData=G.dd||DIFFICULTIES[G.diff]||{};
@@ -891,7 +635,7 @@ function renderShop(){
   let specRow='';
   if(G.specialOffer&&!(G.dd&&G.dd.noSpec)){const sp=SPECIAL(G.specialOffer),pr=sp.price+spen,aff=G.coins>=pr;specRow='<div class="perk spec"><div><div class="pn">'+sp.mark+' '+sp.name+' <span style="color:#7a5c00">(SPEZIAL)</span></div><div class="pd">'+sp.desc+'</div></div><button class="buy" data-spec-buy="'+sp.id+'" '+(aff?'':'disabled')+'>'+pr+' COINS</button></div>';}
   let itemRow='';
-  if(G.itemOffer){const it=CONS(G.itemOffer),pr=it.price+spen,aff=G.coins>=pr&&(G.items||[]).length<2;itemRow='<div class="perk cons"><div><div class="pn">'+it.mark+' '+it.name+' <span style="color:#3a6b54">(ITEM)</span></div><div class="pd">'+it.desc+'</div></div><button class="buy" data-item-buy="'+it.id+'" '+(aff?'':'disabled')+'>'+pr+' COINS</button></div>';}
+  if(G.itemOffer){const it=CONS(G.itemOffer),pr=it.price,aff=G.coins>=pr&&(G.items||[]).length<2;itemRow='<div class="perk cons"><div><div class="pn">'+it.mark+' '+it.name+' <span style="color:#3a6b54">(ITEM)</span></div><div class="pd">'+it.desc+'</div></div><button class="buy" data-item-buy="'+it.id+'" '+(aff?'':'disabled')+'>'+pr+' COINS</button></div>';}
   let vouchRow='';
   if(G.voucherOffer&&!hasV(G.voucherOffer)){const v=VOUCHER(G.voucherOffer),pr=v.price+spen,aff=G.coins>=pr;vouchRow='<div class="perk vouch"><div><div class="pn">'+v.name+' <span style="color:#7a5c00">(UPGRADE)</span></div><div class="pd">'+v.desc+'</div></div><button class="buy" data-voucher-buy="'+v.id+'" '+(aff?'':'disabled')+'>'+pr+' COINS</button></div>';}
   const _na=G.ante+1;
@@ -932,7 +676,7 @@ function showItems(){
   const perks=(G.perks||[]).map(id=>{const p=POOL.find(x=>x.id===id);return p?'<div class="perk'+(p.m?' mlt':'')+'"><div><div class="pn">'+p.name+'</div><div class="pd">'+p.desc+'</div></div></div>':'';}).join('')
     ||'<div class="sub">NOCH KEINE ITEMS — KAUFE PERKS IM SHOP</div>';
   const deck=G.deck?'<div class="ideck"><b>DECK · '+G.deck.name+'</b><br>'+G.deck.desc+'</div>':'';
-  const boss=G.boss?'<div class="iboss">BOSS · '+G.boss.name+' — '+G.boss.desc+'</div>':'';
+  const boss=G.boss?'<div class="iboss">BOSS · '+G.boss.name+' — '+bossDesc()+'</div>':'';
   const specs=(G.specials||[]).length?'<div class="ispec"><b>SPEZIALKARTEN ('+G.specials.length+')</b><br>'+G.specials.map(id=>{const sp=SPECIAL(id);return sp?sp.mark+' '+sp.name:'?';}).join(' · ')+'</div>':'';
   const items=(G.items||[]).length?G.items.map(id=>{const it=CONS(id);return it?'<div class="perk cons"><div><div class="pn">'+it.mark+' '+it.name+'</div><div class="pd">'+it.desc+'</div></div><button class="buy" data-use-item="'+id+'">EINSETZEN</button></div>':'';}).join(''):'';
   const vouchers=(G.vouchers||[]).length?'<div class="ispec"><b>UPGRADES</b><br>'+G.vouchers.map(id=>{const v=VOUCHER(id);return v?v.name:'?';}).join(' · ')+'</div>':'';
@@ -1081,7 +825,7 @@ function render(){
   if(G.chips>G._last){ch.classList.remove('pulse');void ch.offsetWidth;ch.classList.add('pulse');}
   G._last=G.chips;
   const bs=$('bossstrip');
-  if(G.boss){bs.classList.remove('hidden');bs.innerHTML='BOSS · '+G.boss.name+' — '+G.boss.desc;}else bs.classList.add('hidden');
+  if(G.boss){bs.classList.remove('hidden');bs.innerHTML='BOSS · '+G.boss.name+' — '+bossDesc();}else bs.classList.add('hidden');
   $('hud').classList.toggle('tutglow',G.tutGlow==='hud');
   const _bg=G.tutGlow==='bank'?' tut-glow':'';
   const fOrder=Store.data.opts.foundationOrder||[0,1,2,3];
@@ -1102,6 +846,7 @@ function render(){
    SCENE MANAGER  -  menu / game / ach / opts / over / bye
    ============================================================ */
 function showScene(name){
+  if(name!=='game')bossFxStop();   // rAF-Schleife stoppen wenn Spielszene verlassen wird
   document.querySelectorAll('.scene').forEach(s=>s.hidden=true);
   const el=$('scene-'+name); if(el)el.hidden=false;
   if(name==='menu'){renderMenu();renderPostit();}
@@ -1217,32 +962,14 @@ function renderPostit(){
   const p=PATCH_NOTES[0], p2=PATCH_NOTES[1];
   if(!p){$('postit').style.display='none';return;}
   $('postit-ver').textContent='NEU · '+p.v;
-  $('postit-list').innerHTML=p.notes.slice(0,2).map(n=>'<li>'+n+'</li>').join('');
-  if(p2){$('postit-list').innerHTML+='<li class="pt-old"><b>'+p2.v+'</b>: '+p2.notes.slice(0,1).join(', ')+'</li>';}
+  // Post-it zeigt nur Kurzbezeichnungen — Details im Update-Menü
+  function shortNote(n){var s=(n.split(' — ')[0]||n).replace(/\.$/, '');return s.length>45?s.slice(0,44).trimEnd()+'…':s;}
+  $('postit-list').innerHTML=p.notes.map(n=>'<li>'+shortNote(n)+'</li>').join('');
+  if(p2){$('postit-list').innerHTML+='<li class="pt-old"><b>'+p2.v+'</b>: '+shortNote(p2.notes[0]||'')+'</li>';}
   $('postit-more').style.display='block';
-  const tear=document.querySelector('#postit-more .pt-tear'); if(tear)tear.style.display=(p.notes.length>2)?'block':'none';
+  const tear=document.querySelector('#postit-more .pt-tear'); if(tear)tear.style.display='none';
   document.querySelectorAll('#postit-fringe span.torn').forEach(s=>s.classList.remove('torn'));
 }
-/* Easter egg: tear off a fringe tab -> a little souvenir note + a secret achievement. */
-const FORTUNES=[
-  'Glückskeks sagt: Asse zuerst.',
-  'Spar deine Coins — Zinsen sind dein Freund.',
-  'Geheimtipp: Könige räumen Platz.',
-  'Doppeltipp = direkt auf die Bank.',
-  'Hier könnte deine Werbung stehen.',
-  'Solitär seit 1989. Retro 4 ever.',
-  'Den hat schon jemand abgerissen… ach, du warst es.',
-  '+0 Coins. Aber ein gutes Gefühl.',
-  'Viel Glück beim nächsten Run!',
-  'Du Sammler. Immer am Mitnehmen.',
-];
-/* tearing the FINAL tab earns a slightly mean line for hogging them all */
-const MEAN=[
-  'Die letzte?! Jetzt geht jeder andere leer aus. Stark.',
-  'Gierig. Jetzt hat NIEMAND sonst mehr eine Lasche.',
-  'Alle abgerissen. Teilen war wohl keine Option, was?',
-  'Du Monster. Jetzt hängt da nur noch ein nackter Zettel.',
-];
 function tearTab(tab){
   if(!tab||tab.classList.contains('torn'))return;
   tab.classList.add('torn');
@@ -1331,7 +1058,7 @@ function renderOpts(){
   const o=Store.data.opts;
   const cr=Math.round((o.crt||0)*100);
   $('opt-crt').value=cr; $('crt-pct').textContent=cr+'%';
-  const fb=$('opt-fit'); fb.textContent=o.fit?'AN':'AUS'; fb.classList.toggle('on',!!o.fit);
+
   const fc=$('opt-fourcolor'); if(fc){fc.textContent=o.fourColor?'AN':'AUS';fc.classList.toggle('on',!!o.fourColor);}
   const ef=$('opt-effects'); if(ef){ef.textContent=o.effects!==false?'AN':'AUS';ef.classList.toggle('on',o.effects!==false);}
   const ss=$('opt-swapstock'); if(ss){ss.textContent=o.swapStock?'AN':'AUS';ss.classList.toggle('on',!!o.swapStock);}
@@ -1342,8 +1069,7 @@ function renderOpts(){
   const sp=Math.round(o.sfxVol*100), mp=Math.round(o.musicVol*100);
   $('opt-sfx').value=sp; $('sfx-pct').textContent=sp+'%';
   $('opt-musicvol').value=mp; $('music-pct').textContent=mp+'%';
-  document.querySelectorAll('#scaleset .sbtn').forEach(b=>b.classList.toggle('on',!o.fit&&parseFloat(b.dataset.scale)===(o.scale||1)));
-  $('scaleset').classList.toggle('disabled',!!o.fit);
+  document.querySelectorAll('#scaleset .sbtn').forEach(b=>b.classList.toggle('on',parseFloat(b.dataset.scale)===(o.scale||1)));
   // theme rendering
   var selTheme=Store.data.meta.selectedTheme||'og';
   $('theme-set').innerHTML=Object.keys(THEMES).map(function(k){
@@ -1362,76 +1088,7 @@ function renderOpts(){
   }
 }
 
-/* ============================================================
-   WEBGL BACKGROUND SHADERS  —  5 interactive shader wallpapers
-   ============================================================ */
-const BG=(function(){
-const VERT=`attribute vec2 a_pos;void main(){gl_Position=vec4(a_pos,0.,1.);}`;
-const PRE=`precision highp float;
-uniform vec2 u_res;uniform float u_time;uniform vec2 u_mouse,u_mvel;uniform float u_mspeed;
-uniform vec3 u_ripples[8];
-const vec3 MINT=vec3(.212,.878,.627),GOLD=vec3(1.,.824,.247),PINK=vec3(1.,.357,.498),DEEP=vec3(.027,.071,.051);
-float hash21(vec2 p){p=fract(p*vec2(123.34,456.21));p+=dot(p,p+34.56);return fract(p.x*p.y);}
-vec2 hash22(vec2 p){float n=sin(dot(p,vec2(41.,289.)));return fract(vec2(262144.,32768.)*n);}
-float vnoise(vec2 p){vec2 i=floor(p),f=fract(p),u=f*f*(3.-2.*f);float a=hash21(i),b=hash21(i+vec2(1,0)),c=hash21(i+vec2(0,1)),d=hash21(i+vec2(1,1));return mix(mix(a,b,u.x),mix(c,d,u.x),u.y);}
-float fbm(vec2 p){float v=0.,a=.5;mat2 m=mat2(1.6,1.2,-1.2,1.6);for(int i=0;i<5;i++){v+=a*vnoise(p);p=m*p;a*=.5;}return v;}
-float rippleField(vec2 uv){float asp=u_res.x/u_res.y,s=0.;for(int i=0;i<8;i++){vec3 r=u_ripples[i];if(r.z>900.)continue;vec2 d=uv-r.xy;d.x*=asp;float dist=length(d),rad=r.z*.42,ring=exp(-pow((dist-rad)*8.,2.));s+=ring*exp(-r.z*1.5);}return s;}
-float rippleWarp(vec2 uv){float asp=u_res.x/u_res.y,s=0.;for(int i=0;i<8;i++){vec3 r=u_ripples[i];if(r.z>900.)continue;vec2 d=uv-r.xy;d.x*=asp;float dist=length(d),rad=r.z*.42,w=sin((dist-rad)*40.)*exp(-pow((dist-rad)*6.,2.));s+=w*exp(-r.z*1.7);}return s;}
-vec3 tonemap(vec3 c){c=max(c,0.);return c/(c+.62);}`;
-const SH={
-aurora:PRE+`\nvoid main(){vec2 uv=gl_FragCoord.xy/u_res,p=(gl_FragCoord.xy-.5*u_res)/u_res.y;float t=u_time*.12;vec2 m=u_mouse-.5;m.x*=u_res.x/u_res.y;vec2 toM=m-p;float pr=exp(-dot(toM,toM)*2.2);p+=normalize(toM+1e-4)*pr*.10;vec2 q=vec2(fbm(p*1.6+t),fbm(p*1.6-t+5.2)),r=vec2(fbm(p*1.8+1.5*q+vec2(1.7,9.2)+t*1.3),fbm(p*1.8+1.5*q+vec2(8.3,2.8)-t*1.1));float f=fbm(p*1.7+2.4*r+t),band=f+.18*sin(u_time*.5+length(p)*3.);vec3 col=mix(DEEP,MINT,smoothstep(.20,.72,band));col=mix(col,GOLD,smoothstep(.55,.92,band+.10*r.x));col=mix(col,PINK,smoothstep(.80,1.05,band+.25*q.y));col+=MINT*pr*(.35+.5*u_mspeed)+GOLD*rippleField(uv)*1.4;col*=.82+.55*f;col+=DEEP*.4;gl_FragColor=vec4(tonemap(col*1.25),1.);}`,
-grid:PRE+`\nfloat gL(vec2 g){vec2 w=fwidth(g),l=abs(fract(g)-.5)/max(w,1e-4);return 1.-min(min(l.x,l.y),1.);}void main(){vec2 uv=gl_FragCoord.xy/u_res,p=(gl_FragCoord.xy-.5*u_res)/u_res.y,m=u_mouse-.5;m.x*=u_res.x/u_res.y;vec2 d=p-m;float dist=length(d),lens=exp(-dist*dist*3.);p-=normalize(d+1e-4)*lens*.14;p+=normalize(d+1e-4)*rippleWarp(uv)*.05;float t=u_time*.18;vec2 g1=vec2(p.x*9.,p.y*9.+t*4.),g2=vec2(p.x*4.5+sin(t)*.3,p.y*4.5+t*2.);float ln=gL(g1)*.7+gL(g2)*.9;vec3 col=DEEP*.7,lc=mix(mix(MINT,PINK,smoothstep(.3,.9,.5+.5*sin(p.y*1.6-u_time*.4+p.x*.5))),GOLD,lens*.8);col+=lc*ln*(1.1+lens*1.6)+MINT*lens*.5+GOLD*(rippleField(uv)*1.6+pow(gL(g1)*gL(g1.yx),2.)*.6);col*=1.+.4*u_mspeed*lens;gl_FragColor=vec4(tonemap(col*1.3),1.);}`,
-cells:PRE+`\nvoid main(){vec2 uv=gl_FragCoord.xy/u_res;float asp=u_res.x/u_res.y;vec2 p=uv,mp=u_mouse;p.x*=asp;mp.x*=asp;vec2 sp=p*6.,g=floor(sp),f=fract(sp);float d1=8.,d2=8.;vec2 cId=g;for(int y=-1;y<=1;y++)for(int x=-1;x<=1;x++){vec2 o=vec2(float(x),float(y)),pos=o+.5+.42*sin(u_time*.6+6.2831*hash22(g+o));float d=length(pos-f);if(d<d1){d2=d1;d1=d;cId=g+o;}else if(d<d2)d2=d;}float border=1.-smoothstep(0.,.06,d2-d1),r=hash21(cId),near=exp(-dot(p-mp,p-mp)*7.),rf=rippleField(uv);vec3 base=r<.5?mix(DEEP,MINT*.5,r*2.):mix(MINT*.5,PINK*.5,(r-.5)*2.);vec3 col=base*.5+mix(MINT,PINK,hash21(cId+3.1))*border*1.3+GOLD*near*(.6+.8*border)+GOLD*border*(near*1.4+rf*2.2)+MINT*(rf*.6+smoothstep(.10,0.,d1)*.5);col*=.9+.3*u_mspeed*near;gl_FragColor=vec4(tonemap(col*1.25),1.);}`,
-liquid:PRE+`\nvoid main(){vec2 uv=gl_FragCoord.xy/u_res;float asp=u_res.x/u_res.y;vec2 p=uv,mp=u_mouse;p.x*=asp;mp.x*=asp;float field=0.;vec3 acc=vec3(0.);for(int i=0;i<6;i++){float fi=float(i);vec2 c=vec2(.5*asp+.34*asp*sin(u_time*.30+fi*1.7),.5+.34*cos(u_time*.37+fi*2.3));float d2=dot(p-c,p-c),rad=.10+.03*sin(u_time*.5+fi),w=rad*rad/(d2+.0008);field+=w;acc+=((i==0||i==3)?MINT:(i==1||i==4)?GOLD:PINK)*w;}float dm2=dot(p-mp,p-mp),wm=.030/(dm2+.0007);field+=wm;acc+=MINT*wm*1.4;for(int i=0;i<8;i++){vec3 rp=u_ripples[i];if(rp.z>900.)continue;vec2 c=rp.xy;c.x*=asp;float d2r=dot(p-c,p-c),w=(.05*exp(-rp.z*1.8))/(d2r+.001);field+=w;acc+=GOLD*w*1.3;}vec3 bcol=acc/max(field,.0001);float surf=smoothstep(.85,1.35,field),inner=smoothstep(1.2,3.,field);vec3 col=mix(DEEP*.6,bcol*.55,surf);col+=bcol*(pow(surf*(1.-inner),1.5)*1.8+inner*.5+smoothstep(.4,.95,field)*.18);col*=1.+.4*u_mspeed*smoothstep(.6,1.,wm);gl_FragColor=vec4(tonemap(col*1.2),1.);}`,
-suits:PRE+`\nfloat sdT(vec2 p,vec2 a,vec2 b,vec2 c){vec2 e0=b-a,e1=c-b,e2=a-c,v0=p-a,v1=p-b,v2=p-c;vec2 pq0=v0-e0*clamp(dot(v0,e0)/dot(e0,e0),0.,1.),pq1=v1-e1*clamp(dot(v1,e1)/dot(e1,e1),0.,1.),pq2=v2-e2*clamp(dot(v2,e2)/dot(e2,e2),0.,1.);float s=sign(e0.x*e2.y-e0.y*e2.x);vec2 d=min(min(vec2(dot(pq0,pq0),s*(v0.x*e0.y-v0.y*e0.x)),vec2(dot(pq1,pq1),s*(v1.x*e1.y-v1.y*e1.x))),vec2(dot(pq2,pq2),s*(v2.x*e2.y-v2.y*e2.x)));return -sqrt(d.x)*sign(d.y);}float sdH(vec2 q){return min(min(length(q-vec2(-.33,.33))-.42,length(q-vec2(.33,.33))-.42),sdT(q,vec2(-.74,.20),vec2(.74,.20),vec2(0.,-.88)));}float sdS(vec2 q,float s){if(s<.5)return sdH(q);if(s<1.5)return sdH(vec2(q.x,-q.y));if(s<2.5)return abs(q.x)/.60+abs(q.y)/.92-.92;return min(min(min(length(q-vec2(0.,.40))-.36,length(q-vec2(-.38,-.08))-.36),length(q-vec2(.38,-.08))-.36),sdT(q,vec2(0.,-.05),vec2(-.32,-.92),vec2(.32,-.92)));}void main(){vec2 uv=gl_FragCoord.xy/u_res;float asp=u_res.x/u_res.y;vec2 p=uv,mp=u_mouse;p.x*=asp;mp.x*=asp;vec2 off=p-mp;float halo=exp(-dot(off,off)*6.);p+=normalize(off+1e-4)*halo*.10;vec3 col=DEEP*.55;for(int L=0;L<2;L++){float lf=float(L),sc2=6.-lf*2.,spd=.6-lf*.25,dep=1.-lf*.45;vec2 gp=vec2(p.x*sc2+lf*3.7,p.y*sc2-u_time*spd+lf*11.),id=floor(gp),f=fract(gp)-.5;float rnd=hash21(id+lf*57.),rnd2=hash21(id+lf*91.+7.),suit=floor(rnd*4.),sc=.36+.05*sin(u_time*.8+rnd*30.),d=sdS(f/sc,suit)*sc,fill=smoothstep(.02,-.02,d),glow=exp(-max(d,0.)*7.),life=.45+.55*sin(u_time*.5+rnd*40.+id.y*.6);float isRed=(suit<.5||(suit>1.5&&suit<2.5))?1.:0.;vec3 scol=mix(MINT,PINK,isRed);if(rnd2>.86)scol=GOLD;col+=scol*(fill*.9+glow*.5)*dep*(.30+.70*life)+GOLD*fill*halo*dep*.9;}col+=GOLD*rippleField(uv)*1.7+MINT*halo*.15;gl_FragColor=vec4(tonemap(col*1.25),1.);}`,
-};
-const NAMES={none:'ORIGINAL',aurora:'AURORA',grid:'GRID',cells:'CELLS',liquid:'LIQUID',suits:'SUITS'};
-let _gl=null,_progs={},_quad=null,_raf=null,_cur='none',_t0=0,_tl=0,_inited=false;
-let _rpls=[],_rpBuf=new Float32Array(24);
-let _mx=.5,_my=.5,_tx=.5,_ty=.5,_px=.5,_py=.5,_vx=0,_vy=0,_sp=0;
-function _mk(gl,type,src){var s=gl.createShader(type);gl.shaderSource(s,src);gl.compileShader(s);if(!gl.getShaderParameter(s,gl.COMPILE_STATUS)){console.error('BG shader:',gl.getShaderInfoLog(s));return null;}return s;}
-function _mkProg(gl,fsrc,deriv){var src=deriv?('#extension GL_OES_standard_derivatives : enable\n'+fsrc):fsrc,vs=_mk(gl,gl.VERTEX_SHADER,VERT),fs=_mk(gl,gl.FRAGMENT_SHADER,src);if(!vs||!fs)return null;var p=gl.createProgram();gl.attachShader(p,vs);gl.attachShader(p,fs);gl.linkProgram(p);if(!gl.getProgramParameter(p,gl.LINK_STATUS)){console.error('BG link:',gl.getProgramInfoLog(p));return null;}return p;}
-function _init(){
-  if(_inited)return;_inited=true;
-  var cv=document.getElementById('bggl');if(!cv)return;
-  _gl=cv.getContext('webgl',{antialias:false,powerPreference:'low-power'});if(!_gl)return;
-  _gl.getExtension('OES_standard_derivatives');
-  Object.keys(SH).forEach(function(id){var p=_mkProg(_gl,SH[id],id==='grid');if(!p)return;_progs[id]={p:p,l:{a:_gl.getAttribLocation(p,'a_pos'),r:_gl.getUniformLocation(p,'u_res'),t:_gl.getUniformLocation(p,'u_time'),m:_gl.getUniformLocation(p,'u_mouse'),mv:_gl.getUniformLocation(p,'u_mvel'),ms:_gl.getUniformLocation(p,'u_mspeed'),rp:_gl.getUniformLocation(p,'u_ripples[0]')}};});
-  _quad=_gl.createBuffer();_gl.bindBuffer(_gl.ARRAY_BUFFER,_quad);_gl.bufferData(_gl.ARRAY_BUFFER,new Float32Array([-1,-1,1,-1,-1,1,-1,1,1,-1,1,1]),_gl.STATIC_DRAW);
-  function resize(){var dpr=Math.min(window.devicePixelRatio||1,2);cv.width=Math.floor(window.innerWidth*dpr);cv.height=Math.floor(window.innerHeight*dpr);}
-  window.addEventListener('resize',resize);resize();
-  window.addEventListener('mousemove',function(e){_tx=e.clientX/window.innerWidth;_ty=1-e.clientY/window.innerHeight;});
-  window.addEventListener('touchmove',function(e){if(e.touches[0]){_tx=e.touches[0].clientX/window.innerWidth;_ty=1-e.touches[0].clientY/window.innerHeight;}},{passive:true});
-  function addRipple(x,y){_rpls.push({x:x/window.innerWidth,y:1-y/window.innerHeight,t:performance.now()/1000});if(_rpls.length>8)_rpls.shift();}
-  window.addEventListener('mousedown',function(e){if(_cur==='none'||e.target.closest('#app'))return;addRipple(e.clientX,e.clientY);});
-  window.addEventListener('touchstart',function(e){if(_cur==='none'||e.target.closest('#app'))return;var t=e.touches[0];if(t)addRipple(t.clientX,t.clientY);},{passive:true});
-  _t0=performance.now()/1000;
-}
-function _frame(){
-  var cv=document.getElementById('bggl');
-  if(!_gl||!cv||_cur==='none'||!_progs[_cur]){_raf=null;return;}
-  var now=performance.now()/1000,dt=Math.min(now-(_tl||now),0.05);_tl=now;
-  _px=_mx;_py=_my;
-  _mx+=(_tx-_mx)*Math.min(dt*9,1);_my+=(_ty-_my)*Math.min(dt*9,1);
-  _vx=(_mx-_px)/Math.max(dt,1e-3);_vy=(_my-_py)/Math.max(dt,1e-3);
-  _sp+=(Math.min(Math.hypot(_vx,_vy),4)-_sp)*Math.min(dt*6,1);
-  for(var i=0;i<8;i++){if(i<_rpls.length){_rpBuf[i*3]=_rpls[i].x;_rpBuf[i*3+1]=_rpls[i].y;_rpBuf[i*3+2]=now-_rpls[i].t;}else{_rpBuf[i*3]=0;_rpBuf[i*3+1]=0;_rpBuf[i*3+2]=999;}}
-  while(_rpls.length&&now-_rpls[0].t>4)_rpls.shift();
-  var P=_progs[_cur];
-  _gl.viewport(0,0,cv.width,cv.height);_gl.useProgram(P.p);
-  _gl.bindBuffer(_gl.ARRAY_BUFFER,_quad);_gl.enableVertexAttribArray(P.l.a);_gl.vertexAttribPointer(P.l.a,2,_gl.FLOAT,false,0,0);
-  _gl.uniform2f(P.l.r,cv.width,cv.height);_gl.uniform1f(P.l.t,now-_t0);
-  _gl.uniform2f(P.l.m,_mx,_my);_gl.uniform2f(P.l.mv,_vx,_vy);_gl.uniform1f(P.l.ms,_sp);
-  _gl.uniform3fv(P.l.rp,_rpBuf);_gl.drawArrays(_gl.TRIANGLES,0,6);
-  _raf=requestAnimationFrame(_frame);
-}
-return{
-  NAMES:NAMES,
-  select:function(id){_cur=(SH[id]?id:'none');document.body.classList.toggle('bg-shader',_cur!=='none');if(_cur!=='none'){_init();if(!_raf)_raf=requestAnimationFrame(_frame);}else if(_raf){cancelAnimationFrame(_raf);_raf=null;}},
-  cur:function(){return _cur;},
-};
-})();
-
+/* WEBGL BACKGROUND SHADERS — siehe bg.js (Global `BG`, geladen vor game.js) */
 function applyOpts(){ const v=Store.data.opts.crt||0; document.documentElement.style.setProperty('--crt-opacity',v); document.body.classList.toggle('crt-off',v===0); const es=!!Store.data.opts.energySave; document.body.classList.toggle('energy-save',es); BG.select(es?'none':(Store.data.opts.bgShader||'none')); applyTheme(); var app=$('app'); if(app)app.classList.toggle('four-color',!!Store.data.opts.fourColor); fitCards(); }
 function applyTheme(){
   var t=THEMES[Store.data.meta.selectedTheme]||THEMES.og, app=$('app');
@@ -1453,17 +1110,17 @@ function applyTheme(){
   }
   if(tint){tint.style.background=t.bg?'rgba('+hexRgb(t.bg[0]).r+','+hexRgb(t.bg[0]).g+','+hexRgb(t.bg[0]).b+',.65)':'none';}
 }
-/* UI scaling. transform:scale keeps layout/clientWidth unscaled, so fitCards()
-   is unaffected and the whole UI scales uniformly (text + cards + buttons). */
+/* UI scaling — immer automatisch an die Fenstergröße angepasst.
+   o.scale dient als relativer Multiplikator (0.8 = 20% kleiner als Auto-Fit).
+   transform:scale lässt clientWidth unverändert, sodass fitCards() korrekt bleibt. */
 function applyScale(){
   const o=Store.data.opts, app=$('app');
-  let s=o.scale||1;
-  if(o.fit){
-    const w=app.offsetWidth||440, h=app.offsetHeight||640;
-    s=Math.min((window.innerWidth-8)/w,(window.innerHeight-8)/h);
-    s=Math.max(0.5,Math.min(s,2.5));
-  }
+  const aw=Math.min(window.innerWidth-16, 440);
+  let base=(window.innerWidth-16)/aw; // nur Breite — Höhe scrollt
+  base=Math.max(0.4,Math.min(base,2.5));
+  const s=Math.max(0.3,Math.min(base*(o.scale||1),3));
   app.style.transform='scale('+s+')';
+  app.style.marginBottom=Math.round((s-1)*(app.offsetHeight||640))+'px';
 }
 
 /* ---- GAME OVER visualization ---- */
@@ -1642,7 +1299,7 @@ $('scene-cloud').addEventListener('click',function(e){
 // options toggles + reset + UI scale
 $('scene-opts').addEventListener('click',function(e){
   const sc=e.target.closest('[data-scale]');
-  if(sc){Store.data.opts.scale=parseFloat(sc.dataset.scale);Store.data.opts.fit=false;Store.save();applyScale();renderOpts();SFX.click();return;}
+  if(sc){Store.data.opts.scale=parseFloat(sc.dataset.scale);Store.save();applyScale();renderOpts();SFX.click();return;}
   const t=e.target.closest('[data-opt]');
   if(t){const k=t.dataset.opt;Store.data.opts[k]=!Store.data.opts[k];Store.save();applyOpts();applyScale();if(k==='audioOn'){if(Store.data.opts.audioOn){SFX.ensure();SFX.resume();SFX.preload();}Music.setVol();}renderOpts();SFX.click();return;}
   const th=e.target.closest('[data-theme]');
@@ -1706,7 +1363,11 @@ $('scene-over').addEventListener('click',function(e){
   else if(a.dataset.act==='menu')showScene('menu');
 });
 // resize: refit cards (while playing) + recompute UI scale (fit-to-window)
-window.addEventListener('resize',function(){if(!$('scene-game').hidden){fitCards();render();}applyScale();});
+window.addEventListener('resize',function(){
+  if(!$('scene-game').hidden){fitCards();render();}
+  var bc=$('boss-bg');if(bc){bc.width=bc.offsetWidth||440;bc.height=bc.offsetHeight||600;}
+  applyScale();
+});
 // keyboard: Space draws the next card (only in active play, no overlay open)
 window.addEventListener('keydown',function(e){
   if($('scene-game').hidden||G.phase!=='play')return;

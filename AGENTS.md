@@ -41,7 +41,8 @@ git add -A && git commit -m "BL-7: kurze Beschreibung"
 ```
 
 - **Live:** https://matshio7.github.io/neon-klondike/ · **Repo:** `Matshio7/neon-klondike` (Push auf `main` → GitHub Pages baut in ~1–2 Min).
-- **Dateien:** `index.html` (Szenen-Gerüst) · `styles.css` · `game.js` (gesamte Logik, eine IIFE) · `sw.js` (Service Worker) · `img/` `music/` `sfx/` (Assets) · `neon-klondike.html` (Redirect).
+- **Dateien:** `index.html` (Szenen-Gerüst) · `styles.css` · `data.js` (statische Daten) · `bg.js` (WebGL-Shader) · `bosses/*.js` (Boss-Sprites) · `game.js` (Spiellogik, eine IIFE) · `sw.js` (Service Worker) · `img/` `music/` `sfx/` (Assets) · `docs/` (archivierte Design-Notizen) · `neon-klondike.html` (Redirect).
+- **Ladereihenfolge der Scripts** (in `index.html`, Reihenfolge zählt): `data.js` → `bg.js` → `bosses/*.js` → `game.js`. Die ersten drei definieren globale Bezeichner (`IC`, `PATCH_NOTES`, `POOL`, `BOSSES`, `THEMES`, `BG`, `BossGrosseSteuer` …), die `game.js` (strict IIFE) liest. **Neue statische Daten → `data.js`, nicht in `game.js`.**
 - **Persistenz:** `localStorage`; optional Cloud-Save über Supabase (Abschnitt 7).
 
 ---
@@ -71,10 +72,10 @@ git add -A && git commit -m "BL-7: kurze Beschreibung"
 
 ## 3. Aktueller Stand  ← hier zuerst schauen
 
-- **Version:** v0.8.5
-- **Build:** node nicht installiert — Syntax via Browser-Reload verifiziert (keine JS-Fehler in Konsole); Arbeitsverzeichnis clean.
+- **Version:** v0.8.6 (in Vorbereitung, noch nicht gepusht)
+- **Build:** node nicht installiert — Syntax via Browser-Reload verifiziert (keine JS-Fehler in Konsole).
 - **Echte Spieler aktiv** (Cloud-Rangliste wird genutzt).
-- **Zuletzt:** v0.8.5 — 5 WebGL-Shader-Hintergründe + Energiesparmodus. v0.8.4 — Spieler-Feedback: Joker★, Stapel-Spiegeln, Feedback-Link, Difficulty-Tuning. v0.8.3 — Info-Post-it im Menü. v0.8.2 — Wochen-Rangliste. v0.8.0 — Großes Update (BL-3/4/5/14/15). BL-22 (Leaderboard-Submit für abgebrochene Läufe) implementiert — `submitScore()` Helper + keepalive-Beacon, homebtn, visibilitychange, pagehide, Ante-Aufstieg.
+- **Zuletzt:** Boss-Riege v1.0 (nur Logik) — finale 5 Bosse: DÜRRE/FLAUTE/KOPFGELD/ZENSUR (Herausforderer) + GROSSE STEUER (Finale @ Ante 8). `BOSSES` in `data.js` getrimmt, alte Bosse raus, neuer Effekt ZENSUR (zufällige Farbe = 0, `G.bossDeadSuit` in `prepareRound`/`chipsFor`, dynamisches Banner via `bossDesc()`). **Offen:** Sprites + 3 Voice-Samples je Herausforderer (nur GROSSE STEUER hat sie). Vorher: Repo-Restrukturierung — `game.js` 1789→1413 Zeilen, Daten→`data.js`, Shader→`bg.js`, Doku→`docs/` (Architektur: Abschnitt 1 & 6). Browser-verifiziert (Boot, Menü, Board, Shader, Boss-Daten — keine Konsolen-Fehler). v0.8.6 — Auto-Bildschirmbreite (width-only fit, Höhe scrollt), MIDAS-Item-Preis von shopPen entkoppelt, Boss GROSSE STEUER als animierter Canvas-Hintergrund-Layer mit 3 Sprachsamples + Idle-Voice (`bosses/grosse_steuer.js`, `sfx/bigtax-*.mp3`). v0.8.5 — 5 WebGL-Shader-Hintergründe + Energiesparmodus.
 - **applyPlausibility()** in `cloudPayload()` ist bereits aktiv (bestAnte≤100, bestChips≤999999999) — BL-7 client-seitig partiell erledigt, serverseitig noch offen.
 - Volle Historie: `CHANGELOG.md`.
 
@@ -112,22 +113,31 @@ Marker: `- [ ]` offen · `- [~] (name)` in Arbeit · `- [x]` erledigt (mit Datum
   `BL-7: Score-Plausibilität in kl_save prüfen` · `fix: UMKEHR-Deck baut A→K` · `chore: sw.js VER auf v0.8.0`.
   Branch für Features: `feature/bl-<n>`.
 - **Release = drei Stellen IMMER synchron hochzählen:**
-  1. `PATCH_NOTES[0]` in `game.js` (neuer Eintrag, deutscher Stil),
+  1. `PATCH_NOTES[0]` in `data.js` (neuer Eintrag, deutscher Stil),
   2. `opt-about` in `index.html` (`KLONDAIRE · vX.Y`),
   3. `VER` in `sw.js` (`klondaire-vX.Y`).
   Das Menü-Label „build vX" leitet sich aus `PATCH_NOTES[0].v` ab.
-- **Verifizieren:** `node --check game.js`; UI-Änderungen im Browser gegentesten.
+- **Verifizieren:** `node --check game.js data.js bg.js` (falls node verfügbar); sonst Browser-Reload + Konsole prüfen (keine Fehler) — auch `data.js`/`bg.js` werden so geprüft.
 
 ---
 
-## 6. Architektur-Landkarte (`game.js`) — nach Namen suchen, nicht Zeilen
+## 6. Architektur-Landkarte — nach Namen suchen, nicht Zeilen
 
+**`data.js`** (reine Daten + zustandslose Helfer, global lesbar):
+- `IC` — Inline-SVG-Icon-Map · `ACHIEVEMENTS`/`ACH_VOLT`/`ACH_DECK` · `PATCH_NOTES` (oberster = aktuelle Version).
+- `POOL` (Perks) · `SPECIALS` · `CONSUMABLES` · `VOUCHERS` · `BOSSES`/`ENDBOSS` · `DECKS` · `DIFFICULTIES` · `THEMES` · `FORTUNES`/`MEAN`.
+- Zugriffshelfer: `SPECIAL`/`CONS`/`VOUCHER`/`BOSS`/`DECK`/`RED`/`hexRgb`.
+
+**`bg.js`** — `BG` (WebGL-Shader-Hintergründe): `BG.select(id)` · `BG.cur()` · `BG.NAMES`. Self-contained, nur Canvas `#bggl`.
+
+**`bosses/*.js`** — animierte Boss-Sprites, je Datei ein Global (z. B. `BossGrosseSteuer.attach(canvas,opts)`).
+
+**`game.js`** (gesamte Logik, eine strict IIFE — konsumiert obige Globals):
 - `Store` — `localStorage`-Persistenz; `Store._defaults()` definiert `stats`/`meta` (u. a. `cloudCode`, `cloudName`, `selectedTheme`).
 - `G`, `RUN`, `runActive` — aktueller Run / Tracking / Pause-Flag.
 - `showScene(name)` — Szenen-Manager; jede Szene hat `renderX()` (`renderCloud`, `renderRang`, `renderNews`, `renderOpts`).
 - Menü-Click-Handler — Verzweigung über `go==='…'` (`data-go`); Zurück über `data-back`.
-- `IC` + `paintIcons()` — Inline-SVG-Icons für `[data-ic]`.
-- `PATCH_NOTES` — Update-Notes (oberster = aktuelle Version).
+- `svg()`/`paintIcons()`/`suitSvg()` — Icon-Rendering (lesen `IC`/`SUITNAME` aus `data.js`).
 - `CLOUD`, `clRpc(fn,body)`, `cloud*` — Cloud-Save/Backend.
 - `RNG`, `mkRng()`, `rseed()` — seedbarer Zufall (Audio-Zufall im `Music`-Objekt ist NICHT betroffen).
 
