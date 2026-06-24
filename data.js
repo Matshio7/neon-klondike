@@ -78,6 +78,7 @@ const PATCH_NOTES=[
    'Automatische Bildschirmbreite — UI passt sich jetzt immer an die Fensterbreite an, kein manueller Toggle mehr nötig.',
    'MIDAS-Fix — Item-Preise werden nicht mehr von der Schwierigkeits-Strafe erhöht; MIDAS kostet jetzt immer 4 Coins.',
    'Neue Boss-Riege — 5 Bosse, jeder kontert eine andere Strategie; GROSSE STEUER als animiertes Finale mit Sprachausgabe.',
+   'Sackgassen-Hinweis — meldet dir, wenn kein Zug mehr möglich ist (auch Nachziehen hilft nicht), statt dich rätseln zu lassen.',
  ]},
  {v:'v0.8.5', date:'23.06.2026', notes:[
    'WebGL-Hintergründe — 5 interaktive Shader in den Options: AURORA, GRID, CELLS, LIQUID, SUITS — mausreaktiv, mit Klick-Wellen.',

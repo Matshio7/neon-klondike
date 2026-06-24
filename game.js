@@ -547,6 +547,26 @@ function anyMove(){
   return false;
 }
 function checkStuck(){render();if(G.phase==='play'&&G.chips<G.target&&!anyMove())gameOver();}
+/* Echte "kein Zug mehr"-Prüfung: gibt es IRGENDEINEN produktiven Zug — jetzt
+   oder nachdem man den ganzen Stapel durchgezogen/recycelt hat? Anders als
+   anyMove() zählt bloßes Nachziehen NICHT als Zug; geprüft wird, ob irgendeine
+   erreichbare Karte bankbar oder auf eine Spalte legbar ist. */
+function hasProductiveMove(){
+  // 1) eine aufgedeckte Tableau-Sequenz auf eine andere Spalte bewegbar?
+  for(let c=0;c<7;c++){const t=G.tab[c];for(let i=0;i<t.length;i++){if(t[i].up&&validSeq(t.slice(i))){const run=t.slice(i);for(let d=0;d<7;d++)if(d!==c&&canTab(run,d))return true;}}}
+  // 2) erreichbare Einzelkarten: Tableau-Tops, Waste-Top, ALLE Stock-Karten (ziehbar) + bei Recycle auch alle Waste-Karten
+  const cand=[];
+  for(let c=0;c<7;c++){const t=G.tab[c];if(t.length&&t[t.length-1].up)cand.push(t[t.length-1]);}
+  if(G.waste.length)cand.push(G.waste[G.waste.length-1]);
+  for(const c of G.stock)cand.push(c);
+  if(G.rec>0)for(const c of G.waste)cand.push(c);
+  for(const c of cand){
+    if(c.joker)return true;                          // Joker ist immer bankbar
+    if(canFound(c))return true;                       // in eine Bank legbar
+    for(let d=0;d<7;d++)if(canTab([c],d))return true;  // auf eine Spalte legbar
+  }
+  return false;
+}
 function check(){
   const done=G.found.every(f=>f.length===13);
   if(done){roundClear(true);return;}
@@ -831,6 +851,11 @@ function render(){
   G._last=G.chips;
   const bs=$('bossstrip');
   if(G.boss){bs.classList.remove('hidden');bs.innerHTML='BOSS · '+G.boss.name+' — '+bossDesc();}else bs.classList.add('hidden');
+  const nm=$('nomovestrip');
+  if(G.phase==='play'&&G.chips<G.target&&!hasProductiveMove()){
+    if(nm.classList.contains('hidden'))nm.innerHTML='⚠ KEINE ZÜGE MEHR MÖGLICH — auch Nachziehen &amp; Recyceln bringt keine spielbare Karte.<button data-act="nomove-end">RUNDE BEENDEN</button>';
+    nm.classList.remove('hidden');
+  }else nm.classList.add('hidden');
   $('hud').classList.toggle('tutglow',G.tutGlow==='hud');
   const _bg=G.tutGlow==='bank'?' tut-glow':'';
   const fOrder=Store.data.opts.foundationOrder||[0,1,2,3];
@@ -1223,6 +1248,7 @@ $('itemsbtn').addEventListener('click',function(){SFX.click();showItems();});
 $('undobtn').addEventListener('click',function(){doUndo();});
 $('helpbtn').addEventListener('click',function(){SFX.click();showHelp();});
 $('giveupbtn').addEventListener('click',function(){SFX.click();if(runActive&&confirm('Diesen Run aufgeben? Das führt direkt zum Game-Over.'))gameOver();});
+$('nomovestrip').addEventListener('click',function(e){if(!e.target.closest('[data-act="nomove-end"]'))return;SFX.click();if(G.phase==='play'&&confirm('Keine Züge mehr möglich — Runde beenden?'))gameOver();});
 // main menu
 $('scene-menu').addEventListener('click',function(e){
   const b=e.target.closest('[data-go]');
