@@ -190,18 +190,18 @@ function paintIcons(root){(root||document).querySelectorAll('[data-ic]').forEach
    ============================================================ */
 const PATCH_NOTES=[
  {v:'v0.8.6', date:'24.06.2026', notes:[
-   'UI passt sich jetzt automatisch an die Bildschirmbreite an — kein manueller „AN FENSTER ANPASSEN"-Toggle mehr nötig.',
+   'Automatische Bildschirmbreite — UI passt sich jetzt immer an die Fensterbreite an, kein manueller Toggle mehr nötig.',
  ]},
  {v:'v0.8.5', date:'23.06.2026', notes:[
-   '5 interaktive WebGL-Hintergründe in den Options: AURORA, GRID, CELLS, LIQUID, SUITS — mausreaktiv, mit Klick-Wellen.',
-   'Neuer ENERGIESPAREN-Modus: friert alle Animationen ein und schont Akku & CPU — ideal für Unterwegs.',
-   'Rangliste: Schwierigkeits-Filter — nach NORMAL, SCHWER, EXPERTE usw. filtern, oder alles gemeinsam ansehen.',
+   'WebGL-Hintergründe — 5 interaktive Shader in den Options: AURORA, GRID, CELLS, LIQUID, SUITS — mausreaktiv, mit Klick-Wellen.',
+   'ENERGIESPAREN-Modus — friert alle Animationen ein und schont Akku & CPU, ideal für Unterwegs.',
+   'Ranglisten-Filter — nach Schwierigkeit filtern (NORMAL, SCHWER, EXPERTE …) oder alles gemeinsam ansehen.',
  ]},
  {v:'v0.8.4', date:'23.06.2026', notes:[
-   'Ziele in frühen Antes leichter: Ante 1 startet bei 50 statt 60 Chips, Wachstum flacher.',
-   'Joker jetzt mit ★ statt J — kein Verwechsler mehr mit dem Buben. (★ ist Übergangslösung — jeder Joker bekommt bald ein eigenes Cover.)',
-   'Options: STAPEL SPIEGELN — Ablagestapel links für Rechtshänder.',
-   'Options: Feedback-Link direkt im Spiel.',
+   'Schwierigkeits-Tuning — Ante 1 startet bei 50 statt 60 Chips, Wachstum flacher.',
+   'Joker ★ — kein Verwechsler mehr mit dem Buben. (★ ist Übergangslösung — jeder Joker bekommt bald ein eigenes Cover.)',
+   'STAPEL SPIEGELN — Ablagestapel links, Nachziehstapel rechts.',
+   'Feedback-Link — direkt in den Options Rückmeldung geben.',
  ]},
  {v:'v0.8.3', date:'21.06.2026', notes:[
    'Neues Info-Post-it im Hauptmenü: erklärt die Ranglisten-Resets (Woche/Monat/Ewig) und den einmaligen Reset zum Launch v1.0 — plus eine kleine Roadmap, was bis dahin noch kommt.',
@@ -1221,10 +1221,12 @@ function renderPostit(){
   const p=PATCH_NOTES[0], p2=PATCH_NOTES[1];
   if(!p){$('postit').style.display='none';return;}
   $('postit-ver').textContent='NEU · '+p.v;
-  $('postit-list').innerHTML=p.notes.slice(0,2).map(n=>'<li>'+n+'</li>').join('');
-  if(p2){$('postit-list').innerHTML+='<li class="pt-old"><b>'+p2.v+'</b>: '+p2.notes.slice(0,1).join(', ')+'</li>';}
+  // Post-it zeigt nur Kurzbezeichnungen — Details im Update-Menü
+  function shortNote(n){var s=(n.split(' — ')[0]||n).replace(/\.$/, '');return s.length>45?s.slice(0,44).trimEnd()+'…':s;}
+  $('postit-list').innerHTML=p.notes.map(n=>'<li>'+shortNote(n)+'</li>').join('');
+  if(p2){$('postit-list').innerHTML+='<li class="pt-old"><b>'+p2.v+'</b>: '+shortNote(p2.notes[0]||'')+'</li>';}
   $('postit-more').style.display='block';
-  const tear=document.querySelector('#postit-more .pt-tear'); if(tear)tear.style.display=(p.notes.length>2)?'block':'none';
+  const tear=document.querySelector('#postit-more .pt-tear'); if(tear)tear.style.display='none';
   document.querySelectorAll('#postit-fringe span.torn').forEach(s=>s.classList.remove('torn'));
 }
 /* Easter egg: tear off a fringe tab -> a little souvenir note + a secret achievement. */
