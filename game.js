@@ -614,7 +614,8 @@ function newRound(){
   if(G.boss&&G.boss.id==='bigtax'&&window.BossGrosseSteuer){
     var bc=$('boss-bg');
     bc.width=bc.offsetWidth||440; bc.height=bc.offsetHeight||600;
-    G.bossFx=BossGrosseSteuer.attach(bc,{opacity:0.16,state:'appear'});
+    G.bossFx=BossGrosseSteuer.attach(bc,{anchor:'bottom',opacity:0.16,showText:false,state:'appear'});
+    G._bossHitTs=0;
     SFX.voiceAppear();
   }
   if(G.tutorial&&G.ante===1)tutForceAce();   // ensure the bank-an-Ace step is doable
@@ -662,7 +663,7 @@ function bankGain(c){
   G.chips+=gain; RUN.banked++; RUN.totalChips+=gain;
   c.gain=gain; c.multAdd=multAdd;   // recorded so taking the card back can reverse it exactly
   SFX.bank();
-  if(G.bossFx){G.bossFx.play('hit');SFX.voiceHit();}
+  if(G.bossFx){var _n=Date.now();if(_n-(G._bossHitTs||0)>=400){G._bossHitTs=_n;G.bossFx.play('hit');SFX.voiceHit();}}
   evalAch();
   return {gain:gain,sources:sources};
 }
