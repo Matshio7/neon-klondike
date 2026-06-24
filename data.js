@@ -255,18 +255,18 @@ const VOUCHERS=[
  {id:'luckyroll',  name:'WÜRFELGLÜCK', price:6, desc:'Reroll ist gratis.'},
 ];
 const VOUCHER=id=>VOUCHERS.find(x=>x.id===id);
+/* Finale Boss-Riege (v1.0): 4 Herausforderer (Ante 3/6) + GROSSE STEUER als
+   Finale (Ante 8). Jeder kontert eine andere Strategie. Effekt-Hooks: game.js
+   (prepareRound / chipsFor / bankGain-Mult-Ramp). Nur GROSSE STEUER hat bisher
+   Sprite + Stimme (bosses/grosse_steuer.js); die 4 anderen laufen als Banner,
+   bis Sprites + Voice-Samples vorliegen. */
 const BOSSES=[
- {id:'tax',     name:'STEUER',        desc:'ZIEL +40%'},
- {id:'crown',   name:'PAPIERKRONE',   desc:'J Q K = 0 CHIPS'},
- {id:'drought', name:'DÜRRE',         desc:'NUR 1 RECYCLE'},
- {id:'half',    name:'HALBE KRAFT',   desc:'ALLE CHIPS HALBIERT'},
- {id:'blackout',name:'SCHWARZSPERRE', desc:'SCHWARZE KARTEN = 0 CHIPS'},
- {id:'flaute',  name:'FLAUTE',        desc:'KEIN MULT-AUFBAU'},
- {id:'bigtax',  name:'GROSSE STEUER', desc:'ZIEL +80%'},
- {id:'specbane',name:'STÖRSENDER',    desc:'SPEZIALKARTEN = 0 CHIPS'},
- {id:'lowtax',  name:'KOPFGELD',      desc:'KARTEN A–5 = 0 CHIPS'},
+ {id:'drought', name:'DIE DÜRRE',  desc:'NUR 1 RECYCLE'},            // kontert langsames/schlampiges Spiel
+ {id:'flaute',  name:'FLAUTE',     desc:'KEIN MULT-AUFBAU'},         // kontert Combo-/Engine-Builds
+ {id:'lowtax',  name:'KOPFGELD',   desc:'KARTEN A–5 = 0 CHIPS'},     // kontert Low-Card-Fokus
+ {id:'censor',  name:'DIE ZENSUR', desc:'EINE ZUFÄLLIGE FARBE = 0 CHIPS'}, // kontert Anpassung (Farbe wird pro Runde gewürfelt)
 ];
-const ENDBOSS={id:'finale',name:'FINALE',desc:'ZIEL +60% · NUR 1 RECYCLE · BILDKARTEN HALB'};   // erzwungener Endboss @ Ante 8
+const ENDBOSS={id:'bigtax',name:'GROSSE STEUER',desc:'ZIEL +80%'};   // erzwungenes Finale @ Ante 8 (Sprite + 3 Stimmen)
 const BOSS=id=>(id===ENDBOSS.id?ENDBOSS:BOSSES.find(b=>b.id===id));
 /* ============================================================
    DECKS  -  starting-condition modifiers chosen before a run.

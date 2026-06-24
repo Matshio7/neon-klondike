@@ -318,12 +318,10 @@ function newRound(){
   if(bossAnte){
     G.boss=(G.ante===WIN_ANTE)?ENDBOSS:((G.nextBoss&&BOSS(G.nextBoss))||BOSSES[Math.floor(RNG()*BOSSES.length)]);
     G.nextBoss=null;
-    if(G.boss.id==='tax')G.target=Math.round(G.target*1.4/5)*5;
-    if(G.boss.id==='bigtax')G.target=Math.round(G.target*1.8/5)*5;
-    if(G.boss.id==='finale')G.target=Math.round(G.target*1.6/5)*5;
-    if(G.boss.id==='drought')G.rec=Math.max(1,G.rec-2);
-    if(G.boss.id==='finale')G.rec=1;
-  }
+    if(G.boss.id==='bigtax')G.target=Math.round(G.target*1.8/5)*5;   // GROSSE STEUER (Finale): Ziel +80%
+    if(G.boss.id==='drought')G.rec=Math.max(1,G.rec-2);              // DÜRRE: nur 1 Recycle
+    G.bossDeadSuit=(G.boss.id==='censor')?Math.floor(RNG()*4):null;  // ZENSUR: eine zufällige Farbe = 0 Chips
+  }else{G.bossDeadSuit=null;}
   /* bigtax: animierter Hintergrund-Layer */
   bossFxStop();
   if(G.boss&&G.boss.id==='bigtax'&&window.BossGrosseSteuer){
@@ -356,8 +354,9 @@ function validSeq(cards){const rev=G.deck&&G.deck.reverse;for(let i=1;i<cards.le
 function moving(){if(!G.sel)return[];if(G.sel.p==='waste')return[G.waste[G.waste.length-1]];if(G.sel.p==='found')return[G.found[G.sel.suit][G.found[G.sel.suit].length-1]];return G.tab[G.sel.col].slice(G.sel.idx);}
 function canFound(c,suit){const s=c.joker?suit:c.s;if(s==null)return false;const f=G.found[s];const need=(G.deck&&G.deck.reverse)?13-f.length:f.length+1;return c.joker||c.r===need;}   // count-based; wild fills any slot
 function canTab(cards,col){const r0=cards[0],t=G.tab[col];const rev=G.deck&&G.deck.reverse;if(t.length===0)return r0.joker||(rev?r0.r===1:r0.r===13);const top=t[t.length-1];if(!top.up)return false;if(r0.joker||top.joker)return true;return rev?(top.r===r0.r-1&&color(top)!==color(r0)):(top.r===r0.r+1&&color(top)!==color(r0));}
-function chipsFor(c){if(c.special){const sp=SPECIAL(c.special);let sv=sp?sp.chips:10;if(G.boss&&G.boss.id==='half')sv=Math.ceil(sv/2);if(G.boss&&G.boss.id==='specbane')sv=0;return sv;}   // Specials reagieren auf HALBE KRAFT & STÖRSENDER
-  if(G.boss){if(G.boss.id==='crown'&&c.r>=11)return 0;if(G.boss.id==='blackout'&&!RED(c.s))return 0;if(G.boss.id==='lowtax'&&c.r<=5)return 0;}
+function bossDesc(){if(!G.boss)return '';if(G.boss.id==='censor'&&G.bossDeadSuit!=null)return 'FARBE '+SUITS[G.bossDeadSuit]+' = 0 CHIPS';return G.boss.desc;}   // ZENSUR zeigt die konkrete zensierte Farbe
+function chipsFor(c){if(c.special){const sp=SPECIAL(c.special);return sp?sp.chips:10;}   // Specials sind wild (ohne Farbe) — von keinem der 5 Bosse betroffen
+  if(G.boss){if(G.boss.id==='lowtax'&&c.r<=5)return 0;if(G.boss.id==='censor'&&c.s===G.bossDeadSuit)return 0;}   // KOPFGELD: A–5 = 0 · ZENSUR: zensierte Farbe = 0
   let v=10;
   if(G.perks.includes('plus5'))v+=5;
   if(G.perks.includes('red')&&RED(c.s))v+=4;
@@ -367,8 +366,6 @@ function chipsFor(c){if(c.special){const sp=SPECIAL(c.special);let sv=sp?sp.chip
   if(G.perks.includes('low')&&c.r<=5)v+=5;
   if(G.perks.includes('acechip')&&c.r===1)v+=20;
   if(G.deck&&G.deck.cardMods)v+=RED(c.s)?G.deck.cardMods.red:G.deck.cardMods.black;
-  if(G.boss&&G.boss.id==='half')v=Math.ceil(v/2);
-  if(G.boss&&G.boss.id==='finale'&&c.r>=11)v=Math.ceil(v/2);
   return Math.max(0,v);}
 function bankGain(c){
   let multAdd=0;
@@ -679,7 +676,7 @@ function showItems(){
   const perks=(G.perks||[]).map(id=>{const p=POOL.find(x=>x.id===id);return p?'<div class="perk'+(p.m?' mlt':'')+'"><div><div class="pn">'+p.name+'</div><div class="pd">'+p.desc+'</div></div></div>':'';}).join('')
     ||'<div class="sub">NOCH KEINE ITEMS — KAUFE PERKS IM SHOP</div>';
   const deck=G.deck?'<div class="ideck"><b>DECK · '+G.deck.name+'</b><br>'+G.deck.desc+'</div>':'';
-  const boss=G.boss?'<div class="iboss">BOSS · '+G.boss.name+' — '+G.boss.desc+'</div>':'';
+  const boss=G.boss?'<div class="iboss">BOSS · '+G.boss.name+' — '+bossDesc()+'</div>':'';
   const specs=(G.specials||[]).length?'<div class="ispec"><b>SPEZIALKARTEN ('+G.specials.length+')</b><br>'+G.specials.map(id=>{const sp=SPECIAL(id);return sp?sp.mark+' '+sp.name:'?';}).join(' · ')+'</div>':'';
   const items=(G.items||[]).length?G.items.map(id=>{const it=CONS(id);return it?'<div class="perk cons"><div><div class="pn">'+it.mark+' '+it.name+'</div><div class="pd">'+it.desc+'</div></div><button class="buy" data-use-item="'+id+'">EINSETZEN</button></div>':'';}).join(''):'';
   const vouchers=(G.vouchers||[]).length?'<div class="ispec"><b>UPGRADES</b><br>'+G.vouchers.map(id=>{const v=VOUCHER(id);return v?v.name:'?';}).join(' · ')+'</div>':'';
@@ -828,7 +825,7 @@ function render(){
   if(G.chips>G._last){ch.classList.remove('pulse');void ch.offsetWidth;ch.classList.add('pulse');}
   G._last=G.chips;
   const bs=$('bossstrip');
-  if(G.boss){bs.classList.remove('hidden');bs.innerHTML='BOSS · '+G.boss.name+' — '+G.boss.desc;}else bs.classList.add('hidden');
+  if(G.boss){bs.classList.remove('hidden');bs.innerHTML='BOSS · '+G.boss.name+' — '+bossDesc();}else bs.classList.add('hidden');
   $('hud').classList.toggle('tutglow',G.tutGlow==='hud');
   const _bg=G.tutGlow==='bank'?' tut-glow':'';
   const fOrder=Store.data.opts.foundationOrder||[0,1,2,3];
