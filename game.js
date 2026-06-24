@@ -438,7 +438,7 @@ function recBase(){return 2+(G.perks.includes('rec')?1:0)+(G.deck?G.deck.recDelt
 function baseMult(){var b=(G.deck?G.deck.baseMult:1)+(G.perks.includes('fever')?0.5:0)+(G.perks.includes('bigfever')?1:0)+(G.perks.includes('overload')?2:0);var dd=G.dd||DIFFICULTIES[G.diff]||{};return b-(dd.basePen||0);}
 function effMult(){return baseMult()+G.roundMult;}
 
-function resetRun(){RUN={banked:0,totalChips:0,maxMult:0,bestRound:0,newBestAnte:false,newBestChips:false,newAch:[],voltEarned:0,won:false,lastSubmittedAnte:0};}
+function resetRun(){RUN={banked:0,totalChips:0,maxMult:0,bestRound:0,newBestAnte:false,newBestChips:false,newAch:[],voltEarned:0,won:false,lastSubmittedAnte:0,lastDailyAnte:0};}
 
 function newRun(daily){
   resetRun();
@@ -471,16 +471,13 @@ function doDaily(){
   showScene('game');fitCards();newRun(true);
 }
 function dailySubmit(){
-  if(!G||!G.daily||G.dailySubmitted)return;
+  if(!G||!G.daily)return;
+  if(G.ante<=(RUN.lastDailyAnte||0))return;   // nur senden wenn Ante gestiegen (verhindert Spam, erlaubt Nachbesserung)
+  RUN.lastDailyAnte=G.ante;
   const m=Store.data.meta;
   const username=m.cloudName||'Anonym';
   const dayFormatted=G.daily.slice(0,4)+'-'+G.daily.slice(4,6)+'-'+G.daily.slice(6,8);
-  // Backend (Supabase) erwartet:
-  //   Tabelle daily_scores(day date, username text, best_ante int, best_chips int, updated_at timestamptz, primary key(day,username))
-  //   RPC kl_daily_submit(p_day date, p_username text, p_ante int, p_chips int) -> nur verbessern, security definer, anon grant
-  //   RPC kl_daily_board(p_day date, p_limit int) -> rank, username, best_ante, best_chips (keine Codes)
   clRpc('kl_daily_submit',{p_day:dayFormatted,p_username:username,p_ante:G.ante,p_chips:RUN.bestRound||0}).catch(function(e){console.warn('[kl_daily_submit]',e);});
-  G.dailySubmitted=true;
 }
 /* ============================================================
    SAVEGAME  -  persist the whole run to localStorage so it
@@ -1552,14 +1549,14 @@ $('overlay').addEventListener('click',function(e){
   const ui=e.target.closest('[data-use-item]');if(ui){SFX.click();useItem(ui.dataset.useItem);return;}
   const a=e.target.closest('[data-act]');if(!a)return;const act=a.dataset.act;
   if(act==='shop'){SFX.click();openShop();}
-  else if(act==='next'){SFX.click();G.ante++;newRound();submitScore();}
+  else if(act==='next'){SFX.click();G.ante++;newRound();submitScore();dailySubmit();}
   else if(act==='reroll')reroll();
   else if(act==='items-close')hideOv();
   else if(act==='endless'){G.endless=true;SFX.click();openShop();}     // keep playing past the win
   else if(act==='winmenu'){finalizeRun();runActive=false;clearSave();SFX.click();showScene('menu');}
 });
 // top bar: home pauses to menu (run stays); items + give up
-$('homebtn').addEventListener('click',function(){SFX.click();if(runActive)submitScore();showScene('menu');if(G)G.helpMode=false;});
+$('homebtn').addEventListener('click',function(){SFX.click();if(runActive){submitScore();dailySubmit();}showScene('menu');if(G)G.helpMode=false;});
 $('itemsbtn').addEventListener('click',function(){SFX.click();showItems();});
 $('undobtn').addEventListener('click',function(){doUndo();});
 $('helpbtn').addEventListener('click',function(){SFX.click();showHelp();});
