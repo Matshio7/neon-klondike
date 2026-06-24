@@ -189,6 +189,9 @@ function paintIcons(root){(root||document).querySelectorAll('[data-ic]').forEach
    Format: { v:'Titel', date:'optional', notes:['Punkt 1','Punkt 2', ...] }
    ============================================================ */
 const PATCH_NOTES=[
+ {v:'v0.8.6', date:'24.06.2026', notes:[
+   'UI passt sich jetzt automatisch an die Bildschirmbreite an — kein manueller „AN FENSTER ANPASSEN"-Toggle mehr nötig.',
+ ]},
  {v:'v0.8.5', date:'23.06.2026', notes:[
    '5 interaktive WebGL-Hintergründe in den Options: AURORA, GRID, CELLS, LIQUID, SUITS — mausreaktiv, mit Klick-Wellen.',
    'Neuer ENERGIESPAREN-Modus: friert alle Animationen ein und schont Akku & CPU — ideal für Unterwegs.',
