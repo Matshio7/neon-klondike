@@ -147,6 +147,7 @@ let RANG_MODE='all'; // 'all' | 'month' | 'week' | 'daily' leaderboard view
 let RANG_DIFF=null; // null = alle Schwierigkeiten; 0..7 = nur diese Schwierigkeit
 let RANG_TIMER=null; // setInterval handle for the live leaderboard auto-refresh
 let RANG_SIG=''; // last rendered board payload, to skip redundant repaints
+let RANG_GEN=0; // bumps on every renderRang; lets stale in-flight loads bail (tab-switch race)
 let foundSwapIdx=-1; // selected index in foundation-order UI
 
 function $(id){return document.getElementById(id);}
@@ -969,7 +970,7 @@ function renderRang(){
   }
   // live: jetzt laden, dann still alle 15 s neu pollen, solange die Rangliste-Szene offen bleibt
   if(RANG_TIMER){clearInterval(RANG_TIMER);RANG_TIMER=null;}
-  RANG_SIG='';
+  RANG_SIG=''; var gen=++RANG_GEN;
   load(false);
   RANG_TIMER=setInterval(function(){if(!document.hidden)load(true);},15000);
   function load(silent){
@@ -977,6 +978,7 @@ function renderRang(){
   var promise=isDaily?clRpc('kl_daily_board',{p_day:todayFormatted,p_limit:50}):clRpc('kl_board',{p_scope:RANG_MODE,p_limit:50});
   var emptyMsg=isDaily?'Noch keine Einträge für heute – sei der Erste!':(RANG_MODE==='month'?'Diesen Monat noch keine Einträge.':(RANG_MODE==='week'?'Diese Woche noch keine Einträge.':'Noch keine Einträge – spiel eine Runde mit aktivierter Cloud!'));
   promise.then(function(rows){
+    if(gen!==RANG_GEN)return;   // ein neuer renderRang / Tab-Wechsel hat dieses Ergebnis überholt
     var filtered=(!isDaily&&RANG_DIFF!==null)?(rows||[]).filter(function(r){return (r.difficulty||0)===RANG_DIFF;}):rows;
     var sig=JSON.stringify(filtered||[]);
     if(silent&&sig===RANG_SIG)return;   // unverändert → offene Liste nicht anfassen (ausgeklappte Zeilen bleiben)
@@ -1002,6 +1004,7 @@ function renderRang(){
         '<div class="lb-det" data-det="'+i+'" hidden><span class="lb-detk">DECK</span> '+esc(deckName)+(isDaily?'':' &nbsp;·&nbsp; <span class="lb-detk">MODUS</span> '+esc(diff)+' &nbsp;·&nbsp; <span class="lb-detk">DATUM</span> '+esc(dateDE||'?'))+'</div>';
     }).join('');
   }).catch(function(){
+    if(gen!==RANG_GEN)return;
     if(!silent)body.innerHTML='<div class="ach-prog" style="color:var(--pink)">Rangliste nicht erreichbar – bist du online?</div>';
   });
   }
