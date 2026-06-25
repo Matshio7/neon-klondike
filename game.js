@@ -145,6 +145,8 @@ let runActive=false; // true while a run is in progress (resumable from the menu
 let RNG=Math.random; // replacable seeded RNG
 let RANG_MODE='all'; // 'all' | 'month' | 'week' | 'daily' leaderboard view
 let RANG_DIFF=null; // null = alle Schwierigkeiten; 0..7 = nur diese Schwierigkeit
+let RANG_TIMER=null; // setInterval handle for the live leaderboard auto-refresh
+let RANG_SIG=''; // last rendered board payload, to skip redundant repaints
 let foundSwapIdx=-1; // selected index in foundation-order UI
 
 function $(id){return document.getElementById(id);}
@@ -884,6 +886,7 @@ function render(){
    ============================================================ */
 function showScene(name){
   if(name!=='game')bossFxStop();   // rAF-Schleife stoppen wenn Spielszene verlassen wird
+  if(name!=='rang'&&RANG_TIMER){clearInterval(RANG_TIMER);RANG_TIMER=null;}   // Live-Polling der Rangliste stoppen, sobald die Szene verlassen wird
   document.querySelectorAll('.scene').forEach(s=>s.hidden=true);
   const el=$('scene-'+name); if(el)el.hidden=false;
   if(name==='menu'){renderMenu();renderPostit();}
@@ -964,11 +967,20 @@ function renderRang(){
       b.classList.toggle('active',isAll?(RANG_DIFF===null):(+b.dataset.lbDiff===RANG_DIFF));
     });
   }
-  body.innerHTML='<div class="ach-prog loading-pulse" style="color:#8fbfa6">Lade …</div>';
+  // live: jetzt laden, dann still alle 15 s neu pollen, solange die Rangliste-Szene offen bleibt
+  if(RANG_TIMER){clearInterval(RANG_TIMER);RANG_TIMER=null;}
+  RANG_SIG='';
+  load(false);
+  RANG_TIMER=setInterval(function(){if(!document.hidden)load(true);},15000);
+  function load(silent){
+  if(!silent)body.innerHTML='<div class="ach-prog loading-pulse" style="color:#8fbfa6">Lade …</div>';
   var promise=isDaily?clRpc('kl_daily_board',{p_day:todayFormatted,p_limit:50}):clRpc('kl_board',{p_scope:RANG_MODE,p_limit:50});
   var emptyMsg=isDaily?'Noch keine Einträge für heute – sei der Erste!':(RANG_MODE==='month'?'Diesen Monat noch keine Einträge.':(RANG_MODE==='week'?'Diese Woche noch keine Einträge.':'Noch keine Einträge – spiel eine Runde mit aktivierter Cloud!'));
   promise.then(function(rows){
     var filtered=(!isDaily&&RANG_DIFF!==null)?(rows||[]).filter(function(r){return (r.difficulty||0)===RANG_DIFF;}):rows;
+    var sig=JSON.stringify(filtered||[]);
+    if(silent&&sig===RANG_SIG)return;   // unverändert → offene Liste nicht anfassen (ausgeklappte Zeilen bleiben)
+    RANG_SIG=sig;
     if(!filtered||!filtered.length){body.innerHTML='<div class="ach-prog" style="color:#8fbfa6">'+emptyMsg+'</div>';return;}
     body.innerHTML=filtered.map(function(r,i){
       r=Object.assign({},r,{rank:i+1});
@@ -990,8 +1002,9 @@ function renderRang(){
         '<div class="lb-det" data-det="'+i+'" hidden><span class="lb-detk">DECK</span> '+esc(deckName)+(isDaily?'':' &nbsp;·&nbsp; <span class="lb-detk">MODUS</span> '+esc(diff)+' &nbsp;·&nbsp; <span class="lb-detk">DATUM</span> '+esc(dateDE||'?'))+'</div>';
     }).join('');
   }).catch(function(){
-    body.innerHTML='<div class="ach-prog" style="color:var(--pink)">Rangliste nicht erreichbar – bist du online?</div>';
+    if(!silent)body.innerHTML='<div class="ach-prog" style="color:var(--pink)">Rangliste nicht erreichbar – bist du online?</div>';
   });
+  }
 }
 
 /* the menu post-it shows the latest 2 versions */
