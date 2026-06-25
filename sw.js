@@ -1,3 +1,4 @@
+/* KLONDAIRE © 2026 Mats (Matshio7) — Alle Rechte vorbehalten. Keine Lizenz: Nutzung, Kopieren, Verändern oder Weiterverwendung (auch von Teilen) ohne schriftliche Genehmigung untersagt. Siehe LICENSE. */
 /* KLONDAIRE service worker — network-first so the homescreen app always
    loads the newest version when online, and still works offline from cache.
    Bump VER on every release to clear the old cache. */

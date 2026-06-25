@@ -1,3 +1,4 @@
+/* KLONDAIRE © 2026 Mats (Matshio7) — Alle Rechte vorbehalten. Keine Lizenz: Nutzung, Kopieren, Verändern oder Weiterverwendung (auch von Teilen) ohne schriftliche Genehmigung untersagt. Siehe LICENSE. */
 /* ============================================================================
  *  Boss-Asset: GROSSE STEUER  (Boss-ID: "bigtax", ZIEL +80%)
  *  48x48 Pixel-Art + 4 Animationszustaende. Vanilla JS, keine Dependencies.

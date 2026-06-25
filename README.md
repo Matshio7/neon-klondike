@@ -64,6 +64,12 @@ Mehr zu Architektur, Konventionen und Backlog: siehe [`AGENTS.md`](./AGENTS.md) 
 
 Aktuelle Version: **v0.8.6** · in aktiver Entwicklung — Roadmap bis **v1.0** (faire Ranglisten/Anti-Cheat, Run-Historie, mehr Inhalte, dann Steam) ist im Spiel-Menü einsehbar.
 
+## Lizenz & Rechte
+
+© 2026 Mats (Matshio7) — **Alle Rechte vorbehalten.**
+
+Dies ist **kein** Open-Source-Projekt. Der Quellcode ist auf GitHub einsehbar, **es wird jedoch keine Lizenz erteilt.** Ohne ausdrückliche schriftliche Genehmigung ist die **Nutzung, das Kopieren, Verändern, Verbreiten** sowie das **Verwenden von Teilen** (Code, Grafik, Sound, Konzepte, Mechaniken) in anderen Projekten **untersagt**. Erlaubt ist allein das private Spielen über die offizielle Website. Vollständige Bedingungen: siehe [`LICENSE`](./LICENSE).
+
 ---
 
-*Privates Projekt von Mats — in Entwicklung.*
+*Privates Projekt von Mats — in Entwicklung. Alle Rechte vorbehalten.*
