@@ -12,6 +12,10 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="styles.css">
+<!-- Spielstand-Import von der alten Domain (#klimport=…) — MUSS vor game.js laufen -->
+<script>(function(){try{var m=(location.hash||'').match(/[#&]klimport=([^&]+)/);if(!m)return;var b=m[1].replace(/-/g,'+').replace(/_/g,'/');while(b.length%4)b+='=';var d=JSON.parse(decodeURIComponent(escape(atob(b))));if(d&&typeof d==='object'){for(var k in d){if(Object.prototype.hasOwnProperty.call(d,k)&&d[k]!=null&&localStorage.getItem(k)==null){localStorage.setItem(k,d[k]);}}}}catch(e){}try{history.replaceState(null,'',location.pathname+location.search);}catch(e){}})();</script>
+<!-- Umzugs-Banner: nur auf der alten github.io-URL aktiv (Hostname-Gate in migrate.js) -->
+<script defer src="migrate.js"></script>
 </head>
 <body>
 <canvas id="bggl"></canvas>
