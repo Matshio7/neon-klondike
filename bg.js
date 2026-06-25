@@ -1,3 +1,4 @@
+/* KLONDAIRE © 2026 Mats (Matshio7) — Alle Rechte vorbehalten. Keine Lizenz: Nutzung, Kopieren, Verändern oder Weiterverwendung (auch von Teilen) ohne schriftliche Genehmigung untersagt. Siehe LICENSE. */
 /* ============================================================
    WEBGL BACKGROUND SHADERS  —  5 interactive shader wallpapers
    Standalone module loaded before game.js; exposes the global `BG`.
