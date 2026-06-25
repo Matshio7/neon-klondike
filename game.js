@@ -212,6 +212,7 @@ const SAVE_KEY='klondaire.save';
 function snapRun(){                                            // serializable copy of the active run, or null
   if(!runActive||!G||G.phase==='over'||G.tutorial)return null;
   const g=Object.assign({},G); g.undo=[]; g.sel=null;
+  g.bossFx=null; g._bossIdleTimer=null;   // Laufzeit-Objekte (Canvas-Controller / Timer-ID) NICHT persistieren — beim Resume via bossFxStart() neu erzeugt
   g.deckId=g.deck?g.deck.id:'standard'; delete g.deck;
   if(RNG&&RNG.getState)g.rngState=RNG.getState();
   return {g:g,run:RUN};
@@ -292,7 +293,7 @@ function cloudLoad(code){
 }
 /* FORTSETZEN: continue the in-memory run if present, else load from disk */
 function doResume(){
-  if(runActive&&G&&G.phase&&G.phase!=='over'){showScene('game');fitCards();render();return;}
+  if(runActive&&G&&G.phase&&G.phase!=='over'){showScene('game');fitCards();render();if(G.phase==='play')bossFxStart(false);return;}
   if(!loadGame())return;
   showScene('game');fitCards();render();
   if(G.phase==='shop')renderShop();
@@ -300,9 +301,29 @@ function doResume(){
     if(G.ante>=WIN_ANTE&&!G.endless)showVictory();              // was on the victory screen
     else {G.phase='shop';openShop();}                           // otherwise jump straight to the shop
   }
+  else if(G.phase==='play')bossFxStart(false);                  // GROSSE STEUER: Hintergrund-Animation nach Reload neu starten (Controller wird nicht persistiert)
 }
 
-function bossFxStop(){if(G&&G.bossFx){G.bossFx.stop();G.bossFx=null;}if(G&&G._bossIdleTimer){clearInterval(G._bossIdleTimer);G._bossIdleTimer=null;}var bc=$('boss-bg');if(bc){var c2=bc.getContext('2d');c2.clearRect(0,0,bc.width,bc.height);}}
+function bossFxStop(){if(G&&G.bossFx){if(typeof G.bossFx.stop==='function')G.bossFx.stop();G.bossFx=null;}if(G&&G._bossIdleTimer){clearInterval(G._bossIdleTimer);G._bossIdleTimer=null;}var bc=$('boss-bg');if(bc){var c2=bc.getContext('2d');c2.clearRect(0,0,bc.width,bc.height);}}
+/* GROSSE STEUER (bigtax): animierten Canvas-Hintergrund-Layer starten. No-op bei anderen Bossen.
+   replayAppear=true → Einflug-Animation + Stimme (neue Runde); false → stiller Wiedereinstieg (Resume/Reload). */
+function bossFxStart(replayAppear){
+  if(!(G&&G.boss&&G.boss.id==='bigtax'&&window.BossGrosseSteuer))return;
+  var bc=$('boss-bg');if(!bc)return;
+  bc.width=bc.offsetWidth||440; bc.height=bc.offsetHeight||600;
+  G.bossFx=BossGrosseSteuer.attach(bc,{anchor:'bottom',opacity:0.16,showText:false,state:replayAppear?'appear':'idle'});
+  G._bossHitTs=0;
+  G._bossVoicePlayed=false;
+  G._bossRoundStartTs=Date.now();
+  G._lastBossInputTs=Date.now();
+  if(G._bossIdleTimer)clearInterval(G._bossIdleTimer);
+  G._bossIdleTimer=setInterval(function(){
+    if(G._bossVoicePlayed||!G.boss||G.boss.id!=='bigtax'){clearInterval(G._bossIdleTimer);G._bossIdleTimer=null;return;}
+    var now=Date.now();
+    if(now-G._bossRoundStartTs>=30000&&now-(G._lastBossInputTs||0)>=7000){G._bossVoicePlayed=true;clearInterval(G._bossIdleTimer);G._bossIdleTimer=null;SFX.voiceHit();}
+  },2000);
+  if(replayAppear)SFX.voiceAppear();
+}
 function newRound(){
   const deck=[];for(let s=0;s<4;s++)for(let r=1;r<=13;r++)deck.push({r,s,up:false});
   (G.specials||[]).forEach(id=>deck.push({r:0,s:-1,up:false,joker:true,special:id}));   // special cards grow the deck
@@ -324,22 +345,7 @@ function newRound(){
   }else{G.bossDeadSuit=null;}
   /* bigtax: animierter Hintergrund-Layer */
   bossFxStop();
-  if(G.boss&&G.boss.id==='bigtax'&&window.BossGrosseSteuer){
-    var bc=$('boss-bg');
-    bc.width=bc.offsetWidth||440; bc.height=bc.offsetHeight||600;
-    G.bossFx=BossGrosseSteuer.attach(bc,{anchor:'bottom',opacity:0.16,showText:false,state:'appear'});
-    G._bossHitTs=0;
-    G._bossVoicePlayed=false;
-    G._bossRoundStartTs=Date.now();
-    G._lastBossInputTs=Date.now();
-    if(G._bossIdleTimer)clearInterval(G._bossIdleTimer);
-    G._bossIdleTimer=setInterval(function(){
-      if(G._bossVoicePlayed||!G.boss||G.boss.id!=='bigtax'){clearInterval(G._bossIdleTimer);G._bossIdleTimer=null;return;}
-      var now=Date.now();
-      if(now-G._bossRoundStartTs>=30000&&now-(G._lastBossInputTs||0)>=7000){G._bossVoicePlayed=true;clearInterval(G._bossIdleTimer);G._bossIdleTimer=null;SFX.voiceHit();}
-    },2000);
-    SFX.voiceAppear();
-  }
+  bossFxStart(true);
   if(G.tutorial&&G.ante===1)tutForceAce();   // ensure the bank-an-Ace step is doable
   // reaching an ante = a record candidate
   if(G.ante>Store.data.stats.bestAnte){Store.data.stats.bestAnte=G.ante;RUN.newBestAnte=true;}
@@ -590,7 +596,7 @@ function roundClear(cleared){
   if(cleared)Store.data.stats.boardClears++;
   if(G.boss&&(cleared||earned>=G.target)&&Store.data.stats.bossesBeaten.indexOf(G.boss.id)<0)
     Store.data.stats.bossesBeaten.push(G.boss.id);
-  if(G.boss&&(cleared||earned>=G.target)&&G.bossFx){G.bossFx.play('defeat');SFX.voiceDefeat();}
+  if(G.boss&&(cleared||earned>=G.target)&&G.bossFx&&typeof G.bossFx.play==='function'){G.bossFx.play('defeat');SFX.voiceDefeat();}
   Store.save();
   // ---- reward (unchanged economy) ----
   const diffData=G.dd||DIFFICULTIES[G.diff]||{};
@@ -689,7 +695,7 @@ function buyVoucher(id){const v=VOUCHER(id);if(!v||G.voucherOffer!==id||G.coins<
 function useItem(id){const i=(G.items||[]).indexOf(id);if(i<0||G.phase!=='play')return;
   if(id==='spark')G.roundMult+=1.0;
   else if(id==='midas')G.coins+=6;
-  else if(id==='bossbreak')G.boss=null;
+  else if(id==='bossbreak'){G.boss=null;G.bossDeadSuit=null;bossFxStop();}   // Boss-Regel weg → auch animierten Boss-Layer (GROSSE STEUER) stoppen, nicht weiterlaufen lassen
   else if(id==='reshuffle'){var all=G.stock.concat(G.waste);all.forEach(function(c){c.up=false;});G.waste=[];G.stock=shuffle(all);}
   G.items.splice(i,1);SFX.buy();hideOv();render();
 }
